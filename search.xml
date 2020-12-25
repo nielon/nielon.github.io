@@ -383,54 +383,6 @@
 ]]></content>
   </entry>
   <entry>
-    <title>Git@OSC禁止推送大于100M文件【…Q5】</title>
-    <url>/2017/04/18/GitOfOSC/</url>
-    <content><![CDATA[<p>2016/2/14 16:15:47</p>
-<p>整理这篇笔记总共花费了差不多一个工作日的时间（8h），其他的笔记也很费事。所以我在思考一个问题，我整理笔记的方式是不是有问题？花费如此多的时间是否正常？</p>
-<p>以上疑惑留待以后，下面进入正题。</p>
-<h1 id="问题描述与思考"><a href="#问题描述与思考" class="headerlink" title="问题描述与思考"></a>问题描述与思考</h1><p>这个标题可能不恰当，稍后修改。</p>
-<a id="more"></a>
-
-<p>起因是，前一阵子我开始把从网上找到的一些使用手册（chm格式）、电子书（pdf）等参考学习的资源放到版本控制的文档文件夹中，起初文件都不大，几百 KB，最大的不过 10M 左右，进行本地提交和远程推送都正常。直到，</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/cabf9db1-007f-4c8f-be92-9afbfe6b9051.png" alt="大文件"></p>
-<p>这个逾百 M 文件的出现。本地提交正常，可是进行远程推送报错：</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/c82407c2-e263-45ff-af61-1bc5c82f4cb2.png" alt="报错信息"></p>
-<p>报错给出的提示信息很明确，我使用的开源中国 OSC 的网站限制（暂时不打算更换其他的代码托管服务，更具体的说，目前 OSC 是最适合我的）100M  大小。</p>
-<ol>
-<li>最开始我以为“git@oschina 网站不允许 single 文件大于 100M 的内容，所以把 C++ Primer 中文第 5 版使用 Adobe Acrobat 9 Pro 拆分后上传”，至于 200M+ 的大文件进行了“删除并添加到忽略列表”且“保留本地复本”，可是推送时依旧报错；</li>
-<li>然后我以为“git@oschina 每次上传文件总和不能大于 100M，所以拆分后的 7 个子 pdf（一共 198M）分 3 次上传”，依旧报错。ps：通过在网上看到的一些介绍，以及回顾自己之前的使用经历，后者的猜测应该是错误的，毕竟若真是如此的话，那么在老东家时唐龙科技的整个几百兆的项目又是怎么推送的呢。</li>
-</ol>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/6593750.png" alt="文件清单"></p>
-<p>至此，才开始认真考虑“265.pdf is 198.32 MB”这个信息，工作目录中肯定是没有这个文件，那么只能是 .git 隐藏目录了。发现 .git/objects  文件夹有将近 500M，肯定是有些太大了点，从网上搜到一条指令：（ps 通过《Pro Git 第2版》了解 <code>git gc</code> 这个命令，发现在这里使用根本就是驴唇不对马嘴）</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#清理本地版本库</span><br><span class="line">$ git gc --prune&#x3D;now</span><br></pre></td></tr></table></figure>
-<p>执行完毕后，.git/objects 文件夹缩小到 273M。不过报错依旧。</p>
-<p>进一步思考，发现自己还是没有认真思考错误提示，并且对 git 的工作方式的理解不够灵活。最终猜测，“虽然对文件（特指未拆分的大于 200M 的 pdf 文件）进行了删除操作且已再次提交过了，但是作为版本控制库，为了保证还原到上一版本，所以库中肯定是有文件的备份的”，若如此的话，合并新添此文件和删除此文件的两次提交（如果两次提并非相邻提交，则需要合并多个）即可解决问题。也不需要“规避小文件总体超标”（这个错误理解）。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/8283156.png" alt="合并前"></p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/ee54a94c-8c08-4ff4-9f24-2653c4435591.png" alt="合并，且放弃最新提交后"></p>
-<p>再次推送，成功！YES</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/865760ef-32f4-4c3f-8dcd-f64e11f37f3e.png" alt="推送成功"></p>
-<h2 id="课后总结"><a href="#课后总结" class="headerlink" title="课后总结"></a>课后总结</h2><p>Q1：最好找到开源中国对于代码服务推送文件大小限制的官方说明<br>——找不到，放弃。官方只有关于附件的一个说明，但目前我用不到“上传附件”的功能。</p>
-<p>Q2：如果在新的提交上删除了之前提交的文件，库中肯定留有备份。但是如果已经 100% 确认肯定用不到了，那么这种备份如何从库中释放？除了上面合并两者（包含）之间所有的提交这种直接，但是却比较笨的方法，设想如果新添、删除两次提交不相邻，甚至有十几次、几十次提交了，还这么做肯定是不现实的。<br>——参考《Pro Git 第2版》中第7章 重写历史一节的 <code>filter-branch</code> 命令；参考 <a href="http://blog.csdn.net/meteor1113/article/details/4407209">从git中永久删除文件以节省空间</a></p>
-<p>Q3：如果是旧的提交中有，后来进行新提交时删除了（同上），而且添加到了 .gitignore 忽略文件，<strong>感觉</strong>应该自动从库中释放备份了呀，但事实上不会（例如上文中）。纠正此错误认知——考虑，其实 .gitignore 文件自身也可以是版本管理目标之一，也就是说如果还原到 A 提交，那么不单单 A、B 两次提交中间删除的文件的要还原，.gitignore 文件也要重置到 A 提交时未新添忽略项时的版本。.gitignore 文件忽略的项并不是时间轴上的全局，并不是一经修改，通吃过去和现在的。此文件只是针对提交的，并不是针对仓库的。<br>——在 D 盘进行试验，参考《Git 权威指南》第 7 章，使用 <code>git reset</code> 重置命令，注意其选项 <code>--mixed</code>、<code>--hard</code>、<code>--soft</code></p>
-<p>Q5：将学习材料、阅读材料使用云盘同步，因为这些文档不存在版本控制的问题；清理 OSC 版本库的提交<br>——迁移到了 onedrive 同步盘中。</p>
-<h1 id="git文件过大，如何清理"><a href="#git文件过大，如何清理" class="headerlink" title=".git文件过大，如何清理"></a>.git文件过大，如何清理</h1><p>强调一点，上面遇到的问题是代码托管服务平台的限制，所以我需要删除个别大文件，从所有有关提交中删除；.git 文件过大和前者完全是两个不同的问题，前者牵扯 <code>git gc</code> 操作完全是我个人理解上的错误。两者之间唯一的联系其实是“如何从每一个提交移除一个文件”，都使用 <code>filter-branch</code> 命令。</p>
-<p>Q4：那么 .git 隐藏目录中的缓存、垃圾之类的是怎么来的？又该如何清理呢？</p>
-<h2 id="治标不治本"><a href="#治标不治本" class="headerlink" title="治标不治本"></a>治标不治本</h2><p>——这方面暂时不需要了解。如果觉得 clone 本地版本库时太大，可以指定深度，如下，为 1 即表示只克隆最近一次 commit。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone git:&#x2F;&#x2F;xxoo --depth 1</span><br></pre></td></tr></table></figure>
-<p>远程版本库，也可以先删除，然后完全重建版本库。前提是只要结果，过程已无任何价值。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ rm -rf .git</span><br><span class="line">$ git init</span><br><span class="line">$ git add .</span><br><span class="line">$ git cm &quot;first commit&quot;</span><br><span class="line">$ git remote add origin &lt;your_github_repo_url&gt;</span><br><span class="line">$ git push -f -u origin master</span><br></pre></td></tr></table></figure>
-<h2 id="系统性的清理"><a href="#系统性的清理" class="headerlink" title="系统性的清理"></a>系统性的清理</h2><p>以上只是治标不治本的方法，也有其使用限制。但是胜在快刀斩乱麻，不需要花费大量时间、精力去整理执行。系统性的清理参考以下：<a href="https://blog.eood.cn/how-to-clean-up-git-repo">如何清洗 Git Repo 代码仓库。</a></p>
-<p>知乎上看到一个答案，不知道合不合适，仅作参考：<a href="https://www.zhihu.com/question/29769130">如何解决GitHub commit次数过多.git文件过大的问题</a></p>
-<h1 id="网络资源"><a href="#网络资源" class="headerlink" title="网络资源"></a>网络资源</h1><p>后期在网上找到以下帖子，和我遇到的问题完全一致：<a href="http://www.cnblogs.com/qmmq/p/4604862.html">处理GitHub不允许上传大于100M文件问题</a></p>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
-      <tags>
-        <tag>git</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Kindle 帖</title>
     <url>/2017/04/14/Kindle/</url>
     <content><![CDATA[<p>2016年1月6日 10:30:20。这篇笔记早就应该写了。其实就是汇总资源，网络链接等。</p>
@@ -490,6 +442,111 @@
       <categories>
         <category>tools</category>
       </categories>
+  </entry>
+  <entry>
+    <title>Git@OSC禁止推送大于100M文件【…Q5】</title>
+    <url>/2017/04/18/GitOfOSC/</url>
+    <content><![CDATA[<p>2016/2/14 16:15:47</p>
+<p>整理这篇笔记总共花费了差不多一个工作日的时间（8h），其他的笔记也很费事。所以我在思考一个问题，我整理笔记的方式是不是有问题？花费如此多的时间是否正常？</p>
+<p>以上疑惑留待以后，下面进入正题。</p>
+<h1 id="问题描述与思考"><a href="#问题描述与思考" class="headerlink" title="问题描述与思考"></a>问题描述与思考</h1><p>这个标题可能不恰当，稍后修改。</p>
+<a id="more"></a>
+
+<p>起因是，前一阵子我开始把从网上找到的一些使用手册（chm格式）、电子书（pdf）等参考学习的资源放到版本控制的文档文件夹中，起初文件都不大，几百 KB，最大的不过 10M 左右，进行本地提交和远程推送都正常。直到，</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/cabf9db1-007f-4c8f-be92-9afbfe6b9051.png" alt="大文件"></p>
+<p>这个逾百 M 文件的出现。本地提交正常，可是进行远程推送报错：</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/c82407c2-e263-45ff-af61-1bc5c82f4cb2.png" alt="报错信息"></p>
+<p>报错给出的提示信息很明确，我使用的开源中国 OSC 的网站限制（暂时不打算更换其他的代码托管服务，更具体的说，目前 OSC 是最适合我的）100M  大小。</p>
+<ol>
+<li>最开始我以为“git@oschina 网站不允许 single 文件大于 100M 的内容，所以把 C++ Primer 中文第 5 版使用 Adobe Acrobat 9 Pro 拆分后上传”，至于 200M+ 的大文件进行了“删除并添加到忽略列表”且“保留本地复本”，可是推送时依旧报错；</li>
+<li>然后我以为“git@oschina 每次上传文件总和不能大于 100M，所以拆分后的 7 个子 pdf（一共 198M）分 3 次上传”，依旧报错。ps：通过在网上看到的一些介绍，以及回顾自己之前的使用经历，后者的猜测应该是错误的，毕竟若真是如此的话，那么在老东家时唐龙科技的整个几百兆的项目又是怎么推送的呢。</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/6593750.png" alt="文件清单"></p>
+<p>至此，才开始认真考虑“265.pdf is 198.32 MB”这个信息，工作目录中肯定是没有这个文件，那么只能是 .git 隐藏目录了。发现 .git/objects  文件夹有将近 500M，肯定是有些太大了点，从网上搜到一条指令：（ps 通过《Pro Git 第2版》了解 <code>git gc</code> 这个命令，发现在这里使用根本就是驴唇不对马嘴）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#清理本地版本库</span><br><span class="line">$ git gc --prune&#x3D;now</span><br></pre></td></tr></table></figure>
+<p>执行完毕后，.git/objects 文件夹缩小到 273M。不过报错依旧。</p>
+<p>进一步思考，发现自己还是没有认真思考错误提示，并且对 git 的工作方式的理解不够灵活。最终猜测，“虽然对文件（特指未拆分的大于 200M 的 pdf 文件）进行了删除操作且已再次提交过了，但是作为版本控制库，为了保证还原到上一版本，所以库中肯定是有文件的备份的”，若如此的话，合并新添此文件和删除此文件的两次提交（如果两次提并非相邻提交，则需要合并多个）即可解决问题。也不需要“规避小文件总体超标”（这个错误理解）。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/8283156.png" alt="合并前"></p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/ee54a94c-8c08-4ff4-9f24-2653c4435591.png" alt="合并，且放弃最新提交后"></p>
+<p>再次推送，成功！YES</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/865760ef-32f4-4c3f-8dcd-f64e11f37f3e.png" alt="推送成功"></p>
+<h2 id="课后总结"><a href="#课后总结" class="headerlink" title="课后总结"></a>课后总结</h2><p>Q1：最好找到开源中国对于代码服务推送文件大小限制的官方说明<br>——找不到，放弃。官方只有关于附件的一个说明，但目前我用不到“上传附件”的功能。</p>
+<p>Q2：如果在新的提交上删除了之前提交的文件，库中肯定留有备份。但是如果已经 100% 确认肯定用不到了，那么这种备份如何从库中释放？除了上面合并两者（包含）之间所有的提交这种直接，但是却比较笨的方法，设想如果新添、删除两次提交不相邻，甚至有十几次、几十次提交了，还这么做肯定是不现实的。<br>——参考《Pro Git 第2版》中第7章 重写历史一节的 <code>filter-branch</code> 命令；参考 <a href="http://blog.csdn.net/meteor1113/article/details/4407209">从git中永久删除文件以节省空间</a></p>
+<p>Q3：如果是旧的提交中有，后来进行新提交时删除了（同上），而且添加到了 .gitignore 忽略文件，<strong>感觉</strong>应该自动从库中释放备份了呀，但事实上不会（例如上文中）。纠正此错误认知——考虑，其实 .gitignore 文件自身也可以是版本管理目标之一，也就是说如果还原到 A 提交，那么不单单 A、B 两次提交中间删除的文件的要还原，.gitignore 文件也要重置到 A 提交时未新添忽略项时的版本。.gitignore 文件忽略的项并不是时间轴上的全局，并不是一经修改，通吃过去和现在的。此文件只是针对提交的，并不是针对仓库的。<br>——在 D 盘进行试验，参考《Git 权威指南》第 7 章，使用 <code>git reset</code> 重置命令，注意其选项 <code>--mixed</code>、<code>--hard</code>、<code>--soft</code></p>
+<p>Q5：将学习材料、阅读材料使用云盘同步，因为这些文档不存在版本控制的问题；清理 OSC 版本库的提交<br>——迁移到了 onedrive 同步盘中。</p>
+<h1 id="git文件过大，如何清理"><a href="#git文件过大，如何清理" class="headerlink" title=".git文件过大，如何清理"></a>.git文件过大，如何清理</h1><p>强调一点，上面遇到的问题是代码托管服务平台的限制，所以我需要删除个别大文件，从所有有关提交中删除；.git 文件过大和前者完全是两个不同的问题，前者牵扯 <code>git gc</code> 操作完全是我个人理解上的错误。两者之间唯一的联系其实是“如何从每一个提交移除一个文件”，都使用 <code>filter-branch</code> 命令。</p>
+<p>Q4：那么 .git 隐藏目录中的缓存、垃圾之类的是怎么来的？又该如何清理呢？</p>
+<h2 id="治标不治本"><a href="#治标不治本" class="headerlink" title="治标不治本"></a>治标不治本</h2><p>——这方面暂时不需要了解。如果觉得 clone 本地版本库时太大，可以指定深度，如下，为 1 即表示只克隆最近一次 commit。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone git:&#x2F;&#x2F;xxoo --depth 1</span><br></pre></td></tr></table></figure>
+<p>远程版本库，也可以先删除，然后完全重建版本库。前提是只要结果，过程已无任何价值。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ rm -rf .git</span><br><span class="line">$ git init</span><br><span class="line">$ git add .</span><br><span class="line">$ git cm &quot;first commit&quot;</span><br><span class="line">$ git remote add origin &lt;your_github_repo_url&gt;</span><br><span class="line">$ git push -f -u origin master</span><br></pre></td></tr></table></figure>
+<h2 id="系统性的清理"><a href="#系统性的清理" class="headerlink" title="系统性的清理"></a>系统性的清理</h2><p>以上只是治标不治本的方法，也有其使用限制。但是胜在快刀斩乱麻，不需要花费大量时间、精力去整理执行。系统性的清理参考以下：<a href="https://blog.eood.cn/how-to-clean-up-git-repo">如何清洗 Git Repo 代码仓库。</a></p>
+<p>知乎上看到一个答案，不知道合不合适，仅作参考：<a href="https://www.zhihu.com/question/29769130">如何解决GitHub commit次数过多.git文件过大的问题</a></p>
+<h1 id="网络资源"><a href="#网络资源" class="headerlink" title="网络资源"></a>网络资源</h1><p>后期在网上找到以下帖子，和我遇到的问题完全一致：<a href="http://www.cnblogs.com/qmmq/p/4604862.html">处理GitHub不允许上传大于100M文件问题</a></p>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Makefile 执行过程 &amp; include 调用方式</title>
+    <url>/2017/04/26/Makefile3rd/</url>
+    <content><![CDATA[<p>2015年12月8日 16:48:31</p>
+<p>此中测试代码见笔记 <a href="/2016/09/18/Makefile1st/">《Makefile入门》</a></p>
+<h1 id="Makefile-之执行过程"><a href="#Makefile-之执行过程" class="headerlink" title="Makefile 之执行过程"></a>Makefile 之执行过程</h1><ol>
+<li>依次读取变量“MAKEFILES”定义的 makefile 文件列表 </li>
+<li>读取工作目录下的 makefile 文件（根据命名的查找顺序“GNUmakefile”，“makefile”，“Makefile”，首先找到那个就读取那个） </li>
+<li>依次读取工作目录 makefile 文件中使用指示符“include”包含的文件 </li>
+<li><em>查找重建所有已读取的 makefile 文件的规则（如果存在一个目标是当前读取的某一个 makefile 文件，则<strong>执行此规则重建此 makefile 文件</strong>，完成以后从第一步开始重新执行）</em> </li>
+<li>初始化变量值并展开那些需要立即展开的变量和函数并根据预设条件确定执行分支 </li>
+<li>根据“终极目标”以及其他目标的依赖关系建立依赖关系链表 </li>
+<li>执行除“终极目标”以外的所有的目标的规则（规则中如果依赖文件中任一个文件的时间戳比目标文件新，则使用规则所定义的命令重建目标文件） </li>
+<li>执行“终极目标”所在的规则</li>
+</ol>
+<a id="more"></a>
+
+<h1 id="include-调用方式"><a href="#include-调用方式" class="headerlink" title="include 调用方式"></a>include 调用方式</h1><p>Makefile 中 include 的调用方式：（针对 include，不考虑 -include、sinclude）</p>
+<ol>
+<li><p>首先在指定的目录下搜索被调用文件（如果没有路径，则为当前目录）</p>
+</li>
+<li><p>如果没有找到，则从 <code>-I</code> 所指定的 include 目录查找，如果还没找到，则从“/usr/gnu/include”“/usr/local/include”等目录查找</p>
+</li>
+<li><p>最终结果还是没找到，则 Makefile 输出异常信息 “No such file or directory”。</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/1.png" alt="测试"></p>
+<p> ps：橙色标注部分，追求细节的话依赖目标不应该空着。</p>
+<p> 以上操作对应 Makefile 执行过程中第 3 步，然后执行第 4 步：</p>
+</li>
+<li><p>Makefile 中<strong>存在一个目标是当前读取的某一个 makefile 文件，执行此</strong>规则来生成对应文件，例如本例中的规则为：</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/2.png" alt="测试"></p>
+<p> 则根据该规则生成 .depend 文件。（此步骤亦可理解为：Makefile 会试图寻找匹配规则来生成对应文件）</p>
+<p> Makefile 继续执行，此例成功执行完毕。</p>
+</li>
+<li><p>如果没有对应规则，输出错误信息 “make: *** No rule to make target `non-exit-file’.  Stop.”。Makefile 终止执行。</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/3.png" alt="测试"></p>
+</li>
+</ol>
+<h1 id="延伸"><a href="#延伸" class="headerlink" title="延伸"></a>延伸</h1><p>如果弄懂了以上内容，那么应该很轻易能够明白下图中 “all: .depend…” 的写法没有意义。</p>
+<p>——因为 “include .depend” 会先于 根据“终极目标”展开依赖关系 执行，且如有必要 include 操作会自主生成 .depend 文件，然后将 .depend 文件中的依赖关系在主 Makefile 中展开。</p>
+<p>此后若再重新生成 .depend 文件（？），已经没有操作需要此文件了（clean 可能会）。只有等到下一次执行 Makefile 时用到，却可能造成某种不确定性的干扰。</p>
+<p>？：如果 .depend 的依赖目标为空，如以上截图所示，则会重新生成；如果 .depend 的依赖目标如下图所示，为源文件，则不会重新生成。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/4.png" alt="测试"></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>参考：<a href="http://www.cnblogs.com/yyangblog/p/4159778.html">说说Makefile那些事儿</a>、<a href="http://blog.csdn.net/duanbeibei/article/details/2910845">Makefile自动依赖</a>（ps：这篇帖子中提到的“Makefile中include的调用方式：”与我实际验证有出入，已在笔记中说明。）</p>
+<p>其中“程序首次编译时肯定不存在.depend文件，但这时makefile也不需要该文件，因为首次编译肯定连接的都是最新文件。也就是说首次编译时生成的.depend文件其实没用上，而是留作以后有了改动，比如更改了.h文件中的宏变量，则此时可根据.depend中的依赖关系只生成对应的.o文件了” 完全是错误的。</p>
+<p>makefile需要 .depend文件，在执行gcc 指令之前就已生成了 .depend文件。展开说一下“以后有了改动…”，头文件改动：a. 改动文件名，则 $(SRCS) 中的文件肯定相应改动（不改动生成.o目标文件时报错），则 .depend <strong>和</strong>其中描述的目标文件，即 $(OBJS) 重新生成；b. 改动文件内容，则 .depend 中描述的目标文件，即 $(OBJS) 重新生成。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/5.png" alt="测试"></p>
+<p>看一下 .depend文件内容：</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/6.png" alt="测试"></p>
+<p>以上足以说明<strong>首次编译时生成的 .depend 文件妥妥的用上了！！</strong></p>
+]]></content>
+      <categories>
+        <category>make</category>
+      </categories>
+      <tags>
+        <tag>make</tag>
+      </tags>
   </entry>
   <entry>
     <title>不同场景下的 Makefile</title>
@@ -556,63 +613,6 @@
 <li><p>原文中讲到自定义共享库时并没有细致划分 soname、linker name、real name。这个只是小瑕疵</p>
 </li>
 </ol>
-]]></content>
-      <categories>
-        <category>make</category>
-      </categories>
-      <tags>
-        <tag>make</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Makefile 执行过程 &amp; include 调用方式</title>
-    <url>/2017/04/26/Makefile3rd/</url>
-    <content><![CDATA[<p>2015年12月8日 16:48:31</p>
-<p>此中测试代码见笔记 <a href="/2016/09/18/Makefile1st/">《Makefile入门》</a></p>
-<h1 id="Makefile-之执行过程"><a href="#Makefile-之执行过程" class="headerlink" title="Makefile 之执行过程"></a>Makefile 之执行过程</h1><ol>
-<li>依次读取变量“MAKEFILES”定义的 makefile 文件列表 </li>
-<li>读取工作目录下的 makefile 文件（根据命名的查找顺序“GNUmakefile”，“makefile”，“Makefile”，首先找到那个就读取那个） </li>
-<li>依次读取工作目录 makefile 文件中使用指示符“include”包含的文件 </li>
-<li><em>查找重建所有已读取的 makefile 文件的规则（如果存在一个目标是当前读取的某一个 makefile 文件，则<strong>执行此规则重建此 makefile 文件</strong>，完成以后从第一步开始重新执行）</em> </li>
-<li>初始化变量值并展开那些需要立即展开的变量和函数并根据预设条件确定执行分支 </li>
-<li>根据“终极目标”以及其他目标的依赖关系建立依赖关系链表 </li>
-<li>执行除“终极目标”以外的所有的目标的规则（规则中如果依赖文件中任一个文件的时间戳比目标文件新，则使用规则所定义的命令重建目标文件） </li>
-<li>执行“终极目标”所在的规则</li>
-</ol>
-<a id="more"></a>
-
-<h1 id="include-调用方式"><a href="#include-调用方式" class="headerlink" title="include 调用方式"></a>include 调用方式</h1><p>Makefile 中 include 的调用方式：（针对 include，不考虑 -include、sinclude）</p>
-<ol>
-<li><p>首先在指定的目录下搜索被调用文件（如果没有路径，则为当前目录）</p>
-</li>
-<li><p>如果没有找到，则从 <code>-I</code> 所指定的 include 目录查找，如果还没找到，则从“/usr/gnu/include”“/usr/local/include”等目录查找</p>
-</li>
-<li><p>最终结果还是没找到，则 Makefile 输出异常信息 “No such file or directory”。</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/1.png" alt="测试"></p>
-<p> ps：橙色标注部分，追求细节的话依赖目标不应该空着。</p>
-<p> 以上操作对应 Makefile 执行过程中第 3 步，然后执行第 4 步：</p>
-</li>
-<li><p>Makefile 中<strong>存在一个目标是当前读取的某一个 makefile 文件，执行此</strong>规则来生成对应文件，例如本例中的规则为：</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/2.png" alt="测试"></p>
-<p> 则根据该规则生成 .depend 文件。（此步骤亦可理解为：Makefile 会试图寻找匹配规则来生成对应文件）</p>
-<p> Makefile 继续执行，此例成功执行完毕。</p>
-</li>
-<li><p>如果没有对应规则，输出错误信息 “make: *** No rule to make target `non-exit-file’.  Stop.”。Makefile 终止执行。</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/3.png" alt="测试"></p>
-</li>
-</ol>
-<h1 id="延伸"><a href="#延伸" class="headerlink" title="延伸"></a>延伸</h1><p>如果弄懂了以上内容，那么应该很轻易能够明白下图中 “all: .depend…” 的写法没有意义。</p>
-<p>——因为 “include .depend” 会先于 根据“终极目标”展开依赖关系 执行，且如有必要 include 操作会自主生成 .depend 文件，然后将 .depend 文件中的依赖关系在主 Makefile 中展开。</p>
-<p>此后若再重新生成 .depend 文件（？），已经没有操作需要此文件了（clean 可能会）。只有等到下一次执行 Makefile 时用到，却可能造成某种不确定性的干扰。</p>
-<p>？：如果 .depend 的依赖目标为空，如以上截图所示，则会重新生成；如果 .depend 的依赖目标如下图所示，为源文件，则不会重新生成。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/4.png" alt="测试"></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>参考：<a href="http://www.cnblogs.com/yyangblog/p/4159778.html">说说Makefile那些事儿</a>、<a href="http://blog.csdn.net/duanbeibei/article/details/2910845">Makefile自动依赖</a>（ps：这篇帖子中提到的“Makefile中include的调用方式：”与我实际验证有出入，已在笔记中说明。）</p>
-<p>其中“程序首次编译时肯定不存在.depend文件，但这时makefile也不需要该文件，因为首次编译肯定连接的都是最新文件。也就是说首次编译时生成的.depend文件其实没用上，而是留作以后有了改动，比如更改了.h文件中的宏变量，则此时可根据.depend中的依赖关系只生成对应的.o文件了” 完全是错误的。</p>
-<p>makefile需要 .depend文件，在执行gcc 指令之前就已生成了 .depend文件。展开说一下“以后有了改动…”，头文件改动：a. 改动文件名，则 $(SRCS) 中的文件肯定相应改动（不改动生成.o目标文件时报错），则 .depend <strong>和</strong>其中描述的目标文件，即 $(OBJS) 重新生成；b. 改动文件内容，则 .depend 中描述的目标文件，即 $(OBJS) 重新生成。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/5.png" alt="测试"></p>
-<p>看一下 .depend文件内容：</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/6.png" alt="测试"></p>
-<p>以上足以说明<strong>首次编译时生成的 .depend 文件妥妥的用上了！！</strong></p>
 ]]></content>
       <categories>
         <category>make</category>
@@ -896,49 +896,6 @@
       </categories>
   </entry>
   <entry>
-    <title>UUID 入门</title>
-    <url>/2017/07/04/UUID/</url>
-    <content><![CDATA[<p>维基百科中描述：通用唯一识别码（英语：Universally Unique Identifier，简称UUID）的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
-<blockquote>
-<p>目前最广泛应用的UUID，是微软公司的全局唯一标识符（GUID）</p>
-</blockquote>
-<p>UUID的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的32个字符。示例：</p>
-<pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
-<p>接下来重点描述在开发中的使用及应用。</p>
-<h1 id="在-C-中的使用"><a href="#在-C-中的使用" class="headerlink" title="在 C++ 中的使用"></a>在 C++ 中的使用</h1><p>C++ 原生（C++03、C++11/0x）并不支持 UUID。所以要想在 C++ 代码中生成 UUID，如果要求跨平台推荐使用第三方库 Boost UUID，要么结合各自的平台，使用系统 API。以下方法整理自互联网，除 Boost Uuid 和 libuuid 使用过之外，其他的未亲自试验。</p>
-<h2 id="UUID-generation-using-Boost-in-C"><a href="#UUID-generation-using-Boost-in-C" class="headerlink" title="UUID generation using Boost in C++"></a>UUID generation using Boost in C++</h2><p>在 StackOverflow 上的一个例子：<a href="http://stackoverflow.com/questions/3247861/example-of-uuid-generation-using-boost-in-c/3248017">跳转链接</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    boost::uuids::uuid uuid = boost::uuids::random_generator()();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>连续两个括号 <code>()()</code> 是什么鬼？是不是打错了？——首先，这么写是正确的。这种使用形式<strong>涉及到的语法意义</strong>要进一步地学习并掌握。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    boost::uuids::random_generator generator;</span><br><span class="line"></span><br><span class="line">    boost::uuids::uuid uuid1 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid1 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    boost::uuids::uuid uuid2 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid2 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果以上两个简单的例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
-<h2 id="Qt-QUuid"><a href="#Qt-QUuid" class="headerlink" title="Qt QUuid"></a>Qt QUuid</h2><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Qt是一个跨平台的C++编程框架，QUuid类实现了UUID的生成、比较、转换等功能。</p>
-<p>函数QUuid createUuid()，可用于生成一个随即UUID。示例如下：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QUuid&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QString&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    QUuid uuid = QUuid::createUuid();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; qPrintable(uuid.toString()) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux环境中大都有一个名为uuidgen的小工具，运行即可生成一个UUID到标准输出。读取文件/proc/sys/kernel/random/uuid即得UUID，例如：</p>
-<pre><code>cat /proc/sys/kernel/random/uuid</code></pre>
-<h3 id="libuuid"><a href="#libuuid" class="headerlink" title="libuuid"></a>libuuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>libuuid是一个用于生成UUID的C库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;uuid/uuid.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uuid_t</span> uuid;</span><br><span class="line">    <span class="keyword">char</span> str[<span class="number">36</span>];</span><br><span class="line"></span><br><span class="line">    uuid_generate(uuid);</span><br><span class="line">    uuid_unparse(uuid, str);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在Linux下编译时需要链接uuid库</p>
-<pre><code>gcc -o uuid uuid.c -luuid</code></pre>
-<p><strong>问题： 在什么系统下自带？在什么系统中需要另行安装？</strong></p>
-<p>在Ubuntu中，可以用下面的命令安装libuuid：</p>
-<pre><code>sudo apt-get install uuid-dev</code></pre>
-<h2 id="Windows-下生成-UUID"><a href="#Windows-下生成-UUID" class="headerlink" title="Windows 下生成 UUID"></a>Windows 下生成 UUID</h2><h3 id="CoCreateGuid"><a href="#CoCreateGuid" class="headerlink" title="CoCreateGuid"></a>CoCreateGuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Windows下提供了函数CoCreateGuid用于生成GUID。需要使用的头文件是”objbase.h”，需要链接的库是ole32.lib，函数原型为：</p>
-<p>HRESULT CoCreateGuid(GUID *pguid);<br>GUID的原型为</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">GUID</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD Data1;</span><br><span class="line">    WORD Data2;</span><br><span class="line">    WORD Data3;</span><br><span class="line">    BYTE Data4[<span class="number">8</span>];</span><br><span class="line">&#125; GUID;</span><br></pre></td></tr></table></figure>
-<h3 id="UuidCreate"><a href="#UuidCreate" class="headerlink" title="UuidCreate"></a>UuidCreate</h3><p><a href="http://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library">参考来源</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> comment(lib, <span class="meta-string">&quot;rpcrt4.lib&quot;</span>)  <span class="comment">// UuidCreate - Minimum supported OS Win 2000</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UUID uuid;</span><br><span class="line">    UuidCreate(&amp;uuid);</span><br><span class="line">    <span class="keyword">char</span> *str;</span><br><span class="line">    UuidToStringA(&amp;uuid, (RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;str&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    RpcStringFreeA((RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="在-Java-中使用"><a href="#在-Java-中使用" class="headerlink" title="在 Java 中使用"></a>在 Java 中使用</h1><p>工作中偶尔会写一些 Java 的项目，所以也捎带整理一下。</p>
-<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 UUID() 函数生成 uuid。</p>
-]]></content>
-      <tags>
-        <tag>cpp</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>版本控制</title>
     <url>/2017/03/27/VersionControl/</url>
     <content><![CDATA[<p>2016年1月4日 17:23:45，和git有关的链接保存了很多，统一在这篇笔记里整理一下。</p>
@@ -1021,6 +978,49 @@
       </categories>
       <tags>
         <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>UUID 入门</title>
+    <url>/2017/07/04/UUID/</url>
+    <content><![CDATA[<p>维基百科中描述：通用唯一识别码（英语：Universally Unique Identifier，简称UUID）的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
+<blockquote>
+<p>目前最广泛应用的UUID，是微软公司的全局唯一标识符（GUID）</p>
+</blockquote>
+<p>UUID的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的32个字符。示例：</p>
+<pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
+<p>接下来重点描述在开发中的使用及应用。</p>
+<h1 id="在-C-中的使用"><a href="#在-C-中的使用" class="headerlink" title="在 C++ 中的使用"></a>在 C++ 中的使用</h1><p>C++ 原生（C++03、C++11/0x）并不支持 UUID。所以要想在 C++ 代码中生成 UUID，如果要求跨平台推荐使用第三方库 Boost UUID，要么结合各自的平台，使用系统 API。以下方法整理自互联网，除 Boost Uuid 和 libuuid 使用过之外，其他的未亲自试验。</p>
+<h2 id="UUID-generation-using-Boost-in-C"><a href="#UUID-generation-using-Boost-in-C" class="headerlink" title="UUID generation using Boost in C++"></a>UUID generation using Boost in C++</h2><p>在 StackOverflow 上的一个例子：<a href="http://stackoverflow.com/questions/3247861/example-of-uuid-generation-using-boost-in-c/3248017">跳转链接</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    boost::uuids::uuid uuid = boost::uuids::random_generator()();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>连续两个括号 <code>()()</code> 是什么鬼？是不是打错了？——首先，这么写是正确的。这种使用形式<strong>涉及到的语法意义</strong>要进一步地学习并掌握。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    boost::uuids::random_generator generator;</span><br><span class="line"></span><br><span class="line">    boost::uuids::uuid uuid1 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid1 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    boost::uuids::uuid uuid2 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid2 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果以上两个简单的例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
+<h2 id="Qt-QUuid"><a href="#Qt-QUuid" class="headerlink" title="Qt QUuid"></a>Qt QUuid</h2><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>Qt是一个跨平台的C++编程框架，QUuid类实现了UUID的生成、比较、转换等功能。</p>
+<p>函数QUuid createUuid()，可用于生成一个随即UUID。示例如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QUuid&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QString&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    QUuid uuid = QUuid::createUuid();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; qPrintable(uuid.toString()) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux环境中大都有一个名为uuidgen的小工具，运行即可生成一个UUID到标准输出。读取文件/proc/sys/kernel/random/uuid即得UUID，例如：</p>
+<pre><code>cat /proc/sys/kernel/random/uuid</code></pre>
+<h3 id="libuuid"><a href="#libuuid" class="headerlink" title="libuuid"></a>libuuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>libuuid是一个用于生成UUID的C库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;uuid/uuid.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uuid_t</span> uuid;</span><br><span class="line">    <span class="keyword">char</span> str[<span class="number">36</span>];</span><br><span class="line"></span><br><span class="line">    uuid_generate(uuid);</span><br><span class="line">    uuid_unparse(uuid, str);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在Linux下编译时需要链接uuid库</p>
+<pre><code>gcc -o uuid uuid.c -luuid</code></pre>
+<p><strong>问题： 在什么系统下自带？在什么系统中需要另行安装？</strong></p>
+<p>在Ubuntu中，可以用下面的命令安装libuuid：</p>
+<pre><code>sudo apt-get install uuid-dev</code></pre>
+<h2 id="Windows-下生成-UUID"><a href="#Windows-下生成-UUID" class="headerlink" title="Windows 下生成 UUID"></a>Windows 下生成 UUID</h2><h3 id="CoCreateGuid"><a href="#CoCreateGuid" class="headerlink" title="CoCreateGuid"></a>CoCreateGuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>Windows下提供了函数CoCreateGuid用于生成GUID。需要使用的头文件是”objbase.h”，需要链接的库是ole32.lib，函数原型为：</p>
+<p>HRESULT CoCreateGuid(GUID *pguid);<br>GUID的原型为</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">GUID</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD Data1;</span><br><span class="line">    WORD Data2;</span><br><span class="line">    WORD Data3;</span><br><span class="line">    BYTE Data4[<span class="number">8</span>];</span><br><span class="line">&#125; GUID;</span><br></pre></td></tr></table></figure>
+<h3 id="UuidCreate"><a href="#UuidCreate" class="headerlink" title="UuidCreate"></a>UuidCreate</h3><p><a href="http://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library">参考来源</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> comment(lib, <span class="meta-string">&quot;rpcrt4.lib&quot;</span>)  <span class="comment">// UuidCreate - Minimum supported OS Win 2000</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UUID uuid;</span><br><span class="line">    UuidCreate(&amp;uuid);</span><br><span class="line">    <span class="keyword">char</span> *str;</span><br><span class="line">    UuidToStringA(&amp;uuid, (RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;str&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    RpcStringFreeA((RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="在-Java-中使用"><a href="#在-Java-中使用" class="headerlink" title="在 Java 中使用"></a>在 Java 中使用</h1><p>工作中偶尔会写一些 Java 的项目，所以也捎带整理一下。</p>
+<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 UUID() 函数生成 uuid。</p>
+]]></content>
+      <tags>
+        <tag>cpp</tag>
       </tags>
   </entry>
   <entry>
@@ -1653,31 +1653,6 @@
       </tags>
   </entry>
   <entry>
-    <title>BOM 字节顺序标记</title>
-    <url>/2019/11/04/bom/</url>
-    <content><![CDATA[<p>BOM，就是 utf8-bom 中的 bom。</p>
-<p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
-<ul>
-<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
-<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
-</ul>
-<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
-<blockquote>
-<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
-</blockquote>
-<a id="more"></a>
-
-<p>另外，在 c++11 起，新增了两个 <a href="https://zh.cppreference.com/w/cpp/language/escape">转义字符</a>：</p>
-<ul>
-<li><code>\unnnn</code>，    通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnn</code></li>
-<li><code>\Unnnnnnnn</code>，通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnnnnnn</code></li>
-</ul>
-<p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
-<p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
-]]></content>
-  </entry>
-  <entry>
     <title>构建 build]</title>
     <url>/2016/08/13/build/</url>
     <content><![CDATA[<p>整理为知笔记中和 make makefile automake 有关内容，成此篇。</p>
@@ -1782,6 +1757,28 @@
       </tags>
   </entry>
   <entry>
+    <title>为什么不能销户呢？</title>
+    <url>/2017/04/17/cancelaccount/</url>
+    <content><![CDATA[<p>2015年12月31日 15:40:20</p>
+<p>不知道和自己是学计算机的有没有关系，总之我如果手机号不用了我要销号，银行卡不用了我要销卡。同样的，好多网络上的账户（最主要的就是邮箱和社交平台）我也希望能够有借有还，注册注销闭环操作。可惜就我目前了解到的，网易不同，百度各种账号/平台不提供……</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cancelaccount/1b1f9566-5e1d-4eb8-a798-2eb0925ae2d4.png" alt="注销账户"></p>
+<a id="more"></a>
+
+<p>以后新注册什么东东的时候，先想</p>
+<ol>
+<li>必需注册吗？注册了用来干什么？不注册有什么影响？</li>
+<li>注册之后的使用频率高吗？</li>
+<li>注册信息敏感吗？涉及个人身份信息吗？</li>
+<li>注册账号有成长价值吗？</li>
+<li>尽量不注册新账户；尽量使用废弃邮箱操作。</li>
+</ol>
+<p><a href="http://www.douban.com/note/156998420/">如何永久注销不想用的邮箱</a></p>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+  </entry>
+  <entry>
     <title>c++20 特性</title>
     <url>/2020/12/25/c++20/</url>
     <content><![CDATA[<p>学习 c++20 首先要有支持相关特性的编译器</p>
@@ -1841,26 +1838,29 @@
       </categories>
   </entry>
   <entry>
-    <title>为什么不能销户呢？</title>
-    <url>/2017/04/17/cancelaccount/</url>
-    <content><![CDATA[<p>2015年12月31日 15:40:20</p>
-<p>不知道和自己是学计算机的有没有关系，总之我如果手机号不用了我要销号，银行卡不用了我要销卡。同样的，好多网络上的账户（最主要的就是邮箱和社交平台）我也希望能够有借有还，注册注销闭环操作。可惜就我目前了解到的，网易不同，百度各种账号/平台不提供……</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cancelaccount/1b1f9566-5e1d-4eb8-a798-2eb0925ae2d4.png" alt="注销账户"></p>
+    <title>BOM 字节顺序标记</title>
+    <url>/2019/11/04/bom/</url>
+    <content><![CDATA[<p>BOM，就是 utf8-bom 中的 bom。</p>
+<p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
+<ul>
+<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
+<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
+</ul>
+<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
+<blockquote>
+<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
+</blockquote>
 <a id="more"></a>
 
-<p>以后新注册什么东东的时候，先想</p>
-<ol>
-<li>必需注册吗？注册了用来干什么？不注册有什么影响？</li>
-<li>注册之后的使用频率高吗？</li>
-<li>注册信息敏感吗？涉及个人身份信息吗？</li>
-<li>注册账号有成长价值吗？</li>
-<li>尽量不注册新账户；尽量使用废弃邮箱操作。</li>
-</ol>
-<p><a href="http://www.douban.com/note/156998420/">如何永久注销不想用的邮箱</a></p>
+<p>另外，在 c++11 起，新增了两个 <a href="https://zh.cppreference.com/w/cpp/language/escape">转义字符</a>：</p>
+<ul>
+<li><code>\unnnn</code>，    通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnn</code></li>
+<li><code>\Unnnnnnnn</code>，通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnnnnnn</code></li>
+</ul>
+<p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
+<p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
 ]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
   </entry>
   <entry>
     <title>职业</title>
@@ -2114,46 +2114,6 @@
       </categories>
   </entry>
   <entry>
-    <title>零散</title>
-    <url>/2017/04/28/cherry/</url>
-    <content><![CDATA[<p> 2016/3/14 10:51:03</p>
-<p>办公室抽屉中草稿纸上的内容，挑拣有用的信息誊录在此。草稿纸扔掉。</p>
-<blockquote>
-<p>以下每一项都可以展开，写一篇笔记的</p>
-</blockquote>
-<a id="more"></a>
-
-<h1 id="VS2010-学习笔记整理"><a href="#VS2010-学习笔记整理" class="headerlink" title="VS2010 学习笔记整理"></a>VS2010 学习笔记整理</h1><ul>
-<li><p>启用行号</p>
-</li>
-<li><p>F5 调试，ctrl+F5 运行不调试</p>
-</li>
-<li><p>多显示器</p>
-<p>  <img src="http://img.article.pchome.net/00/47/36/04/3.jpg" alt="是不是有种很爽的感觉"></p>
-</li>
-<li><p>目录配置 </p>
-</li>
-</ul>
-<h1 id="UML-类图类与类之间关系表示方法：手机图片"><a href="#UML-类图类与类之间关系表示方法：手机图片" class="headerlink" title="UML 类图类与类之间关系表示方法：手机图片"></a>UML 类图类与类之间关系表示方法：<em>手机图片</em></h1><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/WP_20160314_003.jpg" alt="流程图"></p>
-<h1 id="VIM-常用命令学习笔记整理"><a href="#VIM-常用命令学习笔记整理" class="headerlink" title="VIM 常用命令学习笔记整理"></a>VIM 常用命令学习笔记整理</h1><h1 id="复习-shell-及变量，进一步整理"><a href="#复习-shell-及变量，进一步整理" class="headerlink" title="复习 shell 及变量，进一步整理"></a>复习 shell 及变量，进一步整理</h1><h1 id="字符集和字符编码"><a href="#字符集和字符编码" class="headerlink" title="字符集和字符编码"></a>字符集和字符编码</h1><p>2015年10月29日 17:54:36</p>
-<h2 id="字符集和字符编码，usc-和-unicode"><a href="#字符集和字符编码，usc-和-unicode" class="headerlink" title="字符集和字符编码，usc 和 unicode"></a><del>字符集和字符编码，usc 和 unicode</del></h2><p><del>参考：<a href="http://blog.csdn.net/revilwang/article/details/8763911">字符集与字符编码和宽字符之间的关系</a></del></p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/fd19526e-273d-40a0-8dee-b0599e7fa862.png" alt="excel"></p>
-<p><del>“UTF-8 编码还有一个优点，它是符合 C 语言字符串的要求，以 <code>&#39;\0&#39;</code> 结束，因此所有的普通字符串操作如 <code>strcpy</code> 等对 UTF-8 编码的字符完全有效，而 UTF-16, UTF-32等中间填充大量的 <code>&#39;\0&#39;</code> 字符，则不能使用这些函数。”</del></p>
-<h2 id="ansi-体系和-unicode"><a href="#ansi-体系和-unicode" class="headerlink" title="ansi 体系和 unicode"></a>ansi 体系和 unicode</h2><p>参考：<a href="http://blog.csdn.net/stephen1315/article/details/7476236">Unicode 字符集和多字节字符集关系</a></p>
-<p>ansi 机构最初的 ascii 字符集，后来各国各自扩充，中国大陆和新加坡等地区使用本地编码是 GB2312 或 GBK，中国港台地区使用的本地编码是 BIG5，韩国和日本的本地编码分别是 euc-kr 和 Shift_JIS。这些从 ANSI 标准派生的字符集被习惯的统称为 ANSI 字符集，它们正式的名称应该是 MBCS(Multi-Byte Chactacter System，即多字节字符系统)。ansi 体系，字符集一般只对应一种字符编码。</p>
-<p>再后来，为了大一统，出现了 unicode 字符集。</p>
-<h2 id="mbsc-和宽字节"><a href="#mbsc-和宽字节" class="headerlink" title="mbsc 和宽字节"></a>mbsc 和宽字节</h2><p>参考：<a href="http://blog.csdn.net/leixiaohua1020/article/details/12753723">单字节字符集，多字节字符集，Unicode</a></p>
-<p>ASCII 是 SBCS。一个字节表示的 <code>0</code> 用来标志 SBCS 字符串的结束。  </p>
-<p>DBCS 字符串的结束标志也是一个单字节表示的 <code>0</code>。  </p>
-<p>Unicode 字符串使用两个字节表示的 <code>0</code> 作为它的结束标志。</p>
-<p>——多字节（mbsc）包括 sbsc 和 dbsc 等。ascii 基本代表了 sbsc；ansi 和 mbsc 基本算同义词。</p>
-<p>——宽字节，unicode 基本代表了宽字节。</p>
-]]></content>
-      <tags>
-        <tag>memo</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>cmake 备忘</title>
     <url>/2018/12/03/cmake/</url>
     <content><![CDATA[<p>automake 系列工具友好性的确不咋地，而且只限于 *inux 平台。跨平台还是 cmake 为佳，也有越来越多的项目在使用 cmake，比如 google 的 gRPC，比如 zlib 也支持 cmake。</p>
@@ -2227,6 +2187,46 @@
       </categories>
       <tags>
         <tag>make</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>零散</title>
+    <url>/2017/04/28/cherry/</url>
+    <content><![CDATA[<p> 2016/3/14 10:51:03</p>
+<p>办公室抽屉中草稿纸上的内容，挑拣有用的信息誊录在此。草稿纸扔掉。</p>
+<blockquote>
+<p>以下每一项都可以展开，写一篇笔记的</p>
+</blockquote>
+<a id="more"></a>
+
+<h1 id="VS2010-学习笔记整理"><a href="#VS2010-学习笔记整理" class="headerlink" title="VS2010 学习笔记整理"></a>VS2010 学习笔记整理</h1><ul>
+<li><p>启用行号</p>
+</li>
+<li><p>F5 调试，ctrl+F5 运行不调试</p>
+</li>
+<li><p>多显示器</p>
+<p>  <img src="http://img.article.pchome.net/00/47/36/04/3.jpg" alt="是不是有种很爽的感觉"></p>
+</li>
+<li><p>目录配置 </p>
+</li>
+</ul>
+<h1 id="UML-类图类与类之间关系表示方法：手机图片"><a href="#UML-类图类与类之间关系表示方法：手机图片" class="headerlink" title="UML 类图类与类之间关系表示方法：手机图片"></a>UML 类图类与类之间关系表示方法：<em>手机图片</em></h1><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/WP_20160314_003.jpg" alt="流程图"></p>
+<h1 id="VIM-常用命令学习笔记整理"><a href="#VIM-常用命令学习笔记整理" class="headerlink" title="VIM 常用命令学习笔记整理"></a>VIM 常用命令学习笔记整理</h1><h1 id="复习-shell-及变量，进一步整理"><a href="#复习-shell-及变量，进一步整理" class="headerlink" title="复习 shell 及变量，进一步整理"></a>复习 shell 及变量，进一步整理</h1><h1 id="字符集和字符编码"><a href="#字符集和字符编码" class="headerlink" title="字符集和字符编码"></a>字符集和字符编码</h1><p>2015年10月29日 17:54:36</p>
+<h2 id="字符集和字符编码，usc-和-unicode"><a href="#字符集和字符编码，usc-和-unicode" class="headerlink" title="字符集和字符编码，usc 和 unicode"></a><del>字符集和字符编码，usc 和 unicode</del></h2><p><del>参考：<a href="http://blog.csdn.net/revilwang/article/details/8763911">字符集与字符编码和宽字符之间的关系</a></del></p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/fd19526e-273d-40a0-8dee-b0599e7fa862.png" alt="excel"></p>
+<p><del>“UTF-8 编码还有一个优点，它是符合 C 语言字符串的要求，以 <code>&#39;\0&#39;</code> 结束，因此所有的普通字符串操作如 <code>strcpy</code> 等对 UTF-8 编码的字符完全有效，而 UTF-16, UTF-32等中间填充大量的 <code>&#39;\0&#39;</code> 字符，则不能使用这些函数。”</del></p>
+<h2 id="ansi-体系和-unicode"><a href="#ansi-体系和-unicode" class="headerlink" title="ansi 体系和 unicode"></a>ansi 体系和 unicode</h2><p>参考：<a href="http://blog.csdn.net/stephen1315/article/details/7476236">Unicode 字符集和多字节字符集关系</a></p>
+<p>ansi 机构最初的 ascii 字符集，后来各国各自扩充，中国大陆和新加坡等地区使用本地编码是 GB2312 或 GBK，中国港台地区使用的本地编码是 BIG5，韩国和日本的本地编码分别是 euc-kr 和 Shift_JIS。这些从 ANSI 标准派生的字符集被习惯的统称为 ANSI 字符集，它们正式的名称应该是 MBCS(Multi-Byte Chactacter System，即多字节字符系统)。ansi 体系，字符集一般只对应一种字符编码。</p>
+<p>再后来，为了大一统，出现了 unicode 字符集。</p>
+<h2 id="mbsc-和宽字节"><a href="#mbsc-和宽字节" class="headerlink" title="mbsc 和宽字节"></a>mbsc 和宽字节</h2><p>参考：<a href="http://blog.csdn.net/leixiaohua1020/article/details/12753723">单字节字符集，多字节字符集，Unicode</a></p>
+<p>ASCII 是 SBCS。一个字节表示的 <code>0</code> 用来标志 SBCS 字符串的结束。  </p>
+<p>DBCS 字符串的结束标志也是一个单字节表示的 <code>0</code>。  </p>
+<p>Unicode 字符串使用两个字节表示的 <code>0</code> 作为它的结束标志。</p>
+<p>——多字节（mbsc）包括 sbsc 和 dbsc 等。ascii 基本代表了 sbsc；ansi 和 mbsc 基本算同义词。</p>
+<p>——宽字节，unicode 基本代表了宽字节。</p>
+]]></content>
+      <tags>
+        <tag>memo</tag>
       </tags>
   </entry>
   <entry>
@@ -4825,7 +4825,7 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#110;&#x69;&#101;&#108;&#111;&#110;&#103;&#50;&#x30;&#x31;&#52;&#x40;&#x31;&#x36;&#51;&#x2e;&#99;&#x6f;&#109;">&#110;&#x69;&#101;&#108;&#111;&#110;&#103;&#50;&#x30;&#x31;&#52;&#x40;&#x31;&#x36;&#51;&#x2e;&#99;&#x6f;&#109;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#x34;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#109;">&#x6e;&#x69;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#x34;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#109;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
@@ -6530,7 +6530,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#110;&#x69;&#101;&#x6c;&#x6f;&#110;&#103;&#50;&#x30;&#49;&#52;&#64;&#x31;&#x36;&#51;&#46;&#99;&#111;&#109;">&#110;&#x69;&#101;&#x6c;&#x6f;&#110;&#103;&#50;&#x30;&#49;&#52;&#64;&#x31;&#x36;&#51;&#46;&#99;&#111;&#109;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#101;&#x6c;&#111;&#x6e;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#x6c;&#111;&#x6e;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -7203,6 +7203,8 @@ const double *const pip = &amp;pi;</code></pre>
 </ol>
 <h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p><a href="http://www.jerryfu.net/post/search-engine-for-hexo-with-swiftype-v2.html">利用swiftype为hexo添加站内搜索v2.0</a></p>
 <p>swiftype 试用结束后，只能付费。免费试用期到期后，官网登录之后无论点击哪里都是“Your Swiftype free trial has come to an end” 页面，猜测 swiftype 不再提供免费版本，<a href="https://github.com/iissnan/hexo-theme-next/issues/841">佐证</a>。需要寻找备案了……</p>
+<p><a href="https://www.sqlsec.com/2017/12/hexosearch.html">使用本地搜索</a>，安装插件（需要相应的配置项）。</p>
+<figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
 <h1 id="过程也是结果"><a href="#过程也是结果" class="headerlink" title="过程也是结果"></a>过程也是结果</h1><p>在整理笔记的时候肯定会从网上查找资料，每个知识点肯定都会碰到一篇帖子让自己感慨“哇，总结得好好，娓娓道来，该讲的都讲到了，却也不多一句废话”，每每到此刻都觉得自己整理的笔记就是一坨垃圾，用词不当，表述不清晰，上下文转接不流畅，有的重点落下没讲，废话说太多……可这就是<strong>成长必经的过程</strong>，如果不是整理这个知识点，就不会一板一眼、较真地去查阅好多资料，线上的博客、线下的书，随手 google 来的终究只是编码过程中的 code demo，而非知识，只有当你读了很多篇笔记，看过了很多风景，才能有足够的理解，才能通过已经掌握的，通过对比，认识到某一篇是够精彩的。</p>
 <p>如果因为总结的笔记太烂而气馁，放弃整理，那么就不会查阅足够的资料，就不会见到那篇“哇，精彩”的帖子！整理出来的笔记是结果，整理过程中见到的风景也是结果！</p>
 <p><strong>ps：</strong>在 2017/4/28 10:13:43  之前的文章大多是从 <a href="http://www.wiz.cn/">为知笔记</a> 中手动迁移出来的。</p>
@@ -7210,6 +7212,134 @@ const double *const pip = &amp;pi;</code></pre>
 <li>源于为知笔记不支持账号销户，所以也就没有清空其中的内容，暂时保留一段时间还可以校正迁移过程中的失误；</li>
 <li>但在文章全部迁移完毕之后也就不再使用为知笔记了，因为它 <a href="https://www.zhihu.com/question/53429669">变更服务策略</a> 太激进了。</li>
 </ul>
+]]></content>
+      <tags>
+        <tag>memo</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>使用 Markdown 注意事项</title>
+    <url>/2016/06/13/writing2/</url>
+    <content><![CDATA[<p>分为语法和工具两个部分，备忘录。</p>
+<h1 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h1><h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>在使用 JotterPad（CommonMark）阅读 markdown 格式的文本时，发现的细节：</p>
+<ol>
+<li><p>标题 <code>#</code> 后需要有空格，才能解析成标题，不然就是文本；【重要】</p>
+<ul>
+<li>进一步修正：任意级别的标题行前后添加空行，至少标题行之前要有空行，<code>#</code> 之后添加空格；</li>
+</ul>
+</li>
+<li><p>使用参考式链接时，链接网址只能放在文件最末尾，不然识别不出来；【重要】</p>
+</li>
+<li><p>引用内使用编号问题：</p>
+<blockquote>
+<p>引用文字</p>
+<ol>
+<li>item1</li>
+<li>item</li>
+</ol>
+<p>编号结束，结尾的引用文字</p>
+</blockquote>
+</li>
+<li><p>怎么写代码块？——是解析的，只不过呈现方式只体现在字体上，排版效果并不明显。</p>
+</li>
+<li><p><del>尽量不要嵌套使用。在 GitHub 上项目的 README.md 都不复杂。占一屏幕，不需要滚屏。</del> 建议很值得采纳，但实在是不实用。</p>
+</li>
+<li><p>可以做图片链接的哦，惊喜</p>
+</li>
+<li><p><del>嵌套时无需有空行（分段需求除外，比如引用时），当两个模块是平行关系时需要有空行（列表除外，列表项之间添加空行会引入 &lt;p&gt;）。参考 1.1 节</del></p>
+</li>
+<li><p>中英文混合排版加不加空格问题，持保留态度，无论加或者不加，都保持原状。</p>
+<ol>
+<li><p>强调语义，不加；强调呈现，添加。</p>
+</li>
+<li><p>书写笔记不考虑纯手工补充空格，为了表现效果美观<strong>吹毛求疵</strong>，时间成本太高，没有意义。【重要】</p>
+<p>扩展阅读：</p>
+</li>
+</ol>
+<ul>
+<li><a href="http://www.geekpark.net/topics/198213">不仅仅是空格的问题——再谈中西文混排</a></li>
+</ul>
+</li>
+<li><p>测试 item</p>
+</li>
+</ol>
+<h2 id="块元素"><a href="#块元素" class="headerlink" title="块元素"></a>块元素</h2><p>模块之间的嵌套使用，怎么书写是规范的一直是一件比较困惑的事情。但在我写下这篇文字的时候，我已经感觉到胜利在朝我招手了。</p>
+<p>首先一定要有意识区分“块元素（Block Element）”和“Span Element”，对于熟悉 html 的程序员来说可能是很 easy 的一件事情，但是虽然我用 Markdown 两三个月，相关的操作手册、语法说明也看了很多，但我是自动过滤这两个单词的，讲解标题（用不同数目的 # 区分标题级别）和强调（用 * 斜体，** 加粗）时肯定是分别放在 Block Element 和 Span Element 中介绍，但我脑子里是没有这两个概念的，我并未意识到它们意味着什么，甚至并未意识到它们的存在。我真的是个前端白痴，原谅我。</p>
+<ol>
+<li><p>块元素（Block Element）包括：</p>
+<ul>
+<li>标题</li>
+<li>引用</li>
+<li>列表，注意是整个列表，而不是列表的 item</li>
+<li>代码块</li>
+<li>分割线</li>
+</ul>
+</li>
+<li><p>Span Element 包括：</p>
+<ul>
+<li>链接</li>
+<li>强调</li>
+<li>代码</li>
+<li>图片</li>
+</ul>
+</li>
+</ol>
+<p>块元素是涉及嵌套的主体！Span Element 不是。所以嵌套问题是块元素的嵌套问题，额，如果我了解 html 多好。</p>
+<h2 id="结论（针对-GFM）"><a href="#结论（针对-GFM）" class="headerlink" title="结论（针对 GFM）"></a>结论（针对 GFM）</h2><p><strong>秘籍：</strong>（在严格坚持第一点的基础上，除却以下情况不会用到第二点：如果问题出现在章节末尾（见本文末尾）、列表末尾，使用第二点）</p>
+<ol>
+<li><p>每个独立的块元素（包括分段）之后留有空行，标题、分割线可以除外；</p>
+</li>
+<li><p>哪个块元素解析有问题，就在哪个块元素之前加空行；</p>
+<ol>
+<li>为了保证一致性（特殊情形，即当前嵌套情形（列表主体除末尾空行无其他空行，且在末尾嵌套有子列表）），要求嵌套子列表时，子模块前添加空行（即本行之前的空行，否则解释时不完美）；</li>
+</ol>
+</li>
+<li><p>综合上述两点，在每个块元素（包括分段）的前后添加空行可以保证所有情形下解释正确。唯一的不足在于阅读源文本时可能稍显松散。</p>
+</li>
+<li><p>其实，在每个块元素（包括分段、标题、分割线）之前留有空行是不是就万事大吉了呢？【重要】</p>
+</li>
+</ol>
+<p><strong>详细描述：</strong></p>
+<ol>
+<li><p>分段用空行，这句是废话；</p>
+</li>
+<li><p>标题之前加空行，保证所有情况下语法正常解释；【重要】</p>
+<ul>
+<li>如果前置标题、分割线或者普通段落，则没有空行语法也能正常解释；</li>
+<li>如果前置列表、引用等，没有空行，语法解释后呈现有问题；</li>
+</ul>
+</li>
+<li><p>空行意味着引用、列表的结束；标题、分割线是单行的；GFM 中代码块是 ``` 结束的。多个空行合并成一个。</p>
+<ul>
+<li>分段时，空行意味着段落的结束；</li>
+<li>非分段情况下，段落之后不用跟空行。接标题、引用、<del>列表、</del>代码块都意味着段落结束。</li>
+<li>非分段情况下，段落之后无空行直接跟有序列表，是有问题的；直接跟无序列表没问题；</li>
+<li>综合上述三条，建议每个独立的块元素之后留有空行，标题、分割线除外【重要】</li>
+</ul>
+</li>
+<li><p>列表内容拥有缩进概念；</p>
+<ul>
+<li>列表 item 中缩进内容（针对引用、代码块）前（或者后）加空行；否则语法无法正常解释</li>
+<li>缩进内容为列表（即嵌套子列表）时，按照规则建议添加空行。即使无空行，语法也能正常解释，看着还顺眼一点</li>
+<li>综合上述两条，建议在嵌套子模块的结尾留有空行【重要】</li>
+</ul>
+</li>
+</ol>
+<p>补充说明：</p>
+<ol>
+<li><p>列表的 item 之间一般不需要空行（分段除外），如果</p>
+<blockquote>
+<p>如果列表项之间有空行，markdown会给每一个生成的li元素创建一个p:</p>
+</blockquote>
+</li>
+</ol>
+<h1 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h1><p>前两年一直使用的 MarkdownPad2，后来随着系统更新（而软件并未跟进）出现了几项功能性问题，虽然也能通过某些手段结局，但无疑是影响体验的。</p>
+<p><a href="https://www.jianshu.com/p/40eb4f8207d1" title="MarkdownPad 2 使用问题">MarkdownPad 2 使用问题</a></p>
+<p>在此基础上，由于对 Visual Studio Code 好奇心（喜新厌旧嘛），放弃了使用 MarkdownPad2，但回头再看（2020/12/25 17:38:28 ）前者也只那些 vimer 的狂欢，经过各种调教之后可能好用，但调教本身也是成本。</p>
+<blockquote>
+<p>快捷键支持并不完全。还是算了。<a href="https://lanlan2017.github.io/blog/11f888fa/">来源</a></p>
+</blockquote>
+<p>深有感触，不胜其烦。所以又回归了 MarkdownPad2</p>
 ]]></content>
       <tags>
         <tag>memo</tag>
@@ -9252,134 +9382,6 @@ const double *const pip = &amp;pi;</code></pre>
 ]]></content>
       <tags>
         <tag>git</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>使用 Markdown 注意事项</title>
-    <url>/2016/06/13/writing2/</url>
-    <content><![CDATA[<p>分为语法和工具两个部分，备忘录。</p>
-<h1 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h1><h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>在使用 JotterPad（CommonMark）阅读 markdown 格式的文本时，发现的细节：</p>
-<ol>
-<li><p>标题 <code>#</code> 后需要有空格，才能解析成标题，不然就是文本；【重要】</p>
-<ul>
-<li>进一步修正：任意级别的标题行前后添加空行，至少标题行之前要有空行，<code>#</code> 之后添加空格；</li>
-</ul>
-</li>
-<li><p>使用参考式链接时，链接网址只能放在文件最末尾，不然识别不出来；【重要】</p>
-</li>
-<li><p>引用内使用编号问题：</p>
-<blockquote>
-<p>引用文字</p>
-<ol>
-<li>item1</li>
-<li>item</li>
-</ol>
-<p>编号结束，结尾的引用文字</p>
-</blockquote>
-</li>
-<li><p>怎么写代码块？——是解析的，只不过呈现方式只体现在字体上，排版效果并不明显。</p>
-</li>
-<li><p><del>尽量不要嵌套使用。在 GitHub 上项目的 README.md 都不复杂。占一屏幕，不需要滚屏。</del> 建议很值得采纳，但实在是不实用。</p>
-</li>
-<li><p>可以做图片链接的哦，惊喜</p>
-</li>
-<li><p><del>嵌套时无需有空行（分段需求除外，比如引用时），当两个模块是平行关系时需要有空行（列表除外，列表项之间添加空行会引入 &lt;p&gt;）。参考 1.1 节</del></p>
-</li>
-<li><p>中英文混合排版加不加空格问题，持保留态度，无论加或者不加，都保持原状。</p>
-<ol>
-<li><p>强调语义，不加；强调呈现，添加。</p>
-</li>
-<li><p>书写笔记不考虑纯手工补充空格，为了表现效果美观<strong>吹毛求疵</strong>，时间成本太高，没有意义。【重要】</p>
-<p>扩展阅读：</p>
-</li>
-</ol>
-<ul>
-<li><a href="http://www.geekpark.net/topics/198213">不仅仅是空格的问题——再谈中西文混排</a></li>
-</ul>
-</li>
-<li><p>测试 item</p>
-</li>
-</ol>
-<h2 id="块元素"><a href="#块元素" class="headerlink" title="块元素"></a>块元素</h2><p>模块之间的嵌套使用，怎么书写是规范的一直是一件比较困惑的事情。但在我写下这篇文字的时候，我已经感觉到胜利在朝我招手了。</p>
-<p>首先一定要有意识区分“块元素（Block Element）”和“Span Element”，对于熟悉 html 的程序员来说可能是很 easy 的一件事情，但是虽然我用 Markdown 两三个月，相关的操作手册、语法说明也看了很多，但我是自动过滤这两个单词的，讲解标题（用不同数目的 # 区分标题级别）和强调（用 * 斜体，** 加粗）时肯定是分别放在 Block Element 和 Span Element 中介绍，但我脑子里是没有这两个概念的，我并未意识到它们意味着什么，甚至并未意识到它们的存在。我真的是个前端白痴，原谅我。</p>
-<ol>
-<li><p>块元素（Block Element）包括：</p>
-<ul>
-<li>标题</li>
-<li>引用</li>
-<li>列表，注意是整个列表，而不是列表的 item</li>
-<li>代码块</li>
-<li>分割线</li>
-</ul>
-</li>
-<li><p>Span Element 包括：</p>
-<ul>
-<li>链接</li>
-<li>强调</li>
-<li>代码</li>
-<li>图片</li>
-</ul>
-</li>
-</ol>
-<p>块元素是涉及嵌套的主体！Span Element 不是。所以嵌套问题是块元素的嵌套问题，额，如果我了解 html 多好。</p>
-<h2 id="结论（针对-GFM）"><a href="#结论（针对-GFM）" class="headerlink" title="结论（针对 GFM）"></a>结论（针对 GFM）</h2><p><strong>秘籍：</strong>（在严格坚持第一点的基础上，除却以下情况不会用到第二点：如果问题出现在章节末尾（见本文末尾）、列表末尾，使用第二点）</p>
-<ol>
-<li><p>每个独立的块元素（包括分段）之后留有空行，标题、分割线可以除外；</p>
-</li>
-<li><p>哪个块元素解析有问题，就在哪个块元素之前加空行；</p>
-<ol>
-<li>为了保证一致性（特殊情形，即当前嵌套情形（列表主体除末尾空行无其他空行，且在末尾嵌套有子列表）），要求嵌套子列表时，子模块前添加空行（即本行之前的空行，否则解释时不完美）；</li>
-</ol>
-</li>
-<li><p>综合上述两点，在每个块元素（包括分段）的前后添加空行可以保证所有情形下解释正确。唯一的不足在于阅读源文本时可能稍显松散。</p>
-</li>
-<li><p>其实，在每个块元素（包括分段、标题、分割线）之前留有空行是不是就万事大吉了呢？【重要】</p>
-</li>
-</ol>
-<p><strong>详细描述：</strong></p>
-<ol>
-<li><p>分段用空行，这句是废话；</p>
-</li>
-<li><p>标题之前加空行，保证所有情况下语法正常解释；【重要】</p>
-<ul>
-<li>如果前置标题、分割线或者普通段落，则没有空行语法也能正常解释；</li>
-<li>如果前置列表、引用等，没有空行，语法解释后呈现有问题；</li>
-</ul>
-</li>
-<li><p>空行意味着引用、列表的结束；标题、分割线是单行的；GFM 中代码块是 ``` 结束的。多个空行合并成一个。</p>
-<ul>
-<li>分段时，空行意味着段落的结束；</li>
-<li>非分段情况下，段落之后不用跟空行。接标题、引用、<del>列表、</del>代码块都意味着段落结束。</li>
-<li>非分段情况下，段落之后无空行直接跟有序列表，是有问题的；直接跟无序列表没问题；</li>
-<li>综合上述三条，建议每个独立的块元素之后留有空行，标题、分割线除外【重要】</li>
-</ul>
-</li>
-<li><p>列表内容拥有缩进概念；</p>
-<ul>
-<li>列表 item 中缩进内容（针对引用、代码块）前（或者后）加空行；否则语法无法正常解释</li>
-<li>缩进内容为列表（即嵌套子列表）时，按照规则建议添加空行。即使无空行，语法也能正常解释，看着还顺眼一点</li>
-<li>综合上述两条，建议在嵌套子模块的结尾留有空行【重要】</li>
-</ul>
-</li>
-</ol>
-<p>补充说明：</p>
-<ol>
-<li><p>列表的 item 之间一般不需要空行（分段除外），如果</p>
-<blockquote>
-<p>如果列表项之间有空行，markdown会给每一个生成的li元素创建一个p:</p>
-</blockquote>
-</li>
-</ol>
-<h1 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h1><p>前两年一直使用的 MarkdownPad2，后来随着系统更新（而软件并未跟进）出现了几项功能性问题，虽然也能通过某些手段结局，但无疑是影响体验的。</p>
-<p><a href="https://www.jianshu.com/p/40eb4f8207d1" title="MarkdownPad 2 使用问题">MarkdownPad 2 使用问题</a></p>
-<p>在此基础上，由于对 Visual Studio Code 好奇心（喜新厌旧嘛），放弃了使用 MarkdownPad2，但回头再看（2020/12/25 17:38:28 ）前者也只那些 vimer 的狂欢，经过各种调教之后可能好用，但调教本身也是成本。</p>
-<blockquote>
-<p>快捷键支持并不完全。还是算了。<a href="https://lanlan2017.github.io/blog/11f888fa/">来源</a></p>
-</blockquote>
-<p>深有感触，不胜其烦。所以又回归了 MarkdownPad2</p>
-]]></content>
-      <tags>
-        <tag>memo</tag>
       </tags>
   </entry>
 </search>
