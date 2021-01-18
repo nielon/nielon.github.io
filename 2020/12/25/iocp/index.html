@@ -54,7 +54,7 @@
 <meta property="og:description" content="内核对象的概念，是什么？ 设备内核对象？ 事件内核对象？">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-12-25T08:18:36.000Z">
-<meta property="article:modified_time" content="2020-12-25T08:27:00.304Z">
+<meta property="article:modified_time" content="2021-01-08T07:12:52.485Z">
 <meta property="article:author" content="tnie &amp; ilyw">
 <meta property="article:tag" content="windows">
 <meta name="twitter:card" content="summary">
@@ -240,10 +240,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2020-12-25 16:18:36 / 修改时间：16:27:00" itemprop="dateCreated datePublished" datetime="2020-12-25T16:18:36+08:00">2020-12-25</time>
+              <time title="创建时间：2020-12-25 16:18:36" itemprop="dateCreated datePublished" datetime="2020-12-25T16:18:36+08:00">2020-12-25</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-01-08 15:12:52" itemprop="dateModified" datetime="2021-01-08T15:12:52+08:00">2021-01-08</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -272,7 +278,11 @@
 <p>事件内核对象？</p>
 <a id="more"></a>
 
-<p>相关类型和函数的描述：</p>
+<p><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports">IOCP 概念</a></p>
+<blockquote>
+<p>An I/O completion port is associated with the process that created it and is not sharable between processes. However, a single handle is sharable between threads in the same process.</p>
+</blockquote>
+<p>IOCP 相关的基础 API 只有这三个，相关类型和函数的描述：</p>
 <ul>
 <li><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/fileio/createiocompletionport">CreateIoCompletionPort </a></li>
 </ul>
@@ -289,17 +299,40 @@
 <ul>
 <li><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped">OVERLAPPED </a></li>
 </ul>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">OVERLAPPED</span> &#123;</span></span><br><span class="line">  <span class="comment">// The status code for the I/O request.</span></span><br><span class="line">  ULONG_PTR Internal;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="comment">// The number of bytes transferred for the I/O request.</span></span><br><span class="line">  ULONG_PTR InternalHigh;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      DWORD Offset;</span><br><span class="line">      DWORD OffsetHigh;</span><br><span class="line">    &#125; DUMMYSTRUCTNAME;</span><br><span class="line">    PVOID Pointer;  <span class="comment">// 系统内部使用</span></span><br><span class="line">  &#125; DUMMYUNIONNAME;</span><br><span class="line">  HANDLE    hEvent;</span><br><span class="line">&#125; OVERLAPPED, *LPOVERLAPPED;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">OVERLAPPED</span> &#123;</span></span><br><span class="line">  <span class="comment">// The status code for the I/O request.</span></span><br><span class="line">  ULONG_PTR Internal;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="comment">// The number of bytes transferred for the I/O request.</span></span><br><span class="line">  ULONG_PTR InternalHigh;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      DWORD Offset;</span><br><span class="line">      DWORD OffsetHigh;</span><br><span class="line">    &#125; DUMMYSTRUCTNAME;</span><br><span class="line">    PVOID Pointer;  <span class="comment">// 系统内部使用</span></span><br><span class="line">  &#125; DUMMYUNIONNAME;</span><br><span class="line">  HANDLE    hEvent;</span><br><span class="line">&#125; OVERLAPPED, *LPOVERLAPPED;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">WSAOVERLAPPED</span> &#123;</span></span><br><span class="line">  DWORD    Internal;</span><br><span class="line">  DWORD    InternalHigh;</span><br><span class="line">  DWORD    Offset;</span><br><span class="line">  DWORD    OffsetHigh;</span><br><span class="line">  WSAEVENT hEvent;</span><br><span class="line">&#125; WSAOVERLAPPED, *LPWSAOVERLAPPED;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>Any unused members of this structure should always be initialized to zero before the structure is used in a function call.</p>
 </blockquote>
 <p>其余三个属性一般置零 <code>l.Offset = l.OffsetHigh = 0; l.hEvent = NULL;</code></p>
-<ul>
+<blockquote>
+<p>The <code>WSAOVERLAPPED</code> structure is compatible with the Windows <code>OVERLAPPED</code> structure.</p>
+</blockquote>
+<h1 id="More"><a href="#More" class="headerlink" title="More"></a>More</h1><ul>
 <li><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-readfile">ReadFile </a></li>
 </ul>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">ReadFile</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  HANDLE       hFile,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPVOID       lpBuffer,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD        nNumberOfBytesToRead,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// 以下两个指针分属同步、异步场景中使用，否则置零</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD      lpNumberOfBytesRead,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPOVERLAPPED lpOverlapped</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
-
-
+<ul>
+<li><a href="">WSAStartup</a> </li>
+</ul>
+<blockquote>
+<p>The <code>WSAStartup</code> function initiates use of the Winsock DLL by a process.</p>
+</blockquote>
+<blockquote>
+<p>The <code>WSAStartup</code> function must be the first Windows Sockets function called by an application or DLL. </p>
+</blockquote>
+<ul>
+<li><a href="">WSASocket</a> 和 <a href="">socket </a></li>
+</ul>
+<blockquote>
+<p>By default, a socket created with the <code>WSASocket</code> function will not have this overlapped attribute set.<br>In contrast, the <code>socket</code> function creates a socket that supports overlapped I/O operations as the default behavior.</p>
+</blockquote>
+<ul>
+<li><p><a href="">WSAAccept </a> 和 </p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsarecv">WSARecv</a></p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSARecv</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to an array of WSABUF structures.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// The number of WSABUF structures in the lpBuffers array.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesRecvd,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to a WSAOVERLAPPED structure</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSASend</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results. </span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesSent,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
 
 
     </div>
@@ -366,6 +399,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#More"><span class="nav-number">1.</span> <span class="nav-text">More</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -381,7 +415,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">120</span>
+          <span class="site-state-item-count">121</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -432,7 +466,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>

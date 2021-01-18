@@ -4439,7 +4439,11 @@
 <p>事件内核对象？</p>
 <a id="more"></a>
 
-<p>相关类型和函数的描述：</p>
+<p><a href="https://docs.microsoft.com/en-us/windows/win32/fileio/i-o-completion-ports">IOCP 概念</a></p>
+<blockquote>
+<p>An I/O completion port is associated with the process that created it and is not sharable between processes. However, a single handle is sharable between threads in the same process.</p>
+</blockquote>
+<p>IOCP 相关的基础 API 只有这三个，相关类型和函数的描述：</p>
 <ul>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/fileio/createiocompletionport">CreateIoCompletionPort </a></li>
 </ul>
@@ -4456,17 +4460,40 @@
 <ul>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped">OVERLAPPED </a></li>
 </ul>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">OVERLAPPED</span> &#123;</span></span><br><span class="line">  <span class="comment">// The status code for the I/O request.</span></span><br><span class="line">  ULONG_PTR Internal;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="comment">// The number of bytes transferred for the I/O request.</span></span><br><span class="line">  ULONG_PTR InternalHigh;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      DWORD Offset;</span><br><span class="line">      DWORD OffsetHigh;</span><br><span class="line">    &#125; DUMMYSTRUCTNAME;</span><br><span class="line">    PVOID Pointer;  <span class="comment">// 系统内部使用</span></span><br><span class="line">  &#125; DUMMYUNIONNAME;</span><br><span class="line">  HANDLE    hEvent;</span><br><span class="line">&#125; OVERLAPPED, *LPOVERLAPPED;</span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">OVERLAPPED</span> &#123;</span></span><br><span class="line">  <span class="comment">// The status code for the I/O request.</span></span><br><span class="line">  ULONG_PTR Internal;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="comment">// The number of bytes transferred for the I/O request.</span></span><br><span class="line">  ULONG_PTR InternalHigh;   <span class="comment">//系统内部使用</span></span><br><span class="line">  <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">      DWORD Offset;</span><br><span class="line">      DWORD OffsetHigh;</span><br><span class="line">    &#125; DUMMYSTRUCTNAME;</span><br><span class="line">    PVOID Pointer;  <span class="comment">// 系统内部使用</span></span><br><span class="line">  &#125; DUMMYUNIONNAME;</span><br><span class="line">  HANDLE    hEvent;</span><br><span class="line">&#125; OVERLAPPED, *LPOVERLAPPED;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">WSAOVERLAPPED</span> &#123;</span></span><br><span class="line">  DWORD    Internal;</span><br><span class="line">  DWORD    InternalHigh;</span><br><span class="line">  DWORD    Offset;</span><br><span class="line">  DWORD    OffsetHigh;</span><br><span class="line">  WSAEVENT hEvent;</span><br><span class="line">&#125; WSAOVERLAPPED, *LPWSAOVERLAPPED;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>Any unused members of this structure should always be initialized to zero before the structure is used in a function call.</p>
 </blockquote>
 <p>其余三个属性一般置零 <code>l.Offset = l.OffsetHigh = 0; l.hEvent = NULL;</code></p>
-<ul>
+<blockquote>
+<p>The <code>WSAOVERLAPPED</code> structure is compatible with the Windows <code>OVERLAPPED</code> structure.</p>
+</blockquote>
+<h1 id="More"><a href="#More" class="headerlink" title="More"></a>More</h1><ul>
 <li><a href="https://docs.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-readfile">ReadFile </a></li>
 </ul>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">BOOL <span class="title">ReadFile</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  HANDLE       hFile,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPVOID       lpBuffer,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD        nNumberOfBytesToRead,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// 以下两个指针分属同步、异步场景中使用，否则置零</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD      lpNumberOfBytesRead,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPOVERLAPPED lpOverlapped</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
-
-
+<ul>
+<li><a href="">WSAStartup</a> </li>
+</ul>
+<blockquote>
+<p>The <code>WSAStartup</code> function initiates use of the Winsock DLL by a process.</p>
+</blockquote>
+<blockquote>
+<p>The <code>WSAStartup</code> function must be the first Windows Sockets function called by an application or DLL. </p>
+</blockquote>
+<ul>
+<li><a href="">WSASocket</a> 和 <a href="">socket </a></li>
+</ul>
+<blockquote>
+<p>By default, a socket created with the <code>WSASocket</code> function will not have this overlapped attribute set.<br>In contrast, the <code>socket</code> function creates a socket that supports overlapped I/O operations as the default behavior.</p>
+</blockquote>
+<ul>
+<li><p><a href="">WSAAccept </a> 和 </p>
+</li>
+<li><p><a href="https://docs.microsoft.com/en-us/windows/win32/api/winsock2/nf-winsock2-wsarecv">WSARecv</a></p>
+</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSARecv</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to an array of WSABUF structures.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// The number of WSABUF structures in the lpBuffers array.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesRecvd,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to a WSAOVERLAPPED structure</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSASend</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results. </span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesSent,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
 
 ]]></content>
       <categories>
@@ -6738,73 +6765,9 @@ const double *const pip = &amp;pi;</code></pre>
 <p>为了安全（和方便），提出以下要求或目标：</p>
 <ul>
 <li>禁用账号密码登录，全部改用密钥</li>
-<li></li>
 </ul>
 <a id="more"></a>
 
-<h1 id="SSH-登录"><a href="#SSH-登录" class="headerlink" title="SSH 登录"></a>SSH 登录</h1><p>非对称密钥算法的作用分为两种场景：</p>
-<ul>
-<li>加密数据：公钥加密，私钥解密。数据由前者发往后者，数据是安全的。</li>
-<li>认证：私钥加密，公钥解密。后者验证前者的身份，传输数据的安全性是没有保证的。</li>
-</ul>
-<p>那么远程登录呢？</p>
-<blockquote>
-<p>SSH 本身提供两种级别的验证方法：基于口令的安全验证；基于密钥的安全验证。<a href="https://blog.csdn.net/li528405176/article/details/82810342">引用来源</a></p>
-</blockquote>
-<ul>
-<li><p>口令登录，属于加密数据的场景。</p>
-<blockquote>
-<p>首次登录时客户端获取服务端的公钥，询问其公钥指纹是否可信（客户需要通过其他方式验证真伪）。<br>然后客户端以服务端公钥加密口令后传输，服务端使用自身的密钥解密后验证。<a href="https://blog.csdn.net/csm201314/article/details/78453579">参考</a></p>
-</blockquote>
-</li>
-<li><p>密钥登录，属于认证的场景，比如签名。</p>
-<blockquote>
-<p>需要将客户端的公钥上传给服务端（服务端通过其他方式验证是否可信）。<br>客户端打个招呼要登录，服务端将一个随机字符串发给客户端。<br>客户端使用自身的私钥加密后，服务端解密验证是否一致。</p>
-</blockquote>
-</li>
-</ul>
-<p>CentOS 上创建普通用户后，默认共用 <code>/etc/ssh/</code> 中的密钥。<del>应该进一步的分离，不同用户使用各自的密钥吧</del>？<br><code>/etc/ssh/</code> 中的证书可以认为是用于标识主机的，本就和用户无关。</p>
-<p><a href="https://alick9188.wordpress.com/2013/02/23/ssh-host-fingerprint/">查看 SSH 主机密钥的指纹</a> 的命令： <code>ssh-keygen -l </code></p>
-<p><a href="https://marskid.net/2018/02/05/how-to-verify-ssh-public-key-fingerprint/">验证远程主机 SSH 指纹</a><br>，通过 <strong>可信渠道</strong> 获得服务器的公钥指纹，与客户端首次登录服务器时的指纹对比。</p>
-<h1 id="centos-的基础操作"><a href="#centos-的基础操作" class="headerlink" title="centos 的基础操作"></a>centos 的基础操作</h1><p>为了某人能够业余时间练习、熟悉操作，方便工作。所以使用了与其公司服务器相同的操作系统。限于其公司版本过低， vultr 不提供一键安装服务（需要自行配置），所以采用了目前的</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看 centos 版本</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/redhat-release</span></span><br><span class="line">CentOS Linux release 8.1.1911 (Core)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看用户列表</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/passwd</span></span><br></pre></td></tr></table></figure>
-<p>linux 下查看进程占用的端口分为两步：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">查看nginx进程pid：</span></span><br><span class="line">ps -ef | grep nginx</span><br><span class="line"><span class="meta">#</span><span class="bash">通过nginx进程pid查看占用端口（进程pid为9836）</span></span><br><span class="line">netstat -nap | grep 9836</span><br></pre></td></tr></table></figure>
-<p>操作用户</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 新增用户</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> adduser v2ray</span></span><br><span class="line"><span class="meta">#</span><span class="bash">为这个用户初始化密码</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> passwd v2ray</span></span><br></pre></td></tr></table></figure>
-<h2 id="防火墙"><a href="#防火墙" class="headerlink" title="防火墙"></a>防火墙</h2><p>服务端配置完毕，通信失败时首先要确认的就是端口是否打开。</p>
-<blockquote>
-<p>Centos 升级到 7 之后，内置的防火墙已经从 iptables 变成了 firewalld</p>
-</blockquote>
-<p>所以这里只记录 firewall 的操作备忘。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看已经开放的端口：</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开启端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=80/tcp --permanent</span><br><span class="line"><span class="meta">#</span><span class="bash"> 批量开发端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=30000-40000/tcp --permanent</span><br></pre></td></tr></table></figure>
-<p>命令含义：</p>
-<ul>
-<li><code>–zone</code> #作用域</li>
-<li><code>–add-port=80/tcp</code> #添加端口，格式为：端口/通讯协议</li>
-<li><code>–permanent</code> #永久生效，没有此参数重启后失效</li>
-</ul>
-<p>调整防火墙（比如删减端口）之后，重启生效。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">重启防火墙</span></span><br><span class="line">firewall-cmd --reload</span><br><span class="line"><span class="meta">#</span><span class="bash">查看默认防火墙状态</span></span><br><span class="line">firewall-cmd --state</span><br></pre></td></tr></table></figure>
-<h2 id="启停服务"><a href="#启停服务" class="headerlink" title="启停服务"></a>启停服务</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">停止firewall</span></span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开机启动</span></span><br><span class="line">systemctl enable firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">禁止firewall开机启动</span></span><br><span class="line">systemctl disable firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看状态</span></span><br><span class="line">systemctl status firewalld</span><br></pre></td></tr></table></figure>
-<h2 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h2><p>2020年6月2日，今天发现在公司的联通网络下无法登录 vps 了，连接总是失败，提示超时。</p>
-<p>通过其他主机访问 vps 能够成功，但进入之后看到警告信息：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">There were 2897 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
-<p>提示主机被尝试暴力破解。通过 <code>systemctl status sshd</code> 或者查看 <code>ll /var/log/secure -h</code> 等方式都能够看到异常。</p>
-<h3 id="修改端口"><a href="#修改端口" class="headerlink" title="修改端口"></a>修改端口</h3><p>尝试修改 <code>vim /etc/ssh/sshd_config</code> 默认的 22 端口，重启服务器失败。查询发现报错信息</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">SELinux is preventing /usr/sbin/sshd from name_bind access on the tcp_socket port 88888.</span><br></pre></td></tr></table></figure>
-<p>解决方式其实在配置文件的注释中也说明了：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> If you want to change the port on a SELinux system, you have to tell</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> SELinux about this change.</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> semanage port -a -t ssh_port_t -p tcp <span class="comment">#PORTNUMBER</span></span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash"><span class="comment">#Port 22</span></span></span><br><span class="line">Port 88888</span><br></pre></td></tr></table></figure>
-<p>改完端口之后，公司的主机还是无法登录，依然是超时报错。</p>
-<p>2020年6月24日13:21:37 修改端口并不能一劳永逸，今天发现 /var/log/secure 文件已经 12M 了，从上次成功登陆到刚刚，有 4500+ 次的错误尝试。</p>
-<h3 id="禁用-root-远程登陆"><a href="#禁用-root-远程登陆" class="headerlink" title="禁用 root 远程登陆"></a>禁用 root 远程登陆</h3><p>先创建普通用户。</p>
-<p>修改 <code>/etc/ssh/sshd_config</code> 文件，将</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#PermitRootLogin yes</span><br><span class="line"># 修改为 -&gt;</span><br><span class="line">PermitRootLogin no</span><br></pre></td></tr></table></figure>
-<p>重启 sshd 服务生效。禁止以后，可以使用普通用户 ssh 登录，登录后可以切换到 root 权限。</p>
-<p>更安全了，但登录失败的暴力破解日志还是会一直生成，不开心。</p>
-<p>2020年6月30日13:30:50 普通用户登录，切换 root 登录时提示</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Last login: Wed Jun 24 05:51:51 UTC 2020 on pts/0</span><br><span class="line">Last failed login: Tue Jun 30 05:28:48 UTC 2020 from 106.13.69.8 on ssh:notty</span><br><span class="line">There were 14744 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
-<h3 id="添加禁止-ip"><a href="#添加禁止-ip" class="headerlink" title="添加禁止 ip"></a>添加禁止 ip</h3><p>参考 <a href="http://www.cpacm.net/2019/09/23/%E9%98%B2%E6%AD%A2%E6%9C%8D%E5%8A%A1%E5%99%A8SSH%E8%A2%AB%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3/">防止服务器SSH暴力破解</a>，拷贝其脚本，在服务器定时执行 /root/a.txt 脚本。</p>
 <h1 id="v2ray"><a href="#v2ray" class="headerlink" title="v2ray"></a>v2ray</h1><p>在 shell 中修改 config.json 是不够友好的，推荐通过在线或离线的 json 工具编辑之后整体拷贝。</p>
 <p>使用 v2ray 本质是学习如何配置其 config.json，配置的核心在于其路由模块分流和传输配置。</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 检测配置文件合法性</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> /usr/bin/v2ray/v2ray -<span class="built_in">test</span> -config ./config.json</span></span><br></pre></td></tr></table></figure>
@@ -6856,7 +6819,7 @@ const double *const pip = &amp;pi;</code></pre>
 <p>Remember: Using <code>sudo</code> is not recommended.</p>
 </blockquote>
 <p>实际操作之后，发现全程使用 root 用户是最方便的，创建普通用户 v2ray 反而束手束脚（即便授权 sudo 也意义不大）</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> root 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> need write access to the web root folder</span></span><br><span class="line">chown -R v2ray /usr/share/nginx/html</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则安装证书时没有权限</span></span><br><span class="line">chown -R v2ray /etc/v2ray/</span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash">systemctl start nginx</span></span><br><span class="line">su - v2ray</span><br><span class="line"><span class="meta">#</span><span class="bash"> 普通用户生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -w /usr/share/nginx/html -k ec-256</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 切回 root</span></span><br><span class="line">su - root</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则启动 v2ray 服务时没有权限</span></span><br><span class="line">chown -R root /etc/v2ray/</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> root 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> need write access to the web root folder</span></span><br><span class="line">chown -R v2ray /usr/share/nginx/html</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则安装证书时没有权限</span></span><br><span class="line">chown -R v2ray /etc/v2ray/</span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash">systemctl start nginx</span></span><br><span class="line">su - v2ray</span><br><span class="line"><span class="meta">#</span><span class="bash"> 普通用户生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -w /usr/share/nginx/html -k ec-256</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书（2021年1月18日，单独执行此命令拷贝）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 切回 root</span></span><br><span class="line">su - root</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则启动 v2ray 服务时没有权限</span></span><br><span class="line">chown -R root /etc/v2ray/</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>tools</category>
@@ -9383,5 +9346,81 @@ const double *const pip = &amp;pi;</code></pre>
       <tags>
         <tag>git</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>建立 vps 后的第一步</title>
+    <url>/2020/12/25/vps_first/</url>
+    <content><![CDATA[<p>建立 vps 后首先要保证后续的使用安全。否则再多的功能都是空中楼阁。</p>
+<h1 id="SSH-登录"><a href="#SSH-登录" class="headerlink" title="SSH 登录"></a>SSH 登录</h1><p>非对称密钥算法的作用分为两种场景：</p>
+<ul>
+<li>加密数据：公钥加密，私钥解密。数据由前者发往后者，数据是安全的。</li>
+<li>认证：私钥加密，公钥解密。后者验证前者的身份，传输数据的安全性是没有保证的。</li>
+</ul>
+<p>那么远程登录呢？</p>
+<blockquote>
+<p>SSH 本身提供两种级别的验证方法：基于口令的安全验证；基于密钥的安全验证。<a href="https://blog.csdn.net/li528405176/article/details/82810342">引用来源</a></p>
+</blockquote>
+<ul>
+<li><p>口令登录，属于加密数据的场景。</p>
+<blockquote>
+<p>首次登录时客户端获取服务端的公钥，询问其公钥指纹是否可信（客户需要通过其他方式验证真伪）。</p>
+<p>然后客户端以服务端公钥加密口令后传输，服务端使用自身的密钥解密后验证。<a href="https://blog.csdn.net/csm201314/article/details/78453579">参考</a></p>
+</blockquote>
+</li>
+<li><p>密钥登录，属于认证的场景，比如签名。</p>
+<blockquote>
+<p>需要将客户端的公钥上传给服务端（服务端通过其他方式验证是否可信）。</p>
+<p>客户端打个招呼要登录，服务端将一个随机字符串发给客户端。</p>
+<p>客户端使用自身的私钥加密后，服务端解密验证是否一致。</p>
+</blockquote>
+</li>
+</ul>
+<p>CentOS 上创建普通用户后，默认共用 <code>/etc/ssh/</code> 中的密钥。<del>应该进一步的分离，不同用户使用各自的密钥吧</del>？<code>/etc/ssh/</code> 中的证书可以认为是用于标识主机的，本就和用户无关。</p>
+<p><a href="https://alick9188.wordpress.com/2013/02/23/ssh-host-fingerprint/">查看 SSH 主机密钥的指纹</a> 的命令： <code>ssh-keygen -l </code></p>
+<p><a href="https://marskid.net/2018/02/05/how-to-verify-ssh-public-key-fingerprint/">验证远程主机 SSH 指纹</a>，通过 <strong>可信渠道</strong> 获得服务器的公钥指纹，与客户端首次登录服务器时的指纹对比。</p>
+<h1 id="centos-的基础操作"><a href="#centos-的基础操作" class="headerlink" title="centos 的基础操作"></a>centos 的基础操作</h1><p>为了某人能够业余时间练习、熟悉操作，方便工作。所以使用了与其公司服务器相同的操作系统。限于其公司版本过低， vultr 不提供一键安装服务（需要自行配置），所以采用了目前的</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看 centos 版本</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/redhat-release</span></span><br><span class="line">CentOS Linux release 8.1.1911 (Core)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看用户列表</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/passwd</span></span><br></pre></td></tr></table></figure>
+<p>linux 下查看进程占用的端口分为两步：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">查看nginx进程pid：</span></span><br><span class="line">ps -ef | grep nginx</span><br><span class="line"><span class="meta">#</span><span class="bash">通过nginx进程pid查看占用端口（进程pid为9836）</span></span><br><span class="line">netstat -nap | grep 9836</span><br></pre></td></tr></table></figure>
+<p>操作用户</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 新增用户</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> adduser v2ray</span></span><br><span class="line"><span class="meta">#</span><span class="bash">为这个用户初始化密码</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> passwd v2ray</span></span><br></pre></td></tr></table></figure>
+<h2 id="防火墙"><a href="#防火墙" class="headerlink" title="防火墙"></a>防火墙</h2><p>服务端配置完毕，通信失败时首先要确认的就是端口是否打开。</p>
+<blockquote>
+<p>Centos 升级到 7 之后，内置的防火墙已经从 iptables 变成了 firewalld</p>
+</blockquote>
+<p>所以这里只记录 firewall 的操作备忘。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看已经开放的端口：</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开启端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=80/tcp --permanent</span><br><span class="line"><span class="meta">#</span><span class="bash"> 批量开发端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=30000-40000/tcp --permanent</span><br></pre></td></tr></table></figure>
+<p>命令含义：</p>
+<ul>
+<li><code>–zone</code> #作用域</li>
+<li><code>–add-port=80/tcp</code> #添加端口，格式为：端口/通讯协议</li>
+<li><code>–permanent</code> #永久生效，没有此参数重启后失效</li>
+</ul>
+<p>调整防火墙（比如删减端口）之后，重启生效。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">重启防火墙</span></span><br><span class="line">firewall-cmd --reload</span><br><span class="line"><span class="meta">#</span><span class="bash">查看默认防火墙状态</span></span><br><span class="line">firewall-cmd --state</span><br></pre></td></tr></table></figure>
+<h2 id="启停服务"><a href="#启停服务" class="headerlink" title="启停服务"></a>启停服务</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">停止firewall</span></span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开机启动</span></span><br><span class="line">systemctl enable firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">禁止firewall开机启动</span></span><br><span class="line">systemctl disable firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看状态</span></span><br><span class="line">systemctl status firewalld</span><br></pre></td></tr></table></figure>
+<h2 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h2><p>2020年6月2日，今天发现在公司的联通网络下无法登录 vps 了，连接总是失败，提示超时。</p>
+<p>通过其他主机访问 vps 能够成功，但进入之后看到警告信息：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">There were 2897 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
+<p>提示主机被尝试暴力破解。通过 <code>systemctl status sshd</code> 或者查看 <code>ll /var/log/secure -h</code> 等方式都能够看到异常。</p>
+<h3 id="修改端口"><a href="#修改端口" class="headerlink" title="修改端口"></a>修改端口</h3><p>尝试修改 <code>vim /etc/ssh/sshd_config</code> 默认的 22 端口，重启服务器失败。查询发现报错信息</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">SELinux is preventing /usr/sbin/sshd from name_bind access on the tcp_socket port 88888.</span><br></pre></td></tr></table></figure>
+<p>解决方式其实在配置文件的注释中也说明了：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> If you want to change the port on a SELinux system, you have to tell</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> SELinux about this change.</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> semanage port -a -t ssh_port_t -p tcp <span class="comment">#PORTNUMBER</span></span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash"><span class="comment">#Port 22</span></span></span><br><span class="line">Port 88888</span><br></pre></td></tr></table></figure>
+<p>改完端口之后，公司的主机还是无法登录，依然是超时报错。</p>
+<p>2020年6月24日13:21:37 修改端口并不能一劳永逸，今天发现 /var/log/secure 文件已经 12M 了，从上次成功登陆到刚刚，有 4500+ 次的错误尝试。</p>
+<h3 id="禁用-root-远程登陆"><a href="#禁用-root-远程登陆" class="headerlink" title="禁用 root 远程登陆"></a>禁用 root 远程登陆</h3><p>先创建普通用户。</p>
+<p>修改 <code>/etc/ssh/sshd_config</code> 文件，将</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#PermitRootLogin yes</span><br><span class="line"># 修改为 -&gt;</span><br><span class="line">PermitRootLogin no</span><br></pre></td></tr></table></figure>
+<p>重启 sshd 服务生效。禁止以后，可以使用普通用户 ssh 登录，登录后可以切换到 root 权限。</p>
+<p>更安全了，但登录失败的暴力破解日志还是会一直生成，不开心。</p>
+<p>2020年6月30日13:30:50 普通用户登录，切换 root 登录时提示</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Last login: Wed Jun 24 05:51:51 UTC 2020 on pts/0</span><br><span class="line">Last failed login: Tue Jun 30 05:28:48 UTC 2020 from 106.13.69.8 on ssh:notty</span><br><span class="line">There were 14744 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
+<h3 id="添加禁止-ip"><a href="#添加禁止-ip" class="headerlink" title="添加禁止 ip"></a>添加禁止 ip</h3><p>参考 <a href="http://www.cpacm.net/2019/09/23/%E9%98%B2%E6%AD%A2%E6%9C%8D%E5%8A%A1%E5%99%A8SSH%E8%A2%AB%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3/">防止服务器SSH暴力破解</a>，拷贝其脚本，在服务器定时执行 /root/a.txt 脚本。</p>
+<h3 id="秘钥登录"><a href="#秘钥登录" class="headerlink" title="秘钥登录"></a>秘钥登录</h3><p>为了保证使用的便捷性，<a href="http://ivo-wang.github.io/2019/04/08/vps-%E6%9C%8D%E5%8A%A1%E5%99%A8-%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4%E8%AE%BE%E7%BD%AE/">更改秘钥登录</a></p>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
   </entry>
 </search>

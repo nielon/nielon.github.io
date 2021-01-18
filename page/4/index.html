@@ -215,6 +215,104 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/04/26/gxx/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
+      <meta itemprop="name" content="tnie & ilyw">
+      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不积小流，无以成江海">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/04/26/gxx/" class="post-title-link" itemprop="url">linux 指令之 g++</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-04-26 14:35:11" itemprop="dateCreated datePublished" datetime="2017-04-26T14:35:11+08:00">2017-04-26</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2017-04-27 16:41:33" itemprop="dateModified" datetime="2017-04-27T16:41:33+08:00">2017-04-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>2015年11月6日 16:57:34</p>
+<p>最全的学习材料当然是 GCC 的官方文档。如果有耐心但是英语不好的话，可以参看一下 <a target="_blank" rel="noopener" href="http://www.shanghai.ws/gnu/gcc_1.htm">这个网站</a>。先说</p>
+<h1 id="gcc-g-执行的四个过程："><a href="#gcc-g-执行的四个过程：" class="headerlink" title="gcc/g++ 执行的四个过程："></a>gcc/g++ 执行的四个过程：</h1><ol>
+<li><p><code>gcc -E</code> 仅作预处理，即只激活预处理，不进行编译、汇编和链接                       <strong>{通常以什么为后缀？}</strong></p>
+<p> <code>$gcc -E main.c -o main.i</code></p>
+</li>
+<li><p><code>gcc -s</code> 编译到汇编语言，不进行汇编和链接，即只激活预处理和编译，生成汇编语言</p>
+<p> <code>$gcc -S main.i -o main.s  #参数-S，大写</code></p>
+</li>
+<li><p><code>gcc -c</code> 编译、汇编到目标代码，不进行链接，即只激活预处理、编译和汇编功能，生成目标文件（.o）</p>
+<p> <code>$gcc -c main.s -o main.o</code></p>
+</li>
+<li><p>生成，到执行文件 （根据依赖关系链接各目标文件，生成最终的执行程序）</p>
+<p> <code>$gcc main.o printf1.o printf2.o -o main</code></p>
+</li>
+</ol>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/04/26/gxx/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/04/26/Makefile3rd/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -956,78 +1054,11 @@
   
   
 
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/04/19/toread/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
-      <meta itemprop="name" content="tnie & ilyw">
-      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="不积小流，无以成江海">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/04/19/toread/" class="post-title-link" itemprop="url">读一读</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2017-04-19 10:05:09 / 修改时间：10:30:47" itemprop="dateCreated datePublished" datetime="2017-04-19T10:05:09+08:00">2017-04-19</time>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>在为知笔记里有一个文件夹《读一读》，是<strong>觉得</strong>有意思应该看一看的博客，可是一放少则几个月，多则一两年过去了。有点类似于 chrome 中的僵尸书签，觉得有用做了标记，可是一直扔在那里占着地方却再也没有翻起。</p>
-<p>还有个类似的行为，买书、囤书却不读书。哈哈哈，为什么呢？怎么解决这种行为，这种现象呢？互联网时代在网络上优质资源混杂在垃圾信息里，怎么筛选出有价值的内容？进入新世纪后，出书也变得简单，不再有门槛限制，也是出来了各种各样的垃圾，怎么挑选？</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/04/19/toread/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
   </div>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/5/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/page/3/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="space">&hellip;</span><a class="page-number" href="/page/3/">3</a><span class="page-number current">4</span><a class="page-number" href="/page/5/">5</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="extend next" rel="next" href="/page/5/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1073,7 +1104,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">120</span>
+          <span class="site-state-item-count">121</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1124,7 +1155,7 @@
 <div class="copyright">
   
   &copy; 
-  <span itemprop="copyrightYear">2020</span>
+  <span itemprop="copyrightYear">2021</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
