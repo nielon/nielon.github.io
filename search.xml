@@ -383,6 +383,54 @@
 ]]></content>
   </entry>
   <entry>
+    <title>Git@OSC禁止推送大于100M文件【…Q5】</title>
+    <url>/2017/04/18/GitOfOSC/</url>
+    <content><![CDATA[<p>2016/2/14 16:15:47</p>
+<p>整理这篇笔记总共花费了差不多一个工作日的时间（8h），其他的笔记也很费事。所以我在思考一个问题，我整理笔记的方式是不是有问题？花费如此多的时间是否正常？</p>
+<p>以上疑惑留待以后，下面进入正题。</p>
+<h1 id="问题描述与思考"><a href="#问题描述与思考" class="headerlink" title="问题描述与思考"></a>问题描述与思考</h1><p>这个标题可能不恰当，稍后修改。</p>
+<a id="more"></a>
+
+<p>起因是，前一阵子我开始把从网上找到的一些使用手册（chm格式）、电子书（pdf）等参考学习的资源放到版本控制的文档文件夹中，起初文件都不大，几百 KB，最大的不过 10M 左右，进行本地提交和远程推送都正常。直到，</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/cabf9db1-007f-4c8f-be92-9afbfe6b9051.png" alt="大文件"></p>
+<p>这个逾百 M 文件的出现。本地提交正常，可是进行远程推送报错：</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/c82407c2-e263-45ff-af61-1bc5c82f4cb2.png" alt="报错信息"></p>
+<p>报错给出的提示信息很明确，我使用的开源中国 OSC 的网站限制（暂时不打算更换其他的代码托管服务，更具体的说，目前 OSC 是最适合我的）100M  大小。</p>
+<ol>
+<li>最开始我以为“git@oschina 网站不允许 single 文件大于 100M 的内容，所以把 C++ Primer 中文第 5 版使用 Adobe Acrobat 9 Pro 拆分后上传”，至于 200M+ 的大文件进行了“删除并添加到忽略列表”且“保留本地复本”，可是推送时依旧报错；</li>
+<li>然后我以为“git@oschina 每次上传文件总和不能大于 100M，所以拆分后的 7 个子 pdf（一共 198M）分 3 次上传”，依旧报错。ps：通过在网上看到的一些介绍，以及回顾自己之前的使用经历，后者的猜测应该是错误的，毕竟若真是如此的话，那么在老东家时唐龙科技的整个几百兆的项目又是怎么推送的呢。</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/6593750.png" alt="文件清单"></p>
+<p>至此，才开始认真考虑“265.pdf is 198.32 MB”这个信息，工作目录中肯定是没有这个文件，那么只能是 .git 隐藏目录了。发现 .git/objects  文件夹有将近 500M，肯定是有些太大了点，从网上搜到一条指令：（ps 通过《Pro Git 第2版》了解 <code>git gc</code> 这个命令，发现在这里使用根本就是驴唇不对马嘴）</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#清理本地版本库</span><br><span class="line">$ git gc --prune&#x3D;now</span><br></pre></td></tr></table></figure>
+<p>执行完毕后，.git/objects 文件夹缩小到 273M。不过报错依旧。</p>
+<p>进一步思考，发现自己还是没有认真思考错误提示，并且对 git 的工作方式的理解不够灵活。最终猜测，“虽然对文件（特指未拆分的大于 200M 的 pdf 文件）进行了删除操作且已再次提交过了，但是作为版本控制库，为了保证还原到上一版本，所以库中肯定是有文件的备份的”，若如此的话，合并新添此文件和删除此文件的两次提交（如果两次提并非相邻提交，则需要合并多个）即可解决问题。也不需要“规避小文件总体超标”（这个错误理解）。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/8283156.png" alt="合并前"></p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/ee54a94c-8c08-4ff4-9f24-2653c4435591.png" alt="合并，且放弃最新提交后"></p>
+<p>再次推送，成功！YES</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/865760ef-32f4-4c3f-8dcd-f64e11f37f3e.png" alt="推送成功"></p>
+<h2 id="课后总结"><a href="#课后总结" class="headerlink" title="课后总结"></a>课后总结</h2><p>Q1：最好找到开源中国对于代码服务推送文件大小限制的官方说明<br>——找不到，放弃。官方只有关于附件的一个说明，但目前我用不到“上传附件”的功能。</p>
+<p>Q2：如果在新的提交上删除了之前提交的文件，库中肯定留有备份。但是如果已经 100% 确认肯定用不到了，那么这种备份如何从库中释放？除了上面合并两者（包含）之间所有的提交这种直接，但是却比较笨的方法，设想如果新添、删除两次提交不相邻，甚至有十几次、几十次提交了，还这么做肯定是不现实的。<br>——参考《Pro Git 第2版》中第7章 重写历史一节的 <code>filter-branch</code> 命令；参考 <a href="http://blog.csdn.net/meteor1113/article/details/4407209">从git中永久删除文件以节省空间</a></p>
+<p>Q3：如果是旧的提交中有，后来进行新提交时删除了（同上），而且添加到了 .gitignore 忽略文件，<strong>感觉</strong>应该自动从库中释放备份了呀，但事实上不会（例如上文中）。纠正此错误认知——考虑，其实 .gitignore 文件自身也可以是版本管理目标之一，也就是说如果还原到 A 提交，那么不单单 A、B 两次提交中间删除的文件的要还原，.gitignore 文件也要重置到 A 提交时未新添忽略项时的版本。.gitignore 文件忽略的项并不是时间轴上的全局，并不是一经修改，通吃过去和现在的。此文件只是针对提交的，并不是针对仓库的。<br>——在 D 盘进行试验，参考《Git 权威指南》第 7 章，使用 <code>git reset</code> 重置命令，注意其选项 <code>--mixed</code>、<code>--hard</code>、<code>--soft</code></p>
+<p>Q5：将学习材料、阅读材料使用云盘同步，因为这些文档不存在版本控制的问题；清理 OSC 版本库的提交<br>——迁移到了 onedrive 同步盘中。</p>
+<h1 id="git文件过大，如何清理"><a href="#git文件过大，如何清理" class="headerlink" title=".git文件过大，如何清理"></a>.git文件过大，如何清理</h1><p>强调一点，上面遇到的问题是代码托管服务平台的限制，所以我需要删除个别大文件，从所有有关提交中删除；.git 文件过大和前者完全是两个不同的问题，前者牵扯 <code>git gc</code> 操作完全是我个人理解上的错误。两者之间唯一的联系其实是“如何从每一个提交移除一个文件”，都使用 <code>filter-branch</code> 命令。</p>
+<p>Q4：那么 .git 隐藏目录中的缓存、垃圾之类的是怎么来的？又该如何清理呢？</p>
+<h2 id="治标不治本"><a href="#治标不治本" class="headerlink" title="治标不治本"></a>治标不治本</h2><p>——这方面暂时不需要了解。如果觉得 clone 本地版本库时太大，可以指定深度，如下，为 1 即表示只克隆最近一次 commit。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone git:&#x2F;&#x2F;xxoo --depth 1</span><br></pre></td></tr></table></figure>
+<p>远程版本库，也可以先删除，然后完全重建版本库。前提是只要结果，过程已无任何价值。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ rm -rf .git</span><br><span class="line">$ git init</span><br><span class="line">$ git add .</span><br><span class="line">$ git cm &quot;first commit&quot;</span><br><span class="line">$ git remote add origin &lt;your_github_repo_url&gt;</span><br><span class="line">$ git push -f -u origin master</span><br></pre></td></tr></table></figure>
+<h2 id="系统性的清理"><a href="#系统性的清理" class="headerlink" title="系统性的清理"></a>系统性的清理</h2><p>以上只是治标不治本的方法，也有其使用限制。但是胜在快刀斩乱麻，不需要花费大量时间、精力去整理执行。系统性的清理参考以下：<a href="https://blog.eood.cn/how-to-clean-up-git-repo">如何清洗 Git Repo 代码仓库。</a></p>
+<p>知乎上看到一个答案，不知道合不合适，仅作参考：<a href="https://www.zhihu.com/question/29769130">如何解决GitHub commit次数过多.git文件过大的问题</a></p>
+<h1 id="网络资源"><a href="#网络资源" class="headerlink" title="网络资源"></a>网络资源</h1><p>后期在网上找到以下帖子，和我遇到的问题完全一致：<a href="http://www.cnblogs.com/qmmq/p/4604862.html">处理GitHub不允许上传大于100M文件问题</a></p>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+      <tags>
+        <tag>git</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Kindle 帖</title>
     <url>/2017/04/14/Kindle/</url>
     <content><![CDATA[<p>2016年1月6日 10:30:20。这篇笔记早就应该写了。其实就是汇总资源，网络链接等。</p>
@@ -442,111 +490,6 @@
       <categories>
         <category>tools</category>
       </categories>
-  </entry>
-  <entry>
-    <title>Git@OSC禁止推送大于100M文件【…Q5】</title>
-    <url>/2017/04/18/GitOfOSC/</url>
-    <content><![CDATA[<p>2016/2/14 16:15:47</p>
-<p>整理这篇笔记总共花费了差不多一个工作日的时间（8h），其他的笔记也很费事。所以我在思考一个问题，我整理笔记的方式是不是有问题？花费如此多的时间是否正常？</p>
-<p>以上疑惑留待以后，下面进入正题。</p>
-<h1 id="问题描述与思考"><a href="#问题描述与思考" class="headerlink" title="问题描述与思考"></a>问题描述与思考</h1><p>这个标题可能不恰当，稍后修改。</p>
-<a id="more"></a>
-
-<p>起因是，前一阵子我开始把从网上找到的一些使用手册（chm格式）、电子书（pdf）等参考学习的资源放到版本控制的文档文件夹中，起初文件都不大，几百 KB，最大的不过 10M 左右，进行本地提交和远程推送都正常。直到，</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/cabf9db1-007f-4c8f-be92-9afbfe6b9051.png" alt="大文件"></p>
-<p>这个逾百 M 文件的出现。本地提交正常，可是进行远程推送报错：</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/c82407c2-e263-45ff-af61-1bc5c82f4cb2.png" alt="报错信息"></p>
-<p>报错给出的提示信息很明确，我使用的开源中国 OSC 的网站限制（暂时不打算更换其他的代码托管服务，更具体的说，目前 OSC 是最适合我的）100M  大小。</p>
-<ol>
-<li>最开始我以为“git@oschina 网站不允许 single 文件大于 100M 的内容，所以把 C++ Primer 中文第 5 版使用 Adobe Acrobat 9 Pro 拆分后上传”，至于 200M+ 的大文件进行了“删除并添加到忽略列表”且“保留本地复本”，可是推送时依旧报错；</li>
-<li>然后我以为“git@oschina 每次上传文件总和不能大于 100M，所以拆分后的 7 个子 pdf（一共 198M）分 3 次上传”，依旧报错。ps：通过在网上看到的一些介绍，以及回顾自己之前的使用经历，后者的猜测应该是错误的，毕竟若真是如此的话，那么在老东家时唐龙科技的整个几百兆的项目又是怎么推送的呢。</li>
-</ol>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/6593750.png" alt="文件清单"></p>
-<p>至此，才开始认真考虑“265.pdf is 198.32 MB”这个信息，工作目录中肯定是没有这个文件，那么只能是 .git 隐藏目录了。发现 .git/objects  文件夹有将近 500M，肯定是有些太大了点，从网上搜到一条指令：（ps 通过《Pro Git 第2版》了解 <code>git gc</code> 这个命令，发现在这里使用根本就是驴唇不对马嘴）</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#清理本地版本库</span><br><span class="line">$ git gc --prune&#x3D;now</span><br></pre></td></tr></table></figure>
-<p>执行完毕后，.git/objects 文件夹缩小到 273M。不过报错依旧。</p>
-<p>进一步思考，发现自己还是没有认真思考错误提示，并且对 git 的工作方式的理解不够灵活。最终猜测，“虽然对文件（特指未拆分的大于 200M 的 pdf 文件）进行了删除操作且已再次提交过了，但是作为版本控制库，为了保证还原到上一版本，所以库中肯定是有文件的备份的”，若如此的话，合并新添此文件和删除此文件的两次提交（如果两次提并非相邻提交，则需要合并多个）即可解决问题。也不需要“规避小文件总体超标”（这个错误理解）。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/8283156.png" alt="合并前"></p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/ee54a94c-8c08-4ff4-9f24-2653c4435591.png" alt="合并，且放弃最新提交后"></p>
-<p>再次推送，成功！YES</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/gitofosc/865760ef-32f4-4c3f-8dcd-f64e11f37f3e.png" alt="推送成功"></p>
-<h2 id="课后总结"><a href="#课后总结" class="headerlink" title="课后总结"></a>课后总结</h2><p>Q1：最好找到开源中国对于代码服务推送文件大小限制的官方说明<br>——找不到，放弃。官方只有关于附件的一个说明，但目前我用不到“上传附件”的功能。</p>
-<p>Q2：如果在新的提交上删除了之前提交的文件，库中肯定留有备份。但是如果已经 100% 确认肯定用不到了，那么这种备份如何从库中释放？除了上面合并两者（包含）之间所有的提交这种直接，但是却比较笨的方法，设想如果新添、删除两次提交不相邻，甚至有十几次、几十次提交了，还这么做肯定是不现实的。<br>——参考《Pro Git 第2版》中第7章 重写历史一节的 <code>filter-branch</code> 命令；参考 <a href="http://blog.csdn.net/meteor1113/article/details/4407209">从git中永久删除文件以节省空间</a></p>
-<p>Q3：如果是旧的提交中有，后来进行新提交时删除了（同上），而且添加到了 .gitignore 忽略文件，<strong>感觉</strong>应该自动从库中释放备份了呀，但事实上不会（例如上文中）。纠正此错误认知——考虑，其实 .gitignore 文件自身也可以是版本管理目标之一，也就是说如果还原到 A 提交，那么不单单 A、B 两次提交中间删除的文件的要还原，.gitignore 文件也要重置到 A 提交时未新添忽略项时的版本。.gitignore 文件忽略的项并不是时间轴上的全局，并不是一经修改，通吃过去和现在的。此文件只是针对提交的，并不是针对仓库的。<br>——在 D 盘进行试验，参考《Git 权威指南》第 7 章，使用 <code>git reset</code> 重置命令，注意其选项 <code>--mixed</code>、<code>--hard</code>、<code>--soft</code></p>
-<p>Q5：将学习材料、阅读材料使用云盘同步，因为这些文档不存在版本控制的问题；清理 OSC 版本库的提交<br>——迁移到了 onedrive 同步盘中。</p>
-<h1 id="git文件过大，如何清理"><a href="#git文件过大，如何清理" class="headerlink" title=".git文件过大，如何清理"></a>.git文件过大，如何清理</h1><p>强调一点，上面遇到的问题是代码托管服务平台的限制，所以我需要删除个别大文件，从所有有关提交中删除；.git 文件过大和前者完全是两个不同的问题，前者牵扯 <code>git gc</code> 操作完全是我个人理解上的错误。两者之间唯一的联系其实是“如何从每一个提交移除一个文件”，都使用 <code>filter-branch</code> 命令。</p>
-<p>Q4：那么 .git 隐藏目录中的缓存、垃圾之类的是怎么来的？又该如何清理呢？</p>
-<h2 id="治标不治本"><a href="#治标不治本" class="headerlink" title="治标不治本"></a>治标不治本</h2><p>——这方面暂时不需要了解。如果觉得 clone 本地版本库时太大，可以指定深度，如下，为 1 即表示只克隆最近一次 commit。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">git clone git:&#x2F;&#x2F;xxoo --depth 1</span><br></pre></td></tr></table></figure>
-<p>远程版本库，也可以先删除，然后完全重建版本库。前提是只要结果，过程已无任何价值。</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">$ rm -rf .git</span><br><span class="line">$ git init</span><br><span class="line">$ git add .</span><br><span class="line">$ git cm &quot;first commit&quot;</span><br><span class="line">$ git remote add origin &lt;your_github_repo_url&gt;</span><br><span class="line">$ git push -f -u origin master</span><br></pre></td></tr></table></figure>
-<h2 id="系统性的清理"><a href="#系统性的清理" class="headerlink" title="系统性的清理"></a>系统性的清理</h2><p>以上只是治标不治本的方法，也有其使用限制。但是胜在快刀斩乱麻，不需要花费大量时间、精力去整理执行。系统性的清理参考以下：<a href="https://blog.eood.cn/how-to-clean-up-git-repo">如何清洗 Git Repo 代码仓库。</a></p>
-<p>知乎上看到一个答案，不知道合不合适，仅作参考：<a href="https://www.zhihu.com/question/29769130">如何解决GitHub commit次数过多.git文件过大的问题</a></p>
-<h1 id="网络资源"><a href="#网络资源" class="headerlink" title="网络资源"></a>网络资源</h1><p>后期在网上找到以下帖子，和我遇到的问题完全一致：<a href="http://www.cnblogs.com/qmmq/p/4604862.html">处理GitHub不允许上传大于100M文件问题</a></p>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
-      <tags>
-        <tag>git</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Makefile 执行过程 &amp; include 调用方式</title>
-    <url>/2017/04/26/Makefile3rd/</url>
-    <content><![CDATA[<p>2015年12月8日 16:48:31</p>
-<p>此中测试代码见笔记 <a href="/2016/09/18/Makefile1st/">《Makefile入门》</a></p>
-<h1 id="Makefile-之执行过程"><a href="#Makefile-之执行过程" class="headerlink" title="Makefile 之执行过程"></a>Makefile 之执行过程</h1><ol>
-<li>依次读取变量“MAKEFILES”定义的 makefile 文件列表 </li>
-<li>读取工作目录下的 makefile 文件（根据命名的查找顺序“GNUmakefile”，“makefile”，“Makefile”，首先找到那个就读取那个） </li>
-<li>依次读取工作目录 makefile 文件中使用指示符“include”包含的文件 </li>
-<li><em>查找重建所有已读取的 makefile 文件的规则（如果存在一个目标是当前读取的某一个 makefile 文件，则<strong>执行此规则重建此 makefile 文件</strong>，完成以后从第一步开始重新执行）</em> </li>
-<li>初始化变量值并展开那些需要立即展开的变量和函数并根据预设条件确定执行分支 </li>
-<li>根据“终极目标”以及其他目标的依赖关系建立依赖关系链表 </li>
-<li>执行除“终极目标”以外的所有的目标的规则（规则中如果依赖文件中任一个文件的时间戳比目标文件新，则使用规则所定义的命令重建目标文件） </li>
-<li>执行“终极目标”所在的规则</li>
-</ol>
-<a id="more"></a>
-
-<h1 id="include-调用方式"><a href="#include-调用方式" class="headerlink" title="include 调用方式"></a>include 调用方式</h1><p>Makefile 中 include 的调用方式：（针对 include，不考虑 -include、sinclude）</p>
-<ol>
-<li><p>首先在指定的目录下搜索被调用文件（如果没有路径，则为当前目录）</p>
-</li>
-<li><p>如果没有找到，则从 <code>-I</code> 所指定的 include 目录查找，如果还没找到，则从“/usr/gnu/include”“/usr/local/include”等目录查找</p>
-</li>
-<li><p>最终结果还是没找到，则 Makefile 输出异常信息 “No such file or directory”。</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/1.png" alt="测试"></p>
-<p> ps：橙色标注部分，追求细节的话依赖目标不应该空着。</p>
-<p> 以上操作对应 Makefile 执行过程中第 3 步，然后执行第 4 步：</p>
-</li>
-<li><p>Makefile 中<strong>存在一个目标是当前读取的某一个 makefile 文件，执行此</strong>规则来生成对应文件，例如本例中的规则为：</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/2.png" alt="测试"></p>
-<p> 则根据该规则生成 .depend 文件。（此步骤亦可理解为：Makefile 会试图寻找匹配规则来生成对应文件）</p>
-<p> Makefile 继续执行，此例成功执行完毕。</p>
-</li>
-<li><p>如果没有对应规则，输出错误信息 “make: *** No rule to make target `non-exit-file’.  Stop.”。Makefile 终止执行。</p>
-<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/3.png" alt="测试"></p>
-</li>
-</ol>
-<h1 id="延伸"><a href="#延伸" class="headerlink" title="延伸"></a>延伸</h1><p>如果弄懂了以上内容，那么应该很轻易能够明白下图中 “all: .depend…” 的写法没有意义。</p>
-<p>——因为 “include .depend” 会先于 根据“终极目标”展开依赖关系 执行，且如有必要 include 操作会自主生成 .depend 文件，然后将 .depend 文件中的依赖关系在主 Makefile 中展开。</p>
-<p>此后若再重新生成 .depend 文件（？），已经没有操作需要此文件了（clean 可能会）。只有等到下一次执行 Makefile 时用到，却可能造成某种不确定性的干扰。</p>
-<p>？：如果 .depend 的依赖目标为空，如以上截图所示，则会重新生成；如果 .depend 的依赖目标如下图所示，为源文件，则不会重新生成。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/4.png" alt="测试"></p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>参考：<a href="http://www.cnblogs.com/yyangblog/p/4159778.html">说说Makefile那些事儿</a>、<a href="http://blog.csdn.net/duanbeibei/article/details/2910845">Makefile自动依赖</a>（ps：这篇帖子中提到的“Makefile中include的调用方式：”与我实际验证有出入，已在笔记中说明。）</p>
-<p>其中“程序首次编译时肯定不存在.depend文件，但这时makefile也不需要该文件，因为首次编译肯定连接的都是最新文件。也就是说首次编译时生成的.depend文件其实没用上，而是留作以后有了改动，比如更改了.h文件中的宏变量，则此时可根据.depend中的依赖关系只生成对应的.o文件了” 完全是错误的。</p>
-<p>makefile需要 .depend文件，在执行gcc 指令之前就已生成了 .depend文件。展开说一下“以后有了改动…”，头文件改动：a. 改动文件名，则 $(SRCS) 中的文件肯定相应改动（不改动生成.o目标文件时报错），则 .depend <strong>和</strong>其中描述的目标文件，即 $(OBJS) 重新生成；b. 改动文件内容，则 .depend 中描述的目标文件，即 $(OBJS) 重新生成。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/5.png" alt="测试"></p>
-<p>看一下 .depend文件内容：</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/6.png" alt="测试"></p>
-<p>以上足以说明<strong>首次编译时生成的 .depend 文件妥妥的用上了！！</strong></p>
-]]></content>
-      <categories>
-        <category>make</category>
-      </categories>
-      <tags>
-        <tag>make</tag>
-      </tags>
   </entry>
   <entry>
     <title>不同场景下的 Makefile</title>
@@ -613,6 +556,63 @@
 <li><p>原文中讲到自定义共享库时并没有细致划分 soname、linker name、real name。这个只是小瑕疵</p>
 </li>
 </ol>
+]]></content>
+      <categories>
+        <category>make</category>
+      </categories>
+      <tags>
+        <tag>make</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Makefile 执行过程 &amp; include 调用方式</title>
+    <url>/2017/04/26/Makefile3rd/</url>
+    <content><![CDATA[<p>2015年12月8日 16:48:31</p>
+<p>此中测试代码见笔记 <a href="/2016/09/18/Makefile1st/">《Makefile入门》</a></p>
+<h1 id="Makefile-之执行过程"><a href="#Makefile-之执行过程" class="headerlink" title="Makefile 之执行过程"></a>Makefile 之执行过程</h1><ol>
+<li>依次读取变量“MAKEFILES”定义的 makefile 文件列表 </li>
+<li>读取工作目录下的 makefile 文件（根据命名的查找顺序“GNUmakefile”，“makefile”，“Makefile”，首先找到那个就读取那个） </li>
+<li>依次读取工作目录 makefile 文件中使用指示符“include”包含的文件 </li>
+<li><em>查找重建所有已读取的 makefile 文件的规则（如果存在一个目标是当前读取的某一个 makefile 文件，则<strong>执行此规则重建此 makefile 文件</strong>，完成以后从第一步开始重新执行）</em> </li>
+<li>初始化变量值并展开那些需要立即展开的变量和函数并根据预设条件确定执行分支 </li>
+<li>根据“终极目标”以及其他目标的依赖关系建立依赖关系链表 </li>
+<li>执行除“终极目标”以外的所有的目标的规则（规则中如果依赖文件中任一个文件的时间戳比目标文件新，则使用规则所定义的命令重建目标文件） </li>
+<li>执行“终极目标”所在的规则</li>
+</ol>
+<a id="more"></a>
+
+<h1 id="include-调用方式"><a href="#include-调用方式" class="headerlink" title="include 调用方式"></a>include 调用方式</h1><p>Makefile 中 include 的调用方式：（针对 include，不考虑 -include、sinclude）</p>
+<ol>
+<li><p>首先在指定的目录下搜索被调用文件（如果没有路径，则为当前目录）</p>
+</li>
+<li><p>如果没有找到，则从 <code>-I</code> 所指定的 include 目录查找，如果还没找到，则从“/usr/gnu/include”“/usr/local/include”等目录查找</p>
+</li>
+<li><p>最终结果还是没找到，则 Makefile 输出异常信息 “No such file or directory”。</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/1.png" alt="测试"></p>
+<p> ps：橙色标注部分，追求细节的话依赖目标不应该空着。</p>
+<p> 以上操作对应 Makefile 执行过程中第 3 步，然后执行第 4 步：</p>
+</li>
+<li><p>Makefile 中<strong>存在一个目标是当前读取的某一个 makefile 文件，执行此</strong>规则来生成对应文件，例如本例中的规则为：</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/2.png" alt="测试"></p>
+<p> 则根据该规则生成 .depend 文件。（此步骤亦可理解为：Makefile 会试图寻找匹配规则来生成对应文件）</p>
+<p> Makefile 继续执行，此例成功执行完毕。</p>
+</li>
+<li><p>如果没有对应规则，输出错误信息 “make: *** No rule to make target `non-exit-file’.  Stop.”。Makefile 终止执行。</p>
+<p> <img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/3.png" alt="测试"></p>
+</li>
+</ol>
+<h1 id="延伸"><a href="#延伸" class="headerlink" title="延伸"></a>延伸</h1><p>如果弄懂了以上内容，那么应该很轻易能够明白下图中 “all: .depend…” 的写法没有意义。</p>
+<p>——因为 “include .depend” 会先于 根据“终极目标”展开依赖关系 执行，且如有必要 include 操作会自主生成 .depend 文件，然后将 .depend 文件中的依赖关系在主 Makefile 中展开。</p>
+<p>此后若再重新生成 .depend 文件（？），已经没有操作需要此文件了（clean 可能会）。只有等到下一次执行 Makefile 时用到，却可能造成某种不确定性的干扰。</p>
+<p>？：如果 .depend 的依赖目标为空，如以上截图所示，则会重新生成；如果 .depend 的依赖目标如下图所示，为源文件，则不会重新生成。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/4.png" alt="测试"></p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p>参考：<a href="http://www.cnblogs.com/yyangblog/p/4159778.html">说说Makefile那些事儿</a>、<a href="http://blog.csdn.net/duanbeibei/article/details/2910845">Makefile自动依赖</a>（ps：这篇帖子中提到的“Makefile中include的调用方式：”与我实际验证有出入，已在笔记中说明。）</p>
+<p>其中“程序首次编译时肯定不存在.depend文件，但这时makefile也不需要该文件，因为首次编译肯定连接的都是最新文件。也就是说首次编译时生成的.depend文件其实没用上，而是留作以后有了改动，比如更改了.h文件中的宏变量，则此时可根据.depend中的依赖关系只生成对应的.o文件了” 完全是错误的。</p>
+<p>makefile需要 .depend文件，在执行gcc 指令之前就已生成了 .depend文件。展开说一下“以后有了改动…”，头文件改动：a. 改动文件名，则 $(SRCS) 中的文件肯定相应改动（不改动生成.o目标文件时报错），则 .depend <strong>和</strong>其中描述的目标文件，即 $(OBJS) 重新生成；b. 改动文件内容，则 .depend 中描述的目标文件，即 $(OBJS) 重新生成。</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/5.png" alt="测试"></p>
+<p>看一下 .depend文件内容：</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/makefile3rd/6.png" alt="测试"></p>
+<p>以上足以说明<strong>首次编译时生成的 .depend 文件妥妥的用上了！！</strong></p>
 ]]></content>
       <categories>
         <category>make</category>
@@ -896,6 +896,49 @@
       </categories>
   </entry>
   <entry>
+    <title>UUID 入门</title>
+    <url>/2017/07/04/UUID/</url>
+    <content><![CDATA[<p>维基百科中描述：通用唯一识别码（英语：Universally Unique Identifier，简称UUID）的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
+<blockquote>
+<p>目前最广泛应用的UUID，是微软公司的全局唯一标识符（GUID）</p>
+</blockquote>
+<p>UUID的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的32个字符。示例：</p>
+<pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
+<p>接下来重点描述在开发中的使用及应用。</p>
+<h1 id="在-C-中的使用"><a href="#在-C-中的使用" class="headerlink" title="在 C++ 中的使用"></a>在 C++ 中的使用</h1><p>C++ 原生（C++03、C++11/0x）并不支持 UUID。所以要想在 C++ 代码中生成 UUID，如果要求跨平台推荐使用第三方库 Boost UUID，要么结合各自的平台，使用系统 API。以下方法整理自互联网，除 Boost Uuid 和 libuuid 使用过之外，其他的未亲自试验。</p>
+<h2 id="UUID-generation-using-Boost-in-C"><a href="#UUID-generation-using-Boost-in-C" class="headerlink" title="UUID generation using Boost in C++"></a>UUID generation using Boost in C++</h2><p>在 StackOverflow 上的一个例子：<a href="http://stackoverflow.com/questions/3247861/example-of-uuid-generation-using-boost-in-c/3248017">跳转链接</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    boost::uuids::uuid uuid = boost::uuids::random_generator()();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>连续两个括号 <code>()()</code> 是什么鬼？是不是打错了？——首先，这么写是正确的。这种使用形式<strong>涉及到的语法意义</strong>要进一步地学习并掌握。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    boost::uuids::random_generator generator;</span><br><span class="line"></span><br><span class="line">    boost::uuids::uuid uuid1 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid1 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    boost::uuids::uuid uuid2 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid2 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>如果以上两个简单的例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
+<h2 id="Qt-QUuid"><a href="#Qt-QUuid" class="headerlink" title="Qt QUuid"></a>Qt QUuid</h2><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>Qt是一个跨平台的C++编程框架，QUuid类实现了UUID的生成、比较、转换等功能。</p>
+<p>函数QUuid createUuid()，可用于生成一个随即UUID。示例如下：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QUuid&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QString&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    QUuid uuid = QUuid::createUuid();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; qPrintable(uuid.toString()) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux环境中大都有一个名为uuidgen的小工具，运行即可生成一个UUID到标准输出。读取文件/proc/sys/kernel/random/uuid即得UUID，例如：</p>
+<pre><code>cat /proc/sys/kernel/random/uuid</code></pre>
+<h3 id="libuuid"><a href="#libuuid" class="headerlink" title="libuuid"></a>libuuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>libuuid是一个用于生成UUID的C库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;uuid/uuid.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uuid_t</span> uuid;</span><br><span class="line">    <span class="keyword">char</span> str[<span class="number">36</span>];</span><br><span class="line"></span><br><span class="line">    uuid_generate(uuid);</span><br><span class="line">    uuid_unparse(uuid, str);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在Linux下编译时需要链接uuid库</p>
+<pre><code>gcc -o uuid uuid.c -luuid</code></pre>
+<p><strong>问题： 在什么系统下自带？在什么系统中需要另行安装？</strong></p>
+<p>在Ubuntu中，可以用下面的命令安装libuuid：</p>
+<pre><code>sudo apt-get install uuid-dev</code></pre>
+<h2 id="Windows-下生成-UUID"><a href="#Windows-下生成-UUID" class="headerlink" title="Windows 下生成 UUID"></a>Windows 下生成 UUID</h2><h3 id="CoCreateGuid"><a href="#CoCreateGuid" class="headerlink" title="CoCreateGuid"></a>CoCreateGuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
+<p>Windows下提供了函数CoCreateGuid用于生成GUID。需要使用的头文件是”objbase.h”，需要链接的库是ole32.lib，函数原型为：</p>
+<p>HRESULT CoCreateGuid(GUID *pguid);<br>GUID的原型为</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">GUID</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD Data1;</span><br><span class="line">    WORD Data2;</span><br><span class="line">    WORD Data3;</span><br><span class="line">    BYTE Data4[<span class="number">8</span>];</span><br><span class="line">&#125; GUID;</span><br></pre></td></tr></table></figure>
+<h3 id="UuidCreate"><a href="#UuidCreate" class="headerlink" title="UuidCreate"></a>UuidCreate</h3><p><a href="http://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library">参考来源</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> comment(lib, <span class="meta-string">&quot;rpcrt4.lib&quot;</span>)  <span class="comment">// UuidCreate - Minimum supported OS Win 2000</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UUID uuid;</span><br><span class="line">    UuidCreate(&amp;uuid);</span><br><span class="line">    <span class="keyword">char</span> *str;</span><br><span class="line">    UuidToStringA(&amp;uuid, (RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;str&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    RpcStringFreeA((RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="在-Java-中使用"><a href="#在-Java-中使用" class="headerlink" title="在 Java 中使用"></a>在 Java 中使用</h1><p>工作中偶尔会写一些 Java 的项目，所以也捎带整理一下。</p>
+<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 UUID() 函数生成 uuid。</p>
+]]></content>
+      <tags>
+        <tag>cpp</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>版本控制</title>
     <url>/2017/03/27/VersionControl/</url>
     <content><![CDATA[<p>2016年1月4日 17:23:45，和git有关的链接保存了很多，统一在这篇笔记里整理一下。</p>
@@ -978,49 +1021,6 @@
       </categories>
       <tags>
         <tag>git</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>UUID 入门</title>
-    <url>/2017/07/04/UUID/</url>
-    <content><![CDATA[<p>维基百科中描述：通用唯一识别码（英语：Universally Unique Identifier，简称UUID）的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
-<blockquote>
-<p>目前最广泛应用的UUID，是微软公司的全局唯一标识符（GUID）</p>
-</blockquote>
-<p>UUID的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的32个字符。示例：</p>
-<pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
-<p>接下来重点描述在开发中的使用及应用。</p>
-<h1 id="在-C-中的使用"><a href="#在-C-中的使用" class="headerlink" title="在 C++ 中的使用"></a>在 C++ 中的使用</h1><p>C++ 原生（C++03、C++11/0x）并不支持 UUID。所以要想在 C++ 代码中生成 UUID，如果要求跨平台推荐使用第三方库 Boost UUID，要么结合各自的平台，使用系统 API。以下方法整理自互联网，除 Boost Uuid 和 libuuid 使用过之外，其他的未亲自试验。</p>
-<h2 id="UUID-generation-using-Boost-in-C"><a href="#UUID-generation-using-Boost-in-C" class="headerlink" title="UUID generation using Boost in C++"></a>UUID generation using Boost in C++</h2><p>在 StackOverflow 上的一个例子：<a href="http://stackoverflow.com/questions/3247861/example-of-uuid-generation-using-boost-in-c/3248017">跳转链接</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    boost::uuids::uuid uuid = boost::uuids::random_generator()();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>连续两个括号 <code>()()</code> 是什么鬼？是不是打错了？——首先，这么写是正确的。这种使用形式<strong>涉及到的语法意义</strong>要进一步地学习并掌握。</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    boost::uuids::random_generator generator;</span><br><span class="line"></span><br><span class="line">    boost::uuids::uuid uuid1 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid1 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    boost::uuids::uuid uuid2 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid2 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果以上两个简单的例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
-<h2 id="Qt-QUuid"><a href="#Qt-QUuid" class="headerlink" title="Qt QUuid"></a>Qt QUuid</h2><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Qt是一个跨平台的C++编程框架，QUuid类实现了UUID的生成、比较、转换等功能。</p>
-<p>函数QUuid createUuid()，可用于生成一个随即UUID。示例如下：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QUuid&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QString&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    QUuid uuid = QUuid::createUuid();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; qPrintable(uuid.toString()) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux环境中大都有一个名为uuidgen的小工具，运行即可生成一个UUID到标准输出。读取文件/proc/sys/kernel/random/uuid即得UUID，例如：</p>
-<pre><code>cat /proc/sys/kernel/random/uuid</code></pre>
-<h3 id="libuuid"><a href="#libuuid" class="headerlink" title="libuuid"></a>libuuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>libuuid是一个用于生成UUID的C库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;uuid/uuid.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uuid_t</span> uuid;</span><br><span class="line">    <span class="keyword">char</span> str[<span class="number">36</span>];</span><br><span class="line"></span><br><span class="line">    uuid_generate(uuid);</span><br><span class="line">    uuid_unparse(uuid, str);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在Linux下编译时需要链接uuid库</p>
-<pre><code>gcc -o uuid uuid.c -luuid</code></pre>
-<p><strong>问题： 在什么系统下自带？在什么系统中需要另行安装？</strong></p>
-<p>在Ubuntu中，可以用下面的命令安装libuuid：</p>
-<pre><code>sudo apt-get install uuid-dev</code></pre>
-<h2 id="Windows-下生成-UUID"><a href="#Windows-下生成-UUID" class="headerlink" title="Windows 下生成 UUID"></a>Windows 下生成 UUID</h2><h3 id="CoCreateGuid"><a href="#CoCreateGuid" class="headerlink" title="CoCreateGuid"></a>CoCreateGuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Windows下提供了函数CoCreateGuid用于生成GUID。需要使用的头文件是”objbase.h”，需要链接的库是ole32.lib，函数原型为：</p>
-<p>HRESULT CoCreateGuid(GUID *pguid);<br>GUID的原型为</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">GUID</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD Data1;</span><br><span class="line">    WORD Data2;</span><br><span class="line">    WORD Data3;</span><br><span class="line">    BYTE Data4[<span class="number">8</span>];</span><br><span class="line">&#125; GUID;</span><br></pre></td></tr></table></figure>
-<h3 id="UuidCreate"><a href="#UuidCreate" class="headerlink" title="UuidCreate"></a>UuidCreate</h3><p><a href="http://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library">参考来源</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> comment(lib, <span class="meta-string">&quot;rpcrt4.lib&quot;</span>)  <span class="comment">// UuidCreate - Minimum supported OS Win 2000</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UUID uuid;</span><br><span class="line">    UuidCreate(&amp;uuid);</span><br><span class="line">    <span class="keyword">char</span> *str;</span><br><span class="line">    UuidToStringA(&amp;uuid, (RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;str&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    RpcStringFreeA((RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h1 id="在-Java-中使用"><a href="#在-Java-中使用" class="headerlink" title="在 Java 中使用"></a>在 Java 中使用</h1><p>工作中偶尔会写一些 Java 的项目，所以也捎带整理一下。</p>
-<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 UUID() 函数生成 uuid。</p>
-]]></content>
-      <tags>
-        <tag>cpp</tag>
       </tags>
   </entry>
   <entry>
@@ -1653,7 +1653,32 @@
       </tags>
   </entry>
   <entry>
-    <title>构建 build]</title>
+    <title>BOM 字节顺序标记</title>
+    <url>/2019/11/04/bom/</url>
+    <content><![CDATA[<p>BOM，就是 utf8-bom 中的 bom。</p>
+<p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
+<ul>
+<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
+<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
+</ul>
+<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
+<blockquote>
+<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
+</blockquote>
+<a id="more"></a>
+
+<p>另外，在 c++11 起，新增了两个 <a href="https://zh.cppreference.com/w/cpp/language/escape">转义字符</a>：</p>
+<ul>
+<li><code>\unnnn</code>，    通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnn</code></li>
+<li><code>\Unnnnnnnn</code>，通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnnnnnn</code></li>
+</ul>
+<p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
+<p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
+]]></content>
+  </entry>
+  <entry>
+    <title>构建 build</title>
     <url>/2016/08/13/build/</url>
     <content><![CDATA[<p>整理为知笔记中和 make makefile automake 有关内容，成此篇。</p>
 <h1 id="从-gcc-说起"><a href="#从-gcc-说起" class="headerlink" title="从 gcc 说起"></a>从 <a href="https://gcc.gnu.org/">gcc</a> 说起</h1><p>在介绍 make 之前，首先要保证你会使用 gcc/g++ 编译。了解 gcc 执行的四个阶段，知道预编译阶段、链接阶段需要什么，做什么操作；知道预编译时找不到头文件，链接时缺少库文件怎么处理；知道动态库、静态库的区别，怎么创建并使用它们。以上是必需的！只有掌握了上面的内容，才能保证面对一个简单的项目（可能包含头文件、源文件和链接库）知道怎么组织，最终得到可执行文件。</p>
@@ -1757,28 +1782,6 @@
       </tags>
   </entry>
   <entry>
-    <title>为什么不能销户呢？</title>
-    <url>/2017/04/17/cancelaccount/</url>
-    <content><![CDATA[<p>2015年12月31日 15:40:20</p>
-<p>不知道和自己是学计算机的有没有关系，总之我如果手机号不用了我要销号，银行卡不用了我要销卡。同样的，好多网络上的账户（最主要的就是邮箱和社交平台）我也希望能够有借有还，注册注销闭环操作。可惜就我目前了解到的，网易不同，百度各种账号/平台不提供……</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cancelaccount/1b1f9566-5e1d-4eb8-a798-2eb0925ae2d4.png" alt="注销账户"></p>
-<a id="more"></a>
-
-<p>以后新注册什么东东的时候，先想</p>
-<ol>
-<li>必需注册吗？注册了用来干什么？不注册有什么影响？</li>
-<li>注册之后的使用频率高吗？</li>
-<li>注册信息敏感吗？涉及个人身份信息吗？</li>
-<li>注册账号有成长价值吗？</li>
-<li>尽量不注册新账户；尽量使用废弃邮箱操作。</li>
-</ol>
-<p><a href="http://www.douban.com/note/156998420/">如何永久注销不想用的邮箱</a></p>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
-  </entry>
-  <entry>
     <title>c++20 特性</title>
     <url>/2020/12/25/c++20/</url>
     <content><![CDATA[<p>学习 c++20 首先要有支持相关特性的编译器</p>
@@ -1838,29 +1841,26 @@
       </categories>
   </entry>
   <entry>
-    <title>BOM 字节顺序标记</title>
-    <url>/2019/11/04/bom/</url>
-    <content><![CDATA[<p>BOM，就是 utf8-bom 中的 bom。</p>
-<p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
-<ul>
-<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
-<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
-</ul>
-<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
-<blockquote>
-<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
-</blockquote>
+    <title>为什么不能销户呢？</title>
+    <url>/2017/04/17/cancelaccount/</url>
+    <content><![CDATA[<p>2015年12月31日 15:40:20</p>
+<p>不知道和自己是学计算机的有没有关系，总之我如果手机号不用了我要销号，银行卡不用了我要销卡。同样的，好多网络上的账户（最主要的就是邮箱和社交平台）我也希望能够有借有还，注册注销闭环操作。可惜就我目前了解到的，网易不同，百度各种账号/平台不提供……</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cancelaccount/1b1f9566-5e1d-4eb8-a798-2eb0925ae2d4.png" alt="注销账户"></p>
 <a id="more"></a>
 
-<p>另外，在 c++11 起，新增了两个 <a href="https://zh.cppreference.com/w/cpp/language/escape">转义字符</a>：</p>
-<ul>
-<li><code>\unnnn</code>，    通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnn</code></li>
-<li><code>\Unnnnnnnn</code>，通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnnnnnn</code></li>
-</ul>
-<p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
-<p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
+<p>以后新注册什么东东的时候，先想</p>
+<ol>
+<li>必需注册吗？注册了用来干什么？不注册有什么影响？</li>
+<li>注册之后的使用频率高吗？</li>
+<li>注册信息敏感吗？涉及个人身份信息吗？</li>
+<li>注册账号有成长价值吗？</li>
+<li>尽量不注册新账户；尽量使用废弃邮箱操作。</li>
+</ol>
+<p><a href="http://www.douban.com/note/156998420/">如何永久注销不想用的邮箱</a></p>
 ]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
   </entry>
   <entry>
     <title>职业</title>
@@ -2114,82 +2114,6 @@
       </categories>
   </entry>
   <entry>
-    <title>cmake 备忘</title>
-    <url>/2018/12/03/cmake/</url>
-    <content><![CDATA[<p>automake 系列工具友好性的确不咋地，而且只限于 *inux 平台。跨平台还是 cmake 为佳，也有越来越多的项目在使用 cmake，比如 google 的 gRPC，比如 zlib 也支持 cmake。</p>
-<p>如果只是说要编译三方库为自己所用，一般来说不需要掌握怎么编写 <code>CMakeLists.txt</code>；只有当自己的项目需要用 cmake 管理、组织编译时才需要弄懂 <code>CMakeLists.txt</code> 中的“语言”怎么编写。</p>
-<h1 id="使用-cmake"><a href="#使用-cmake" class="headerlink" title="使用 cmake"></a>使用 cmake</h1><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake .. &amp;&amp; cmake --build . --target install</code></pre>
-<p><code>cmake --build .</code> 在 linux 下等价于 <code>make</code>，在 windows 下等同于 msvc 生成解决方案 </p>
-<a id="more"></a>
-
-<h2 id="外部编译"><a href="#外部编译" class="headerlink" title="外部编译"></a>外部编译</h2><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake ..</code></pre>
-<blockquote>
-<p>就是让源码文件和 cmake 生成的工程文件分开，将 cmake 生成的工程文件放在一个单独的目录下面。</p>
-</blockquote>
-<p>坚持使用 build 目录，进行外部编译。以避免在源码目录中混杂垃圾文件。</p>
-<h2 id="生成器-generator-G"><a href="#生成器-generator-G" class="headerlink" title="生成器 generator -G"></a>生成器 generator <code>-G</code></h2><pre><code>cmake -G &quot;&lt;generator&gt;&quot; -DCMAKE_INSTALL_PREFIX=stage ..</code></pre>
-<p><a href="https://cmake.org/cmake/help/v3.13/manual/cmake-generators.7.html">cmake-generators 文档</a> 描述</p>
-<h3 id="Command-Line-Build-Tool-Generators"><a href="#Command-Line-Build-Tool-Generators" class="headerlink" title="Command-Line Build Tool Generators"></a>Command-Line Build Tool Generators</h3><p>……</p>
-<h3 id="IDE-Build-Tool-Generators"><a href="#IDE-Build-Tool-Generators" class="headerlink" title="IDE Build Tool Generators"></a>IDE Build Tool Generators</h3><p>These generators support Integrated Development Environment (IDE) project files. Since <strong>the IDEs configure their own environment</strong> one may launch CMake from any environment.</p>
-<h4 id="Visual-Studio-Generators"><a href="#Visual-Studio-Generators" class="headerlink" title="Visual Studio Generators"></a>Visual Studio Generators</h4><ul>
-<li>……</li>
-<li>Visual Studio 12 2013</li>
-<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2014%202015.html">Visual Studio 14 2015</a></li>
-<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2015%202017.html">Visual Studio 15 2017</a></li>
-</ul>
-<blockquote>
-<p>VS 2017 supports <strong>multiple installations</strong> on the same machine. The <code>CMAKE_GENERATOR_INSTANCE</code> variable may be set as a cache entry containing the absolute path to a Visual Studio instance. If the value is not specified explicitly by the user or a toolchain file, CMake queries the Visual Studio Installer to locate VS instances, chooses one, and sets the variable as a cache entry to hold the value persistently.</p>
-</blockquote>
-<h5 id="Platform-Selection-A"><a href="#Platform-Selection-A" class="headerlink" title="Platform Selection -A"></a>Platform Selection <code>-A</code></h5><p>The <code>CMAKE_GENERATOR_PLATFORM</code> variable may be set, perhaps via the cmake(1) <code>-A</code> option, to specify a target platform name (architecture)<sup>1</sup>. For example:</p>
-<ul>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A Win32</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A Win32</code></li>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A x64</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A x64</code></li>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A ARM</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM</code></li>
-<li><code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM64</code></li>
-</ul>
-<p>For compatibility with CMake versions prior to 3.1, one may specify a target platform name optionally at the end of the generator name. This is supported only for:</p>
-<ul>
-<li><code>Visual Studio 14 2015 Win64</code> / <code>Visual Studio 15 2017 Win64</code>, Specify target platform <code>x64</code>.</li>
-<li><code>Visual Studio 14 2015 ARM</code> / <code>Visual Studio 15 2017 ARM</code>, Specify target platform <code>ARM</code>.</li>
-</ul>
-<p><em>sup 1</em>：<a href="https://docs.microsoft.com/en-us/cpp/supported-platforms-visual-cpp?view=vs-2017">Supported Platforms (Visual C++)</a></p>
-<h5 id="Toolset-Selection-T"><a href="#Toolset-Selection-T" class="headerlink" title="Toolset Selection -T"></a>Toolset Selection <code>-T</code></h5><p>The <code>v140</code> toolset that comes with <strong>Visual Studio 14 2015</strong> is selected by default. The <code>CMAKE_GENERATOR_TOOLSET</code> option may be set, perhaps via the cmake(1) <code>-T</code> option, to specify another toolset.</p>
-<blockquote>
-<p>The <code>v141</code> toolset that comes with <strong>Visual Studio 15 2017</strong> is selected by default.</p>
-</blockquote>
-<p>For each toolset that comes with this version of Visual Studio, there are variants that are themselves compiled for 32-bit (x86) and 64-bit (x64) hosts (independent of the architecture they target). By default Visual Studio chooses the 32-bit variant even on a 64-bit host. One may request use of the 64-bit host tools by adding a <code>host=x64</code> option to the toolset specification. See the <code>CMAKE_GENERATOR_TOOLSET</code> variable for details.</p>
-<p><strong>针对 MSVC 总结</strong>：三种或四种平台，桌面开发主要针对 win32 和 x64；工具集基本对应 MSVC 版本，高版本 MSVC 可选择低版本的工具集；另外，还有个平台版本（即 SDK version），似乎在 cmake 中并不重要。</p>
-<blockquote>
-<p>安装各版本的平台工具集：VS2010 之后版本的 VS 都有这个功能, 可以通过切换平台工具集, 在使用最新的 IDE 的同时, 用旧版本来进行编译, 彻底杜绝兼容问题<sup>2</sup>。<a href="https://junkboy.gitee.io/posts/2018/06/05/MSVC-VER.html">摘自</a></p>
-</blockquote>
-<p><em>sup 2</em>: MSVC 各版本之间的兼容问题是个老梗了，ε=(´ο｀*)))唉，不过 <a href="https://blogs.msdn.microsoft.com/vcblog/2017/03/07/binary-compatibility-and-pain-free-upgrade-why-moving-to-visual-studio-2017-is-almost-too-easy/"> v141 is binary compatible with v140</a></p>
-<h3 id="Extra-Generators"><a href="#Extra-Generators" class="headerlink" title="Extra Generators"></a>Extra Generators</h3><p>……</p>
-<h2 id="增删变量-D"><a href="#增删变量-D" class="headerlink" title="增删变量 -D"></a>增删变量 <code>-D</code></h2><p><code>-D&lt;var&gt;:&lt;type&gt;=&lt;value&gt;</code> 添加变量及值到 CMakeCache.txt 中。注意 <code>-D</code> 后面不能有空格，type 为 string 时可省略。例如：<code>cmake -DCMAKE_BUILD_TYPE:STRING=Debug</code>。MinGW Generator 默认生成 <code>CMAKE_BUILD_TYPE</code> 为空，即 release；NMake Generator默认生成 <code>CMAKE_BUILD_TYPE</code> 为 Debug。</p>
-<p><code>-U&lt;globbing_expr&gt;</code> 删除 CMakeCache.txt 中的变量。注意 <code>-U</code> 后面不能有空格,支持 globbing 表达式，比如 <code>*,?</code> 等。例如：<code>cmake -UCMAKE_BUILD_TYPE</code>。</p>
-<h3 id="编译模式"><a href="#编译模式" class="headerlink" title="编译模式"></a>编译模式</h3><figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">cmake .. <span class="literal">-G</span> <span class="string">&quot;Visual Studio 14 2015&quot;</span> <span class="literal">-DCMAKE_INSTALL_PREFIX</span>=<span class="string">&quot;install_root&quot;</span> <span class="comment"># -DCMAKE_BUILD_TYPE=&quot;Release&quot;</span></span><br><span class="line">cmake -<span class="literal">-build</span> . -<span class="literal">-target</span> install -<span class="literal">-config</span> Release</span><br></pre></td></tr></table></figure>
-<p>如果前一条命令不指定 <code>-DCMAKE_BUILD_TYPE=&quot;Release&quot;</code>，只是单独在第二条命令中 <code>--config=Release</code>，会造成什么后果？无任何后果。当使用 MSVC 时，<a href="https://stackoverflow.com/questions/24460486/cmake-build-type-not-being-used-in-cmakelists-txt"><code>CMAKE_BUILD_TYPE</code> 选项被忽略</a>。</p>
-<blockquote>
-<p>Specifies the build type on <strong>single</strong>-configuration generators. <a href="https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html"><code>CMAKE_BUILD_TYPE</code> 的意义</a></p>
-<p>This variable is only meaningful to single-configuration generators <del>(such as Makefile Generators and Ninja) i.e. those which choose a single configuration when CMake runs to generate a build tree</del> as opposed to multi-configuration generators <del>which offer selection of the build configuration within the generated build environment</del>.</p>
-</blockquote>
-<h3 id="调试版本后缀"><a href="#调试版本后缀" class="headerlink" title="调试版本后缀"></a>调试版本后缀</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">-DCMAKE_DEBUG_POSTFIX=<span class="string">&quot;d&quot;</span></span><br><span class="line"><span class="comment"># -DCMAKE_RELEASE_POSTFIX=xx</span></span><br></pre></td></tr></table></figure>
-<h3 id="MT-和-MD"><a href="#MT-和-MD" class="headerlink" title="MT 和 MD"></a>MT 和 MD</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 1. 追加 `CMAKE_CXX_FLAGS_Build Type`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_RELEASE&#125; /MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_DEBUG&#125; /MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 替换 `CMAKE_CXX_FLAGS_Build`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;/MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;/MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 或者将已经存在的 `/MD、/MDd` 替换为 `/MT、/MTd`</span></span><br><span class="line"><span class="keyword">if</span> (MSVC)</span><br><span class="line">    <span class="keyword">set</span>(CompilerFlags</span><br><span class="line">        CMAKE_CXX_FLAGS</span><br><span class="line">        CMAKE_CXX_FLAGS_DEBUG</span><br><span class="line">        CMAKE_CXX_FLAGS_RELEASE</span><br><span class="line">        CMAKE_C_FLAGS</span><br><span class="line">        CMAKE_C_FLAGS_DEBUG</span><br><span class="line">        CMAKE_C_FLAGS_RELEASE</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">foreach</span>(CompilerFlag <span class="variable">$&#123;CompilerFlags&#125;</span>)</span><br><span class="line">        <span class="keyword">string</span>(REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> <span class="variable">$&#123;CompilerFlag&#125;</span> <span class="string">&quot;$&#123;$&#123;CompilerFlag&#125;&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">endforeach</span>()</span><br><span class="line"><span class="keyword">endif</span>(MSVC)</span><br></pre></td></tr></table></figure>
-<p>摘自：<a href="https://blog.csdn.net/frank_liuxing/article/details/74010939">https://blog.csdn.net/frank_liuxing/article/details/74010939</a> </p>
-<p>原文描述提到“<del>如果CMAKE Flags已经设置了<code>/MD</code>，可以不能发挥作用。可以采用方法2</del>” 但很可能是错误的，后者覆盖前者：</p>
-<blockquote>
-<p>If your CMake flags already contain <code>/MD</code>, you can ensure that the above commands are executed after the point at which <code>/MD</code> is inserted (the later addition of <code>/MT</code> <strong>overrides</strong> the conflicting existing option) <a href="https://stackoverflow.com/questions/14172856/cmake-compile-with-mt-instead-of-md">来自 stackoverflow</a></p>
-</blockquote>
-<h3 id="安装路径"><a href="#安装路径" class="headerlink" title="安装路径"></a>安装路径</h3><pre><code>-DCMAKE_INSTALL_PREFIX</code></pre>
-<h2 id="其他参数"><a href="#其他参数" class="headerlink" title="其他参数"></a>其他参数</h2><h2 id="清理之后重新构建、编译"><a href="#清理之后重新构建、编译" class="headerlink" title="清理之后重新构建、编译"></a>清理之后重新构建、编译</h2><p>当出现 xx 等无法理解的问题时（尤其是在同一目录下同时编译 Debug 和 Release 版本时出现依赖库异常时），尝试删除 cmake 临时文件（<code>CMakeCache.txt</code> <code>CMakeFiles\</code> 等）所在目录，再次执行试试</p>
-<h2 id="cmake-gui"><a href="#cmake-gui" class="headerlink" title="cmake-gui"></a>cmake-gui</h2><h1 id="编写-CMakeLists-txt"><a href="#编写-CMakeLists-txt" class="headerlink" title="编写 CMakeLists.txt"></a>编写 CMakeLists.txt</h1>]]></content>
-      <categories>
-        <category>make</category>
-      </categories>
-      <tags>
-        <tag>make</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>零散</title>
     <url>/2017/04/28/cherry/</url>
     <content><![CDATA[<p> 2016/3/14 10:51:03</p>
@@ -2381,6 +2305,82 @@
       </categories>
   </entry>
   <entry>
+    <title>cmake 备忘</title>
+    <url>/2018/12/03/cmake/</url>
+    <content><![CDATA[<p>automake 系列工具友好性的确不咋地，而且只限于 *inux 平台。跨平台还是 cmake 为佳，也有越来越多的项目在使用 cmake，比如 google 的 gRPC，比如 zlib 也支持 cmake。</p>
+<p>如果只是说要编译三方库为自己所用，一般来说不需要掌握怎么编写 <code>CMakeLists.txt</code>；只有当自己的项目需要用 cmake 管理、组织编译时才需要弄懂 <code>CMakeLists.txt</code> 中的“语言”怎么编写。</p>
+<h1 id="使用-cmake"><a href="#使用-cmake" class="headerlink" title="使用 cmake"></a>使用 cmake</h1><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake .. &amp;&amp; cmake --build . --target install</code></pre>
+<p><code>cmake --build .</code> 在 linux 下等价于 <code>make</code>，在 windows 下等同于 msvc 生成解决方案 </p>
+<a id="more"></a>
+
+<h2 id="外部编译"><a href="#外部编译" class="headerlink" title="外部编译"></a>外部编译</h2><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake ..</code></pre>
+<blockquote>
+<p>就是让源码文件和 cmake 生成的工程文件分开，将 cmake 生成的工程文件放在一个单独的目录下面。</p>
+</blockquote>
+<p>坚持使用 build 目录，进行外部编译。以避免在源码目录中混杂垃圾文件。</p>
+<h2 id="生成器-generator-G"><a href="#生成器-generator-G" class="headerlink" title="生成器 generator -G"></a>生成器 generator <code>-G</code></h2><pre><code>cmake -G &quot;&lt;generator&gt;&quot; -DCMAKE_INSTALL_PREFIX=stage ..</code></pre>
+<p><a href="https://cmake.org/cmake/help/v3.13/manual/cmake-generators.7.html">cmake-generators 文档</a> 描述</p>
+<h3 id="Command-Line-Build-Tool-Generators"><a href="#Command-Line-Build-Tool-Generators" class="headerlink" title="Command-Line Build Tool Generators"></a>Command-Line Build Tool Generators</h3><p>……</p>
+<h3 id="IDE-Build-Tool-Generators"><a href="#IDE-Build-Tool-Generators" class="headerlink" title="IDE Build Tool Generators"></a>IDE Build Tool Generators</h3><p>These generators support Integrated Development Environment (IDE) project files. Since <strong>the IDEs configure their own environment</strong> one may launch CMake from any environment.</p>
+<h4 id="Visual-Studio-Generators"><a href="#Visual-Studio-Generators" class="headerlink" title="Visual Studio Generators"></a>Visual Studio Generators</h4><ul>
+<li>……</li>
+<li>Visual Studio 12 2013</li>
+<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2014%202015.html">Visual Studio 14 2015</a></li>
+<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2015%202017.html">Visual Studio 15 2017</a></li>
+</ul>
+<blockquote>
+<p>VS 2017 supports <strong>multiple installations</strong> on the same machine. The <code>CMAKE_GENERATOR_INSTANCE</code> variable may be set as a cache entry containing the absolute path to a Visual Studio instance. If the value is not specified explicitly by the user or a toolchain file, CMake queries the Visual Studio Installer to locate VS instances, chooses one, and sets the variable as a cache entry to hold the value persistently.</p>
+</blockquote>
+<h5 id="Platform-Selection-A"><a href="#Platform-Selection-A" class="headerlink" title="Platform Selection -A"></a>Platform Selection <code>-A</code></h5><p>The <code>CMAKE_GENERATOR_PLATFORM</code> variable may be set, perhaps via the cmake(1) <code>-A</code> option, to specify a target platform name (architecture)<sup>1</sup>. For example:</p>
+<ul>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A Win32</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A Win32</code></li>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A x64</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A x64</code></li>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A ARM</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM</code></li>
+<li><code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM64</code></li>
+</ul>
+<p>For compatibility with CMake versions prior to 3.1, one may specify a target platform name optionally at the end of the generator name. This is supported only for:</p>
+<ul>
+<li><code>Visual Studio 14 2015 Win64</code> / <code>Visual Studio 15 2017 Win64</code>, Specify target platform <code>x64</code>.</li>
+<li><code>Visual Studio 14 2015 ARM</code> / <code>Visual Studio 15 2017 ARM</code>, Specify target platform <code>ARM</code>.</li>
+</ul>
+<p><em>sup 1</em>：<a href="https://docs.microsoft.com/en-us/cpp/supported-platforms-visual-cpp?view=vs-2017">Supported Platforms (Visual C++)</a></p>
+<h5 id="Toolset-Selection-T"><a href="#Toolset-Selection-T" class="headerlink" title="Toolset Selection -T"></a>Toolset Selection <code>-T</code></h5><p>The <code>v140</code> toolset that comes with <strong>Visual Studio 14 2015</strong> is selected by default. The <code>CMAKE_GENERATOR_TOOLSET</code> option may be set, perhaps via the cmake(1) <code>-T</code> option, to specify another toolset.</p>
+<blockquote>
+<p>The <code>v141</code> toolset that comes with <strong>Visual Studio 15 2017</strong> is selected by default.</p>
+</blockquote>
+<p>For each toolset that comes with this version of Visual Studio, there are variants that are themselves compiled for 32-bit (x86) and 64-bit (x64) hosts (independent of the architecture they target). By default Visual Studio chooses the 32-bit variant even on a 64-bit host. One may request use of the 64-bit host tools by adding a <code>host=x64</code> option to the toolset specification. See the <code>CMAKE_GENERATOR_TOOLSET</code> variable for details.</p>
+<p><strong>针对 MSVC 总结</strong>：三种或四种平台，桌面开发主要针对 win32 和 x64；工具集基本对应 MSVC 版本，高版本 MSVC 可选择低版本的工具集；另外，还有个平台版本（即 SDK version），似乎在 cmake 中并不重要。</p>
+<blockquote>
+<p>安装各版本的平台工具集：VS2010 之后版本的 VS 都有这个功能, 可以通过切换平台工具集, 在使用最新的 IDE 的同时, 用旧版本来进行编译, 彻底杜绝兼容问题<sup>2</sup>。<a href="https://junkboy.gitee.io/posts/2018/06/05/MSVC-VER.html">摘自</a></p>
+</blockquote>
+<p><em>sup 2</em>: MSVC 各版本之间的兼容问题是个老梗了，ε=(´ο｀*)))唉，不过 <a href="https://blogs.msdn.microsoft.com/vcblog/2017/03/07/binary-compatibility-and-pain-free-upgrade-why-moving-to-visual-studio-2017-is-almost-too-easy/"> v141 is binary compatible with v140</a></p>
+<h3 id="Extra-Generators"><a href="#Extra-Generators" class="headerlink" title="Extra Generators"></a>Extra Generators</h3><p>……</p>
+<h2 id="增删变量-D"><a href="#增删变量-D" class="headerlink" title="增删变量 -D"></a>增删变量 <code>-D</code></h2><p><code>-D&lt;var&gt;:&lt;type&gt;=&lt;value&gt;</code> 添加变量及值到 CMakeCache.txt 中。注意 <code>-D</code> 后面不能有空格，type 为 string 时可省略。例如：<code>cmake -DCMAKE_BUILD_TYPE:STRING=Debug</code>。MinGW Generator 默认生成 <code>CMAKE_BUILD_TYPE</code> 为空，即 release；NMake Generator默认生成 <code>CMAKE_BUILD_TYPE</code> 为 Debug。</p>
+<p><code>-U&lt;globbing_expr&gt;</code> 删除 CMakeCache.txt 中的变量。注意 <code>-U</code> 后面不能有空格,支持 globbing 表达式，比如 <code>*,?</code> 等。例如：<code>cmake -UCMAKE_BUILD_TYPE</code>。</p>
+<h3 id="编译模式"><a href="#编译模式" class="headerlink" title="编译模式"></a>编译模式</h3><figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">cmake .. <span class="literal">-G</span> <span class="string">&quot;Visual Studio 14 2015&quot;</span> <span class="literal">-DCMAKE_INSTALL_PREFIX</span>=<span class="string">&quot;install_root&quot;</span> <span class="comment"># -DCMAKE_BUILD_TYPE=&quot;Release&quot;</span></span><br><span class="line">cmake -<span class="literal">-build</span> . -<span class="literal">-target</span> install -<span class="literal">-config</span> Release</span><br></pre></td></tr></table></figure>
+<p>如果前一条命令不指定 <code>-DCMAKE_BUILD_TYPE=&quot;Release&quot;</code>，只是单独在第二条命令中 <code>--config=Release</code>，会造成什么后果？无任何后果。当使用 MSVC 时，<a href="https://stackoverflow.com/questions/24460486/cmake-build-type-not-being-used-in-cmakelists-txt"><code>CMAKE_BUILD_TYPE</code> 选项被忽略</a>。</p>
+<blockquote>
+<p>Specifies the build type on <strong>single</strong>-configuration generators. <a href="https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html"><code>CMAKE_BUILD_TYPE</code> 的意义</a></p>
+<p>This variable is only meaningful to single-configuration generators <del>(such as Makefile Generators and Ninja) i.e. those which choose a single configuration when CMake runs to generate a build tree</del> as opposed to multi-configuration generators <del>which offer selection of the build configuration within the generated build environment</del>.</p>
+</blockquote>
+<h3 id="调试版本后缀"><a href="#调试版本后缀" class="headerlink" title="调试版本后缀"></a>调试版本后缀</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">-DCMAKE_DEBUG_POSTFIX=<span class="string">&quot;d&quot;</span></span><br><span class="line"><span class="comment"># -DCMAKE_RELEASE_POSTFIX=xx</span></span><br></pre></td></tr></table></figure>
+<h3 id="MT-和-MD"><a href="#MT-和-MD" class="headerlink" title="MT 和 MD"></a>MT 和 MD</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 1. 追加 `CMAKE_CXX_FLAGS_Build Type`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_RELEASE&#125; /MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_DEBUG&#125; /MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 替换 `CMAKE_CXX_FLAGS_Build`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;/MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;/MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 或者将已经存在的 `/MD、/MDd` 替换为 `/MT、/MTd`</span></span><br><span class="line"><span class="keyword">if</span> (MSVC)</span><br><span class="line">    <span class="keyword">set</span>(CompilerFlags</span><br><span class="line">        CMAKE_CXX_FLAGS</span><br><span class="line">        CMAKE_CXX_FLAGS_DEBUG</span><br><span class="line">        CMAKE_CXX_FLAGS_RELEASE</span><br><span class="line">        CMAKE_C_FLAGS</span><br><span class="line">        CMAKE_C_FLAGS_DEBUG</span><br><span class="line">        CMAKE_C_FLAGS_RELEASE</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">foreach</span>(CompilerFlag <span class="variable">$&#123;CompilerFlags&#125;</span>)</span><br><span class="line">        <span class="keyword">string</span>(REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> <span class="variable">$&#123;CompilerFlag&#125;</span> <span class="string">&quot;$&#123;$&#123;CompilerFlag&#125;&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">endforeach</span>()</span><br><span class="line"><span class="keyword">endif</span>(MSVC)</span><br></pre></td></tr></table></figure>
+<p>摘自：<a href="https://blog.csdn.net/frank_liuxing/article/details/74010939">https://blog.csdn.net/frank_liuxing/article/details/74010939</a> </p>
+<p>原文描述提到“<del>如果CMAKE Flags已经设置了<code>/MD</code>，可以不能发挥作用。可以采用方法2</del>” 但很可能是错误的，后者覆盖前者：</p>
+<blockquote>
+<p>If your CMake flags already contain <code>/MD</code>, you can ensure that the above commands are executed after the point at which <code>/MD</code> is inserted (the later addition of <code>/MT</code> <strong>overrides</strong> the conflicting existing option) <a href="https://stackoverflow.com/questions/14172856/cmake-compile-with-mt-instead-of-md">来自 stackoverflow</a></p>
+</blockquote>
+<h3 id="安装路径"><a href="#安装路径" class="headerlink" title="安装路径"></a>安装路径</h3><pre><code>-DCMAKE_INSTALL_PREFIX</code></pre>
+<h2 id="其他参数"><a href="#其他参数" class="headerlink" title="其他参数"></a>其他参数</h2><h2 id="清理之后重新构建、编译"><a href="#清理之后重新构建、编译" class="headerlink" title="清理之后重新构建、编译"></a>清理之后重新构建、编译</h2><p>当出现 xx 等无法理解的问题时（尤其是在同一目录下同时编译 Debug 和 Release 版本时出现依赖库异常时），尝试删除 cmake 临时文件（<code>CMakeCache.txt</code> <code>CMakeFiles\</code> 等）所在目录，再次执行试试</p>
+<h2 id="cmake-gui"><a href="#cmake-gui" class="headerlink" title="cmake-gui"></a>cmake-gui</h2><h1 id="编写-CMakeLists-txt"><a href="#编写-CMakeLists-txt" class="headerlink" title="编写 CMakeLists.txt"></a>编写 CMakeLists.txt</h1>]]></content>
+      <categories>
+        <category>make</category>
+      </categories>
+      <tags>
+        <tag>make</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>C++11 的重大改变</title>
     <url>/2016/11/03/cpp11BigChanges/</url>
     <content><![CDATA[<p><a href="http://blog.smartbear.com/c-plus-plus/the-biggest-changes-in-c11-and-why-you-should-care/">The Biggest Changes in C++11 (and Why You Should Care)</a>，译文：<a href="http://www.devbean.net/2012/11/biggest-changes-in-c11/">C++11 的重大改变</a></p>
@@ -2535,8 +2535,16 @@
 <p><img src="https://raw.githubusercontent.com/nielong0610/MarkdownPhotos/master/TrayOnly-Directory.jpg" alt="TrayOnly项目的目录结构"></p>
 <a id="more"></a>
 
-<p>TrayOnly.exe会调用启动BasicConf.exe，而BasicConf.exe负责读写配置文件”conf\sample.conf”。在VS2010中将BasicConf.vcxproj设置为启动项目进行调试时，此配置文件须在BasicConf文件夹下，即”BasicConf\conf\sample.conf”；将TrayOnly.vcxproj设置为启动项目进行调试，通过TrayOnly.exe启动BasicConf.exe时，配置文件须在TrayOnly文件夹下，即”TrayOnly\conf\sample.conf”；而在Debug目录中手动启动BasicConf.exe时，配置文件须在Debug文件夹下，即”Debug\conf\sample.conf”。——这个就是一个凌乱的现象。</p>
-<h1 id="工作目录和运行目录"><a href="#工作目录和运行目录" class="headerlink" title="工作目录和运行目录"></a>工作目录和运行目录</h1><p>工作目录，全称是当前工作目录(Current Working Directory)。一般来说，每个进程都有一个与之相关联的分级文件系统(hierarchical file system)下的目录，称之为该进程的当前工作目录。工作目录是一个环境变量，如果程序刚进入main入口处的时候，当前工作目录其实就是程序启动的目录，但是当前工作目录是可以通过程序进行设置或者随着 <code>OpenFileDialog</code>、<code>SaveFileDialog</code> 等对象所确定的目录而改变。所以使用的时候要小心。<strong>工作目录主要影响程序中使用到的相对路径</strong>，比如说  <code>file.open(../a.txt);</code>   这个 a.txt 文件的具体位置是根据工作目录来判断的。</p>
+<p>TrayOnly.exe 会调用启动 BasicConf.exe，而 BasicConf.exe 负责读写配置文件”conf\sample.conf”。</p>
+<ul>
+<li>在 VS2010 中将 BasicConf.vcxproj 设置为启动项目进行调试时，此配置文件须在 BasicConf 文件夹下，即”BasicConf\conf\sample.conf”；</li>
+<li>将 TrayOnly.vcxproj 设置为启动项目进行调试，通过 TrayOnly.exe 启动 BasicConf.exe 时，配置文件须在 TrayOnly 文件夹下，即”TrayOnly\conf\sample.conf”；</li>
+<li>而在 Debug 目录中手动启动 BasicConf.exe 时，配置文件须在 Debug 文件夹下，即”Debug\conf\sample.conf”。</li>
+</ul>
+<p>这个就是一个凌乱的现象。</p>
+<h2 id="设置工作目录"><a href="#设置工作目录" class="headerlink" title="设置工作目录"></a>设置工作目录</h2><p>右击项目-属性页-调试-工作目录，默认 <code>$(ProjectDir)</code> = 当前项目的目录 = 当前项目 .vcxproj 文件的所在目录</p>
+<p>关于 IDE 中更多预定义变量的意义：<a href="https://cloud.tencent.com/developer/news/465316">Visual Studio中相对路径中的宏定义</a></p>
+<h1 id="工作目录和运行目录"><a href="#工作目录和运行目录" class="headerlink" title="工作目录和运行目录"></a>工作目录和运行目录</h1><p>工作目录，全称是当前工作目录(Current Working Directory)。一般来说，每个进程都有一个与之相关联的分级文件系统(hierarchical file system)下的目录，称之为该进程的当前工作目录。工作目录是一个环境变量，如果程序刚进入 <code>main</code> 入口处的时候，当前工作目录其实就是程序启动的目录，但是当前工作目录是可以通过程序进行设置或者随着 <code>OpenFileDialog</code>、<code>SaveFileDialog</code> 等对象所确定的目录而改变。所以使用的时候要小心。<strong>工作目录主要影响程序中使用到的相对路径</strong>，比如说  <code>file.open(../a.txt);</code>   这个 a.txt 文件的具体位置是根据工作目录来判断的。</p>
 <p>运行目录，也称执行目录、应用程序所在目录。该进程从中启动的目录，即程序文件自身所在的目录，是固定不变的。</p>
 <p>所以，当前工作目录和程序所在的目录可以不同。</p>
 <p>参考 <a href="http://stackoverflow.com/questions/4419868/what-is-the-current-directory-in-a-batch-file">What is the current directory in a batch file?</a></p>
@@ -2621,20 +2629,27 @@
 <ol>
 <li>Visual Studio，越新越好，但都有历史包袱</li>
 <li><del>Visual AssistX</del> 破解费时费力，还有兼容问题。非重度用户，可探索 visual studio IDE 自身</li>
-<li><del>spdlog</del> 通过 vcpkg 使用</li>
-<li>vcpkg</li>
-<li>vld</li>
+<li><a href="https://tnie.github.io/2018/12/10/vcpkg/">vcpkg 包管理器</a></li>
+<li>spdlog 通过 vcpkg 安装</li>
+<li>vld, <a href="https://kinddragon.github.io/vld/">Visual Leak Detector</a></li>
+<li>不使用制表符，转换为 4 个空格。配置 IDE 实现。</li>
 </ol>
 <p>Visual Studio2015 IDE 中需要安装的插件（vc2017 中可能已经内嵌了某些插件的功能）</p>
 <ul>
 <li><a href="https://marketplace.visualstudio.com/items?itemName=MadsKristensen.TrailingWhitespaceVisualizer">Trailing Whitespace Visualizer</a></li>
 <li><a href="https://github.com/tcbhat/cpptripleslash">cpptripleslash</a></li>
 <li><a href="https://marketplace.visualstudio.com/items?itemName=VisualStudioPlatformTeam.ProductivityPowerTools2015">Productivity Power Tools 2015</a></li>
-<li><a href="https://marketplace.visualstudio.com/items?itemName=mreu.ProtobufLanguageService">Protobuf Language Service</a></li>
 </ul>
 <a id="more"></a>
 
-<h3 id="“监视”窗口中的格式说明符"><a href="#“监视”窗口中的格式说明符" class="headerlink" title="“监视”窗口中的格式说明符"></a><a href="https://docs.microsoft.com/zh-cn/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017">“监视”窗口中的格式说明符</a></h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">char</span>* a = <span class="string">&quot;你好&quot;</span>;</span><br><span class="line">    <span class="keyword">char</span>* a1 = <span class="string">&quot;Hello, world&quot;</span>;</span><br><span class="line">    <span class="built_in">string</span> b = <span class="string">u8&quot;你好&quot;</span>;</span><br><span class="line">    <span class="keyword">auto</span> c = <span class="string">u&quot;你好&quot;</span>; <span class="comment">// char16_t*</span></span><br><span class="line">    <span class="keyword">auto</span> d = <span class="string">U&quot;你好&quot;</span>; <span class="comment">// char32_t*</span></span><br><span class="line">    <span class="keyword">auto</span> e = <span class="number">68</span>;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="如何用好"><a href="#如何用好" class="headerlink" title="如何用好"></a>如何用好</h1><h2 id="跨平台"><a href="#跨平台" class="headerlink" title="跨平台"></a>跨平台</h2><p>在 visual studio 开发 c++ 程序时，编写代码的规范：</p>
+<ul>
+<li>文件编码在 utf-8 和 utf-8-bom 中二选一</li>
+<li>回车统一使用 Unix(LF) 格式</li>
+</ul>
+<p>protoc.exe 生成的源文件是: 两个空格 + utf-8 + Unix(LF)</p>
+<h2 id="“监视”窗口中的格式说明符"><a href="#“监视”窗口中的格式说明符" class="headerlink" title="“监视”窗口中的格式说明符"></a>“监视”窗口中的格式说明符</h2><p><a href="https://docs.microsoft.com/zh-cn/visualstudio/debugger/format-specifiers-in-cpp?view=vs-2017">“监视”窗口中的格式说明符</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;string&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">char</span>* a = <span class="string">&quot;你好&quot;</span>;</span><br><span class="line">    <span class="keyword">char</span>* a1 = <span class="string">&quot;Hello, world&quot;</span>;</span><br><span class="line">    <span class="built_in">string</span> b = <span class="string">u8&quot;你好&quot;</span>;</span><br><span class="line">    <span class="keyword">auto</span> c = <span class="string">u&quot;你好&quot;</span>; <span class="comment">// char16_t*</span></span><br><span class="line">    <span class="keyword">auto</span> d = <span class="string">U&quot;你好&quot;</span>; <span class="comment">// char32_t*</span></span><br><span class="line">    <span class="keyword">auto</span> e = <span class="number">68</span>;</span><br><span class="line">    <span class="built_in">cout</span> &lt;&lt; a &lt;&lt; b &lt;&lt; c &lt;&lt; d &lt;&lt; e &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <table>
 <thead>
 <tr>
@@ -2674,10 +2689,11 @@
 <td>char[15]</td>
 </tr>
 </tbody></table>
-<h3 id="调试多线程应用程序"><a href="#调试多线程应用程序" class="headerlink" title="调试多线程应用程序"></a><a href="https://docs.microsoft.com/zh-cn/visualstudio/debugger/debug-multithreaded-applications-in-visual-studio?view=vs-2017">调试多线程应用程序</a></h3><h3 id="预编译头"><a href="#预编译头" class="headerlink" title="预编译头"></a>预编译头</h3><p>优点就是加快编译速度，YDStockProject 每次编译让我崩溃：一方面源于头文件依赖的混乱；另一方面可能就是源于 JUCE、BOOST 等使用大量模板的头文件的编译。</p>
+<h2 id="调试多线程应用程序"><a href="#调试多线程应用程序" class="headerlink" title="调试多线程应用程序"></a>调试多线程应用程序</h2><p><a href="https://docs.microsoft.com/zh-cn/visualstudio/debugger/debug-multithreaded-applications-in-visual-studio?view=vs-2017">调试多线程应用程序</a></p>
+<h2 id="预编译头"><a href="#预编译头" class="headerlink" title="预编译头"></a>预编译头</h2><p>优点就是加快编译速度，YDStockProject 每次编译让我崩溃：一方面源于头文件依赖的混乱；另一方面可能就是源于 JUCE、BOOST 等使用大量模板的头文件的编译。</p>
 <p>学习过程中 get 的点</p>
 <ul>
-<li><p>源文件也可以创建预编译头。按需学习，暂时你无用</p>
+<li><p>源文件也可以创建预编译头。按需学习，暂时无用</p>
 </li>
 <li><p>每个源文件只能 <code>#include</code> 一个预编译头，但同一项目中不同源文件可以 <code>#include</code> 不同的预编译头</p>
 </li>
@@ -2689,6 +2705,67 @@
 </blockquote>
 </li>
 </ul>
+<h1 id="避免踩坑"><a href="#避免踩坑" class="headerlink" title="避免踩坑"></a>避免踩坑</h1><p>msvc 宇宙第一的 ide 都有哪些坑？</p>
+<h2 id="不同版本的-stl-不兼容"><a href="#不同版本的-stl-不兼容" class="headerlink" title="不同版本的 stl 不兼容"></a>不同版本的 stl 不兼容</h2><p>谷歌喷 msvc 的 dll</p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/43124169-e83ae890-8f58-11e8-9c66-726a09766f7d.png" alt="谷歌喷 msvc 的 dll"></p>
+<h2 id="msvc2015-内嵌的-git-残废"><a href="#msvc2015-内嵌的-git-残废" class="headerlink" title="msvc2015 内嵌的 git 残废"></a>msvc2015 内嵌的 git 残废</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225152924.png"></p>
+<p><a href="https://stackoverflow.com/questions/37818902/diff-between-commits-in-visual-studio-2015-using-git">https://stackoverflow.com/questions/37818902/diff-between-commits-in-visual-studio-2015-using-git</a></p>
+<p><a href="https://blog.csdn.net/coolcooldool/article/details/53815939">https://blog.csdn.net/coolcooldool/article/details/53815939</a></p>
+<p><a href="http://www.codewrecks.com/blog/index.php/2013/03/19/how-to-configure-diff-and-merge-tool-in-visual-studio-git-tools/">http://www.codewrecks.com/blog/index.php/2013/03/19/how-to-configure-diff-and-merge-tool-in-visual-studio-git-tools/</a></p>
+<h2 id="编译模式与项目属性"><a href="#编译模式与项目属性" class="headerlink" title="编译模式与项目属性"></a>编译模式与项目属性</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153054.png"></p>
+<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153121.png"></p>
+<h2 id="node-js8-在-vs2017-中才支持"><a href="#node-js8-在-vs2017-中才支持" class="headerlink" title="node.js8 在 vs2017 中才支持"></a>node.js8 在 vs2017 中才支持</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153203.png"></p>
+<h2 id="msvc2015-用旧编译器的库报错“无法解析的外部符号”"><a href="#msvc2015-用旧编译器的库报错“无法解析的外部符号”" class="headerlink" title="msvc2015 用旧编译器的库报错“无法解析的外部符号”"></a>msvc2015 用旧编译器的库报错“无法解析的外部符号”</h2><p><a href="https://blog.csdn.net/hutianyou123/article/details/76577827">https://blog.csdn.net/hutianyou123/article/details/76577827</a></p>
+<p><a href="https://stackoverflow.com/a/32418900/6728820">https://stackoverflow.com/a/32418900/6728820</a></p>
+<h2 id="不能自由选择-c-标准"><a href="#不能自由选择-c-标准" class="headerlink" title="不能自由选择 c++ 标准"></a>不能自由选择 c++ 标准</h2><h2 id="不能在动态库静态变量或全局变量的析构中-join-线程"><a href="#不能在动态库静态变量或全局变量的析构中-join-线程" class="headerlink" title="不能在动态库静态变量或全局变量的析构中 join() 线程"></a>不能在动态库静态变量或全局变量的析构中 join() 线程</h2><p><a href="https://github.com/tnie/TestDll/issues/15">https://github.com/tnie/TestDll/issues/15</a></p>
+<h2 id="Windows-的-cmd-和-powershell-表现不一致"><a href="#Windows-的-cmd-和-powershell-表现不一致" class="headerlink" title="Windows 的 cmd 和 powershell 表现不一致"></a>Windows 的 cmd 和 powershell 表现不一致</h2><p>命令路径中存在空格，如何使用？ 注意 引号 <code>&quot;</code> 和 斜杠 <code>\</code> 的相对位置</p>
+<table>
+<thead>
+<tr>
+<th>command</th>
+<th>cmd 执行结果</th>
+<th>power shell 执行结果</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe&quot; calculator.sln</code></td>
+<td>√</td>
+<td>×</td>
+<td>表达式或语句中包含意外的标记“calculator.sln”。</td>
+</tr>
+<tr>
+<td><code>&quot;C:\Program Files (x86)\MSBuild\14.0\Bin\&quot;MSBuild.exe calculator.sln</code></td>
+<td>√</td>
+<td>×</td>
+<td>表达式或语句中包含意外的标记“MSBuild.exe”。</td>
+</tr>
+<tr>
+<td><code>&quot;C:\Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
+<td>√</td>
+<td>×</td>
+<td>表达式或语句中包含意外的标记“\MSBuild\14.0\Bin\MSBuild.exe”。</td>
+</tr>
+<tr>
+<td><code>&quot;C:\Program Files (x86)\&quot;MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
+<td>√</td>
+<td>×</td>
+<td>表达式或语句中包含意外的标记“MSBuild\14.0\Bin\MSBuild.exe”。</td>
+</tr>
+<tr>
+<td><code>C:\&quot;Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
+<td>×</td>
+<td>√</td>
+<td>MSBUILD : error MSB1008: 只能指定一个项目。</td>
+</tr>
+<tr>
+<td><code>C:&quot;\Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
+<td>√</td>
+<td>√</td>
+<td>/</td>
+</tr>
+</tbody></table>
+<p>END</p>
 ]]></content>
       <tags>
         <tag>cpp</tag>
@@ -2753,88 +2830,93 @@
       </categories>
   </entry>
   <entry>
-    <title>进一步理解extern</title>
+    <title>进一步理解 extern</title>
     <url>/2016/11/03/extern-static-const/</url>
-    <content><![CDATA[<h1 id="全局变量和局部变量"><a href="#全局变量和局部变量" class="headerlink" title="全局变量和局部变量"></a>全局变量和局部变量</h1><p>首先，要区分全局变量和局部变量。</p>
-<p>在C和C++中，局部变量意义相同；全局变量略有出入。</p>
+    <content><![CDATA[<p>首先，要区分全局变量和局部变量。</p>
+<h1 id="全局变量和局部变量"><a href="#全局变量和局部变量" class="headerlink" title="全局变量和局部变量"></a>全局变量和局部变量</h1><p>在 C 和 C++ 中，局部变量意义相同；全局变量略有出入。</p>
 <p>在《C++ Primer》中很明确的表示：(p44)</p>
 <blockquote>
-<p>名字main定义于所以花括号之外，它和其他大多数定义在函数体之外的名字一样拥有<strong>全局作用域</strong>。一旦声明之后，全局作用域内的名字在<strong>整个程序的范围内</strong>都可使用。</p>
+<p>名字 <code>main</code> 定义于所有花括号之外，它和其他大多数定义在函数体之外的名字一样拥有<strong>全局作用域</strong>。一旦声明之后，全局作用域内的名字在<strong>整个程序的范围内</strong>都可使用。</p>
 </blockquote>
-<p>在<a href="http://c.biancheng.net/cpp/html/62.html">C语言中文网-C语言局部变量和全局变量</a>中指出：</p>
+<p>在 <a href="http://c.biancheng.net/cpp/html/62.html">C语言中文网-C语言局部变量和全局变量</a> 中指出：</p>
 <blockquote>
 <p>在所有函数外部定义的变量称为全局变量（Global Variable），它的作用域是<strong>整个源程序</strong>。</p>
 </blockquote>
 <a id="more"></a>
 
-<p>这一点和<a href="http://c.biancheng.net/cpp/html/1158.html">C语言中文网-C语言变量作用域和生存期</a>中的描述是统一的：</p>
+<p>这一点和 <a href="http://c.biancheng.net/cpp/html/1158.html">C语言中文网-C语言变量作用域和生存期</a> 中的描述是统一的：</p>
 <blockquote>
-<p>extern(外部的)  这是在<em>函数外部定义</em>的变量的<em>缺省存储方式</em>。extern变量的作用域是整个程序。</p>
+<p><code>extern</code> (外部的)  这是在<em>函数外部定义</em>的变量的<em>缺省存储方式</em>。<code>extern</code> 变量的作用域是整个程序。</p>
 </blockquote>
-<p>但是，在<a href="https://zh.wikipedia.org/wiki/%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F">维基百科词条-全局变量</a>中则有另一番表述：</p>
+<p>但是，在 <a href="https://zh.wikipedia.org/wiki/%E5%85%A8%E5%B1%80%E5%8F%98%E9%87%8F">维基百科词条-全局变量</a> 中则有另一番表述：</p>
 <blockquote>
-<p>需要指出的是，C语言不存在真正意义上的“全局变量”。被习惯性误称为“全局变量”的，一般是文件作用域对象。</p>
+<p>需要指出的是，C 语言不存在真正意义上的“全局变量”。被习惯性误称为“全局变量”的，一般是文件作用域对象。</p>
 <p>文件作用域变量，作用域从声明开始一直到文件末尾。</p>
 </blockquote>
-<p>在实际的测试中（使用的gcc编译器），C中的全局变量作用域为整个程序，而不是到文件末尾。因为会报错“重复定义”，但想来和gcc/g++ 作为C++编译器也是有关的。</p>
-<h1 id="变量声明和定义"><a href="#变量声明和定义" class="headerlink" title="变量声明和定义"></a>变量声明和定义</h1><p>然后，我们来区分声明和定义。</p>
-<p>在《C++ Primer》中指出：p41</p>
+<p>在实际的测试中（使用的 gcc 编译器），C 中的全局变量作用域为整个程序，而不是到文件末尾。因为会报错“重复定义”，但想来和 gcc/g++ 作为 C++ 编译器也是有关的。</p>
+<p>然后，我们来区分声明和定义。</p>
+<h1 id="变量声明和定义"><a href="#变量声明和定义" class="headerlink" title="变量声明和定义"></a>变量声明和定义</h1><p>在《C++ Primer》中指出：p41</p>
 <blockquote>
-<p>为了允许把程序拆分成多个逻辑部分来编写，C++语言支持<strong>分离式编译</strong>机制，该机制允许将程序分割为若干个文件，每个文件可被独立编译。</p>
+<p>为了允许把程序拆分成多个逻辑部分来编写，C++ 语言支持<strong>分离式编译</strong>机制，该机制允许将程序分割为若干个文件，每个文件可被独立编译。</p>
 <p>如果将程序分为多个文件，则需要有在文件间共享代码的方法。</p>
-<p>为了支持分离式编译，C++语言将声明和定义区分开来。<strong>声明（declaration）</strong>使得名字为程序所知，一个文件如果想使用别处定义的名字则必须包含对那个名字的声明。而<strong>定义（definition）</strong>负责创建与名字关联的实体。</p>
+<p>为了支持分离式编译，C++ 语言将声明和定义区分开来。<strong>声明（declaration）</strong>使得名字为程序所知，一个文件如果想使用别处定义的名字则必须包含对那个名字的声明。而<strong>定义（definition）</strong>负责创建与名字关联的实体。</p>
 <p>变量声明规定了变量的类型和名字，在这一点上定义与之相同。但是<em>除此之外</em>，定义还申请存储空间，<em>也可能</em>会为变量赋一个初始值。</p>
-<p>如果想声明一个变量而非定义它，就在变量名前添加关键字extern，而且不要显示地初始化变量，任何包含了显示初始化的声明即成为定义。</p>
+<p>如果想声明一个变量而非定义它，就在变量名前添加关键字 <code>extern</code>，而且不要显示地初始化变量，任何包含了显示初始化的声明即成为定义。</p>
 <p>变量能且只能被定义一次，但是可以被多次声明。</p>
 <p>如果要在多个文件中使用同一个变量，就必须将声明和定义分离。此时，变量的定义必须出现在且只能出现在一个文件中，而其他用到该变量的文件必须对其进行声明，却绝对不能重复定义。</p>
 </blockquote>
-<p>在<a href="http://c.biancheng.net/cpp/biancheng/view/143.html">C语言中文网-关于C++变量的声明和定义</a>中描述如下：</p>
+<p>在 <a href="http://c.biancheng.net/cpp/biancheng/view/143.html">C语言中文网-关于C++变量的声明和定义</a> 中描述如下：</p>
 <blockquote>
 <p>外部变量定义和外部变量声明的含义是不同的。外部变量的定义只能有一次，它的位置在所有函数之外，而同一文件中的外部变量的声明可以有多次，它的位置可以在函数之内，也可以在函数之外。</p>
 <p>系统根据外部变量的定义分配存储单元。对外部变量的初始化只能在定义时进行，而不能在声明中进行。</p>
-<p>所谓声明，其作用是向编译系统发出一个信息，声明该变量是一个在后面定义的外部变量，仅仅是为了提前引用该变量而作的声明。extern只用作声明，而不用于定义。</p>
+<p>所谓声明，其作用是向编译系统发出一个信息，声明该变量是一个在后面定义的外部变量，仅仅是为了提前引用该变量而作的声明。<code>extern</code> 只用作声明，而不用于定义。</p>
 </blockquote>
 <p>其中的讲解和“分离式编译”、“文件间共享代码”毫无关系，重在关联函数的声明/定义<strong>与</strong>变量的声明/定义，以函数的声明/定义来讲变量的声明/定义。比如</p>
 <ul>
-<li>如果未在fun2()之前定义fun1()，则在fun2()中调用fun1()时必须先声明fun1()，相似的，使用外部变量时若未定义，则必须先声明。</li>
+<li>如果未在 <code>fun2()</code> 之前定义 <code>fun1()</code>，则在 <code>fun2()</code> 中调用 <code>fun1()</code> 时必须先声明 <code>fun1()</code>，相似的，使用外部变量时若未定义，则必须先声明。</li>
 <li>声明（函数声明/变量声明）一般放在头文件中，这样就可以在多个源文件间共享函数/变量。</li>
 </ul>
-<h1 id="extern和static"><a href="#extern和static" class="headerlink" title="extern和static"></a>extern和static</h1><p>至此，引出<code>extern</code>和<code>static</code>关键字。</p>
-<h2 id="static"><a href="#static" class="headerlink" title="static"></a>static</h2><p>参考<a href="http://developer.51cto.com/art/201104/256820.htm">浅谈C/C++中的static和extern关键字</a>，其中关于<code>extern</code>的讲解不够精细，关于<code>static</code>的足够。</p>
+<h1 id="extern-和-static"><a href="#extern-和-static" class="headerlink" title="extern 和 static"></a>extern 和 static</h1><p>至此，引出<code>extern</code>和<code>static</code>关键字。</p>
+<h2 id="static"><a href="#static" class="headerlink" title="static"></a>static</h2><p>参考 <a href="http://developer.51cto.com/art/201104/256820.htm">浅谈C/C++中的static和extern关键字</a>，其中关于<code>extern</code>的讲解不够精细，关于<code>static</code>的足够。</p>
 <blockquote>
-<p>static对局部变量进行修饰过后，其生命周期以及存储空间发生了变化，但是其作用域并没有改变，其仍然是一个局部变量，作用域仅限于该语句块。</p>
-<p>对于一个全局变量，它既可以在本源文件（定义此全局变量的源文件）中被访问到，也可以在同一个工程的其它源文件中被访问（其他源文件只需用extern进行声明即可）。</p>
-<p>在本源文件中（定义时）用static对全局变量进行修饰改变了其作用域的范围，由原来的整个工程可见变为本源文件可见。</p>
+<p><code>static</code> 对局部变量进行修饰过后，其生命周期以及存储空间发生了变化，但是其作用域并没有改变，其仍然是一个局部变量，作用域仅限于该语句块。</p>
+<p>对于一个全局变量，它既可以在本源文件（定义此全局变量的源文件）中被访问到，也可以在同一个工程的其它源文件中被访问（其他源文件只需用 <code>extern</code> 进行声明即可）。</p>
+<p>在本源文件中（定义时）用 <code>static</code> 对全局变量进行修饰改变了其作用域的范围，由原来的整个工程可见变为本源文件可见。</p>
 </blockquote>
 <p>引用<a href="">另一篇帖子</a>中的表述：</p>
 <blockquote>
 <p>全局变量本身就是静态存储方式， 静态全局变量当然也是静态存储方式。这两者在存储方式上并无不同。这两者的区别虽在于非静态全局变量的作用域是整个源程序，当一个源程序由多个源文件组成时，非静态的全局变量在各个源文件中都是有效的。而静态全局变量则限制了其作用域，即只在定义该变量的源文件内有效，在同一源程序的其它源文件中不能使用它。</p>
 <p>把局部变量改变为静态变量后是改变了它的存储方式即改变了它的生存期。把全局变量改变为静态变量后是改变了它的作用域，限制了它的使用范围。</p>
-<p>Tip A.若全局变量仅在单个C文件中访问，则可以将这个变量修改为静态全局变量，以降低模块间（文件间）的耦合度；</p>
+<p>Tip A.若全局变量仅在单个 C 文件中访问，则可以将这个变量修改为静态全局变量，以降低模块间（文件间）的耦合度；</p>
 <p>Tip B.若全局变量仅由单个函数访问，则可以将这个变量改为该函数的静态局部变量，以降低模块间（函数间）的耦合度；</p>
-<p>Tip E.函数中必须要使用static变量情况:比如当某函数的返回值为指针类型时，则必须是static的局部变量的地址作为返回值，若为auto类型，则返回为错指针。</p>
+<p>Tip E.函数中必须要使用 <code>static</code> 变量情况：比如当某函数的返回值为指针类型时，则必须是 <code>static</code> 的局部变量的地址作为返回值，若为 <code>auto</code> 类型，则返回为错指针。</p>
 </blockquote>
 <h2 id="extern"><a href="#extern" class="headerlink" title="extern"></a>extern</h2><blockquote>
-<p>在C语言中，修饰符extern用在变量或者函数的声明前，用来说明“此变量/函数是在别处定义的，要在此处引用”。</p>
-<p>extern声明的位置对其作用域也有关系，如果是在main函数中进行声明的，则只能在main函数中调用，在其它函数中不能调用。</p>
+<p>在 C 语言中，修饰符 <code>extern</code> 用在变量或者函数的声明前，用来说明“此变量/函数是在别处定义的，要在此处引用”。</p>
+<p><code>extern</code> 声明的位置对其作用域也有关系，如果是在 <code>main</code> 函数中进行声明的，则只能在 <code>main</code> 函数中调用，在其它函数中不能调用。</p>
 </blockquote>
-<p>看到这里，应该也理解了<code>extern</code>关键字了。如果还要进一步理解可以参考<a href="http://www.cnblogs.com/yc_sunniwell/archive/2010/07/14/1777431.html">C/C++中extern关键字详解</a>，但其实不建议通过这篇帖子学习，因为其中的逻辑层次、语言表述很让人难受啊。</p>
-<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p>在弄清楚<code>extern</code>关键字的过程中，还额外学到了一些知识：</p>
+<p>看到这里，应该也理解了 <code>extern</code> 关键字了。如果还要进一步理解可以参考 <a href="http://www.cnblogs.com/yc_sunniwell/archive/2010/07/14/1777431.html">C/C++中extern关键字详解</a>，但其实不建议通过这篇帖子学习，因为其中的逻辑层次、语言表述很让人难受啊。</p>
+<h2 id="二进制兼容"><a href="#二进制兼容" class="headerlink" title="二进制兼容"></a>二进制兼容</h2><p><a href="https://www.cnblogs.com/skynet/archive/2010/07/10/1774964.html">C++ 项目中的 extern “C” {}</a></p>
+<p>不同语言编写的代码互相调用是困难的，甚至是同一种编写的代码但不同的编译器编译的代码。</p>
+<p>为了使它们遵守统一规则，可以使用 <code>extern</code> 指定一个编译和连接规约。</p>
+<p><code>extern &quot;C&quot;</code> 指令非常有用，因为 C 和 C++ 的近亲关系。注意：<code>extern &quot;C&quot;</code> 指令中的 <code>C</code>，表示的一种 <strong>编译和连接规约</strong>，而不是一种语言。C 表示符合 C 语言的编译和连接规约的任何语言，如 Fortran、assembler 等。</p>
+<p>还有要说明的是，<code>extern &quot;C&quot;</code> 指令仅指定编译和连接规约，但不影响语义。例如在函数声明中，指定了 <code>extern &quot;C&quot;</code>，仍然要遵守 C++ 的类型检测、参数转换规则。</p>
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p>在弄清楚 <code>extern</code> 关键字的过程中，还额外学到了一些知识：</p>
 <ol>
 <li><p><a href="http://developer.51cto.com/art/201105/261467.htm">头文件中定义实体（不只是声明）</a></p>
 <blockquote>
-<p>不能在头文件中定义变量。但是有三个例外。头文件可以定义类、值在编译时就知道的const对象和inline函数。</p>
+<p>不能在头文件中定义变量。但是有三个例外。头文件可以定义类、值在编译时就知道的 <code>const</code> 对象和 <code>inline</code> 函数。</p>
 </blockquote>
 </li>
-<li><p><a href="http://www.cnblogs.com/yc_sunniwell/archive/2010/07/14/1777431.html">extern和const</a></p>
+<li><p><a href="http://www.cnblogs.com/yc_sunniwell/archive/2010/07/14/1777431.html">extern 和 const</a></p>
 <blockquote>
-<p> **C++**中<code>const</code>修饰的全局常量据有跟<code>static</code>相同的特性，即它们只能作用于本编译模块中，但是<code>const</code>可以与<code>extern</code>连用来声明该常量可以作用于其他编译模块中</p>
-<p> 我只是想提醒你，<code>const char* g_str = &quot;123456&quot;</code> 与 <code>const char g_str[] =&quot;123465&quot;</code>是不同的， 前面（指向常量的普通指针 pointer to const）那个<code>const</code> 修饰的是<code>char *</code>而不是<code>g_str</code>,它的<code>g_str</code>并不是常量，它被看做是一个定义了的全局变量（可以被其他编译单元使用）， 所以如果你想让<code>char* g_str</code>遵守<code>const</code>的全局常量的规则，最好这么定义<code>const char* const g_str=&quot;123456&quot;</code>（指向常量的常量指针 const pointer to const）。</p>
+<p> <strong>C++</strong> 中 <code>const</code> 修饰的全局常量据有跟 <code>static</code> 相同的特性，即它们只能作用于本编译模块中，但是 <code>const</code> 可以与 <code>extern</code> 连用来声明该常量可以作用于其他编译模块中</p>
+<p> 我只是想提醒你，<code>const char* g_str = &quot;123456&quot;</code> 与 <code>const char g_str[] =&quot;123465&quot;</code>是不同的， 前面（指向常量的普通指针 pointer to const）那个 <code>const</code> 修饰的是 <code>char *</code> 而不是 <code>g_str</code>,它的 <code>g_str</code> 并不是常量，它被看做是一个定义了的全局变量（可以被其他编译单元使用）， 所以如果你想让 <code>char* g_str</code> 遵守 <code>const</code> 的全局常量的规则，最好这么定义 <code>const char* const g_str=&quot;123456&quot;</code>（指向常量的常量指针 const pointer to const）。</p>
 </blockquote>
 <p> 强调，C++ 和C 是不同的！</p>
 </li>
-<li><p><a href="http://www.caole.net/diary/lvalue.html">C/C++中的左值</a></p>
-<p> 左值、右值的概念真是反人类啊，其实一直不懂掌握这个知识点对于程序员有什么价值。只看到了2.2节，因为2.3节中出现了未掌握的类型转化，当然最主要的原因还是~我真的看不下去了。</p>
+<li><p><a href="http://www.caole.net/diary/lvalue.html">C/C++ 中的左值</a></p>
+<p> 左值、右值的概念真是反人类啊，其实一直不懂掌握这个知识点对于程序员有什么价值。只看到了 2.2节，因为 2.3节中出现了未掌握的类型转化，当然最主要的原因还是~我真的看不下去了。</p>
 </li>
 </ol>
 ]]></content>
@@ -2924,6 +3006,26 @@
 ]]></content>
       <categories>
         <category>linux</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>函数模板</title>
+    <url>/2021/02/02/function-template/</url>
+    <content><![CDATA[<p>function 模板到底是什么？ <a href="https://github.com/tnie/YDData2/issues/163">https://github.com/tnie/YDData2/issues/163</a></p>
+<p>为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>? <a href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11</a></p>
+<p>vc2015 IntelliSence 提示</p>
+<blockquote>
+<p>使用 <code>auto</code> 类型说明符声明的变量不能出现在其自身的初始值设定项中</p>
+</blockquote>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// sum2 = ...</span></span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ERR，报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-code</category>
       </categories>
   </entry>
   <entry>
@@ -4657,6 +4759,45 @@
       </tags>
   </entry>
   <entry>
+    <title>内存泄漏</title>
+    <url>/2019/11/29/memoryLeak/</url>
+    <content><![CDATA[<h1 id="检查内存泄漏"><a href="#检查内存泄漏" class="headerlink" title="检查内存泄漏"></a>检查内存泄漏</h1><p>Linux 下使用 Valgrind；Windows 下使用 Visual Leak Detector。前者没接触过，后者的确不错。</p>
+<p>虽然在 Windows 下可以使用 CRT：<a href="https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2017">Find memory leaks with the CRT library</a>，但因为其也会报全局变量以及 <code>static</code> 变量（报告早于这两者的析构），当项目体量较大，全局变量或 <code>static</code> 变量较多时，没有有效的区分，查找真实的内存泄漏就会比较棘手。</p>
+<ol>
+<li><p>Enable memory leak detection，如何启用</p>
+<p> 只在启用 <code>_DEBUG</code> 时有效；若程序存在多个退出点，可以使用 <code>_CrtSetDbgFlag</code> 函数；报告默认在“输出”窗口打印，但可以自定义。</p>
+</li>
+<li><p>Interpret the memory-leak report，报告怎么看</p>
+<p> 重点强调了检测只针对 <code>malloc</code> 函数，无法检测 <code>new</code> 操作符。但其提供了使用 <code>_malloc_dbg</code> 实现的 <code>operator new</code> 重载版本：</p>
+</li>
+<li><p>Set breakpoints on a memory allocation number，如何打断点</p>
+</li>
+<li><p>Compare memory states，对比不同时刻的快照</p>
+</li>
+<li><p>False positives，误报现象</p>
+</li>
+</ol>
+<a id="more"></a>
+
+<p>虽然文章中特别提到：</p>
+<blockquote>
+<p>We don’t recommend you create a preprocessor macro named <code>new</code>, or any other language keyword.</p>
+</blockquote>
+<p>但是在好多中文博客中都是通过直接定义 <code>new</code> 的同名宏来避免对代码主体的修改（文件头和 main 的修改无可避免）：比如 <a href="https://www.zhihu.com/question/63946754/answer/215606096">vczh</a></p>
+<p>在网络上找到一篇 <a href="https://blog.csdn.net/crybird/article/details/80907192">关于全局变量内存泄漏的误报和解决方案</a>，但并未验证。</p>
+<h2 id="crt"><a href="#crt" class="headerlink" title="crt"></a>crt</h2><p>待补充</p>
+<h2 id="vld"><a href="#vld" class="headerlink" title="vld"></a>vld</h2><p><a href="https://github.com/KindDragon/vld/wiki/Using-Visual-Leak-Detector">Using Visual Leak Detector</a>，其使用是非常简单的。建议在每个程序中都默认启用。</p>
+<p><a href="https://blog.csdn.net/chaipp0607/article/details/79182471">VS内存泄漏工具Visual Leak Detector2.5.1安装与使用</a></p>
+<h2 id="linux-平台内存泄漏"><a href="#linux-平台内存泄漏" class="headerlink" title="linux 平台内存泄漏"></a>linux 平台内存泄漏</h2><p><a href="https://blog.csdn.net/gatieme/article/details/51959654">Linux下几款C++程序中的内存泄露检查工具</a></p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>cpp</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>从 static 到对象的内存布局</title>
     <url>/2016/11/03/memoryLayout/</url>
     <content><![CDATA[<p>2016/9/8 17:07:08</p>
@@ -4737,45 +4878,6 @@
       </tags>
   </entry>
   <entry>
-    <title>内存泄漏</title>
-    <url>/2019/11/29/memoryLeak/</url>
-    <content><![CDATA[<h1 id="检查内存泄漏"><a href="#检查内存泄漏" class="headerlink" title="检查内存泄漏"></a>检查内存泄漏</h1><p>Linux 下使用 Valgrind；Windows 下使用 Visual Leak Detector。前者没接触过，后者的确不错。</p>
-<p>虽然在 Windows 下可以使用 CRT：<a href="https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2017">Find memory leaks with the CRT library</a>，但因为其也会报全局变量以及 <code>static</code> 变量（报告早于这两者的析构），当项目体量较大，全局变量或 <code>static</code> 变量较多时，没有有效的区分，查找真实的内存泄漏就会比较棘手。</p>
-<ol>
-<li><p>Enable memory leak detection，如何启用</p>
-<p> 只在启用 <code>_DEBUG</code> 时有效；若程序存在多个退出点，可以使用 <code>_CrtSetDbgFlag</code> 函数；报告默认在“输出”窗口打印，但可以自定义。</p>
-</li>
-<li><p>Interpret the memory-leak report，报告怎么看</p>
-<p> 重点强调了检测只针对 <code>malloc</code> 函数，无法检测 <code>new</code> 操作符。但其提供了使用 <code>_malloc_dbg</code> 实现的 <code>operator new</code> 重载版本：</p>
-</li>
-<li><p>Set breakpoints on a memory allocation number，如何打断点</p>
-</li>
-<li><p>Compare memory states，对比不同时刻的快照</p>
-</li>
-<li><p>False positives，误报现象</p>
-</li>
-</ol>
-<a id="more"></a>
-
-<p>虽然文章中特别提到：</p>
-<blockquote>
-<p>We don’t recommend you create a preprocessor macro named <code>new</code>, or any other language keyword.</p>
-</blockquote>
-<p>但是在好多中文博客中都是通过直接定义 <code>new</code> 的同名宏来避免对代码主体的修改（文件头和 main 的修改无可避免）：比如 <a href="https://www.zhihu.com/question/63946754/answer/215606096">vczh</a></p>
-<p>在网络上找到一篇 <a href="https://blog.csdn.net/crybird/article/details/80907192">关于全局变量内存泄漏的误报和解决方案</a>，但并未验证。</p>
-<h2 id="crt"><a href="#crt" class="headerlink" title="crt"></a>crt</h2><p>待补充</p>
-<h2 id="vld"><a href="#vld" class="headerlink" title="vld"></a>vld</h2><p><a href="https://github.com/KindDragon/vld/wiki/Using-Visual-Leak-Detector">Using Visual Leak Detector</a>，其使用是非常简单的。建议在每个程序中都默认启用。</p>
-<p><a href="https://blog.csdn.net/chaipp0607/article/details/79182471">VS内存泄漏工具Visual Leak Detector2.5.1安装与使用</a></p>
-<h2 id="linux-平台内存泄漏"><a href="#linux-平台内存泄漏" class="headerlink" title="linux 平台内存泄漏"></a>linux 平台内存泄漏</h2><p><a href="https://blog.csdn.net/gatieme/article/details/51959654">Linux下几款C++程序中的内存泄露检查工具</a></p>
-]]></content>
-      <categories>
-        <category>cpp</category>
-      </categories>
-      <tags>
-        <tag>cpp</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Markdown 标准及其语法</title>
     <url>/2016/12/15/messOfMarkdown/</url>
     <content><![CDATA[<p>Markdown 简洁好用是毋庸置疑的。但是在使用中碰到过以下几个困惑：</p>
@@ -4852,86 +4954,12 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#x34;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#109;">&#x6e;&#x69;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#x34;&#64;&#49;&#54;&#51;&#46;&#x63;&#111;&#109;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#105;&#x65;&#x6c;&#x6f;&#110;&#x67;&#x32;&#x30;&#x31;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#x6d;">&#x6e;&#105;&#x65;&#x6c;&#x6f;&#110;&#x67;&#x32;&#x30;&#x31;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#x6d;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
         <category>tools</category>
       </categories>
-  </entry>
-  <entry>
-    <title>MSVC 避坑</title>
-    <url>/2020/12/25/msvc/</url>
-    <content><![CDATA[<p>msvc 宇宙第一的 ide 都有哪些坑？</p>
-<h2 id="不同版本的-stl-不兼容"><a href="#不同版本的-stl-不兼容" class="headerlink" title="不同版本的 stl 不兼容"></a>不同版本的 stl 不兼容</h2><p>谷歌喷 msvc 的 dll</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/43124169-e83ae890-8f58-11e8-9c66-726a09766f7d.png" alt="谷歌喷 msvc 的 dll"></p>
-<a id="more"></a>
-
-<h2 id="msvc2015-内嵌的-git-残废"><a href="#msvc2015-内嵌的-git-残废" class="headerlink" title="msvc2015 内嵌的 git 残废"></a>msvc2015 内嵌的 git 残废</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225152924.png"></p>
-<p><a href="https://stackoverflow.com/questions/37818902/diff-between-commits-in-visual-studio-2015-using-git">https://stackoverflow.com/questions/37818902/diff-between-commits-in-visual-studio-2015-using-git</a></p>
-<p><a href="https://blog.csdn.net/coolcooldool/article/details/53815939">https://blog.csdn.net/coolcooldool/article/details/53815939</a></p>
-<p><a href="http://www.codewrecks.com/blog/index.php/2013/03/19/how-to-configure-diff-and-merge-tool-in-visual-studio-git-tools/">http://www.codewrecks.com/blog/index.php/2013/03/19/how-to-configure-diff-and-merge-tool-in-visual-studio-git-tools/</a></p>
-<h2 id="编译模式与项目属性"><a href="#编译模式与项目属性" class="headerlink" title="编译模式与项目属性"></a>编译模式与项目属性</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153054.png"></p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153121.png"></p>
-<h2 id="node-js8-在-vs2017-中才支持"><a href="#node-js8-在-vs2017-中才支持" class="headerlink" title="node.js8 在 vs2017 中才支持"></a>node.js8 在 vs2017 中才支持</h2><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/20201225153203.png"></p>
-<h2 id="msvc2015-用旧编译器的库报错“无法解析的外部符号”"><a href="#msvc2015-用旧编译器的库报错“无法解析的外部符号”" class="headerlink" title="msvc2015 用旧编译器的库报错“无法解析的外部符号”"></a>msvc2015 用旧编译器的库报错“无法解析的外部符号”</h2><p><a href="https://blog.csdn.net/hutianyou123/article/details/76577827">https://blog.csdn.net/hutianyou123/article/details/76577827</a></p>
-<p><a href="https://stackoverflow.com/a/32418900/6728820">https://stackoverflow.com/a/32418900/6728820</a></p>
-<h2 id="不能自由选择-c-标准"><a href="#不能自由选择-c-标准" class="headerlink" title="不能自由选择 c++ 标准"></a>不能自由选择 c++ 标准</h2><h2 id="不能在动态库静态变量或全局变量的析构中-join-线程"><a href="#不能在动态库静态变量或全局变量的析构中-join-线程" class="headerlink" title="不能在动态库静态变量或全局变量的析构中 join() 线程"></a>不能在动态库静态变量或全局变量的析构中 join() 线程</h2><p><a href="https://github.com/tnie/TestDll/issues/15">https://github.com/tnie/TestDll/issues/15</a></p>
-<h2 id="Windows-的-cmd-和-powershell-表现不一致"><a href="#Windows-的-cmd-和-powershell-表现不一致" class="headerlink" title="Windows 的 cmd 和 powershell 表现不一致"></a>Windows 的 cmd 和 powershell 表现不一致</h2><p>命令路径中存在空格，如何使用？ 注意 引号 <code>&quot;</code> 和 斜杠 <code>\</code> 的相对位置</p>
-<table>
-<thead>
-<tr>
-<th>command</th>
-<th>cmd 执行结果</th>
-<th>power shell 执行结果</th>
-<th>备注</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><code>&quot;C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe&quot; calculator.sln</code></td>
-<td>√</td>
-<td>×</td>
-<td>表达式或语句中包含意外的标记“calculator.sln”。</td>
-</tr>
-<tr>
-<td><code>&quot;C:\Program Files (x86)\MSBuild\14.0\Bin\&quot;MSBuild.exe calculator.sln</code></td>
-<td>√</td>
-<td>×</td>
-<td>表达式或语句中包含意外的标记“MSBuild.exe”。</td>
-</tr>
-<tr>
-<td><code>&quot;C:\Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
-<td>√</td>
-<td>×</td>
-<td>表达式或语句中包含意外的标记“\MSBuild\14.0\Bin\MSBuild.exe”。</td>
-</tr>
-<tr>
-<td><code>&quot;C:\Program Files (x86)\&quot;MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
-<td>√</td>
-<td>×</td>
-<td>表达式或语句中包含意外的标记“MSBuild\14.0\Bin\MSBuild.exe”。</td>
-</tr>
-<tr>
-<td><code>C:\&quot;Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
-<td>×</td>
-<td>√</td>
-<td>MSBUILD : error MSB1008: 只能指定一个项目。</td>
-</tr>
-<tr>
-<td><code>C:&quot;\Program Files (x86)&quot;\MSBuild\14.0\Bin\MSBuild.exe calculator.sln</code></td>
-<td>√</td>
-<td>√</td>
-<td>/</td>
-</tr>
-</tbody></table>
-<p>END</p>
-]]></content>
-      <categories>
-        <category>cpp</category>
-      </categories>
-      <tags>
-        <tag>windows</tag>
-      </tags>
   </entry>
   <entry>
     <title>在C++类中创建线程函数</title>
@@ -5408,6 +5436,44 @@ const double *const pip = &amp;pi;</code></pre>
       </categories>
   </entry>
   <entry>
+    <title>《ppp》读书笔记</title>
+    <url>/2021/02/02/ppp-notes/</url>
+    <content><![CDATA[<h1 id="类接口：保持接口的最小化"><a href="#类接口：保持接口的最小化" class="headerlink" title="类接口：保持接口的最小化"></a>类接口：保持接口的最小化</h1><p>p207</p>
+<blockquote>
+<p>当我们试图最小化类接口时（在保证完整性的前提下），不得不忽略大量有用的操作。如果一个函数可以简单、优美、高效地实现为一个独立函数时（即实现为非成员函数），就应该将它的实现放在类外。<strong>采用这种方式，函数中的错误就不会直接破坏类对象中的数据</strong>。p213</p>
+</blockquote>
+<h1 id="如何创建自己的-vector"><a href="#如何创建自己的-vector" class="headerlink" title="如何创建自己的 vector"></a>如何创建自己的 <code>vector</code></h1><p>预留空间 和 <code>std::allocator</code> 类</p>
+<blockquote>
+<p>注意，我们并不对预留空间中的元素进行初始化。 p329</p>
+</blockquote>
+<blockquote>
+<p>我们需要处理非常尴尬的情况：数据结构同时包含已初始化数据和未初始化数据。p341</p>
+</blockquote>
+<p>因为内置的数值类型都是小对象，所以可以一律初始化，无需在意开销。但对于自定义类型，初始化要有的放矢。</p>
+<p>TODO 还是要自己手动写出 <code>tnie::vector</code> 才行</p>
+<p><code>std::allocator</code> 主要涉及 <a href="https://www.cnblogs.com/luxiaoxun/archive/2012/08/10/2631812.html">new/delete 函数和操作符</a></p>
+<blockquote>
+<p>new operator/delete operator就是new和delete操作符，而operator new/operator delete是函数。</p>
+</blockquote>
+<h1 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h1><p>p337</p>
+<blockquote>
+<p>Binary_predicate&lt;P,T,U&gt;()：我们可以用两个类型分别为 T 和 U 的实参调用 P，得到一个布尔结果。<br>Binary_predicate&lt;B,T,T&gt;(): 我们可以用 B 对一个 T 和一个 U 执行一个操作。</p>
+</blockquote>
+<p>这两者的区别在哪？</p>
+<h1 id="理解-std-function"><a href="#理解-std-function" class="headerlink" title="理解 std::function"></a>理解 <code>std::function</code></h1><p>传参时使用传值方式。原因是什么？</p>
+<h1 id="用户界面的选择"><a href="#用户界面的选择" class="headerlink" title="用户界面的选择"></a>用户界面的选择</h1><p>p161</p>
+<ul>
+<li>使用控制台输入/输出：如果需要图形<strong>输出</strong>，我们可以使用一个<strong>图形显示库</strong>，不需要对我们的程序设计风格进行明显的修改。</li>
+<li>使用图形用户界面（GUI）库：与图形显示库（只输出）是不同的</li>
+</ul>
+<h2 id="widget-概念"><a href="#widget-概念" class="headerlink" title="widget 概念"></a>widget 概念</h2><p>构件？</p>
+<h1 id="未读章节"><a href="#未读章节" class="headerlink" title="未读章节"></a>未读章节</h1><p>1-4 前四章<br>15 容器和迭代器<br>16 算法和映射<br>20 绘制函数图和数据图<br>23 文本处理<br>24 数值计算<br>25 嵌入式系统程序设计<br>27 C 语言<br>附录</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+  </entry>
+  <entry>
     <title>protobuf 压缩</title>
     <url>/2019/01/05/protobuf/</url>
     <content><![CDATA[<p>在 github 上我们能找到 protobuf 的 <a href="https://github.com/protocolbuffers/protobuf/releases">最新发布版本</a></p>
@@ -5792,10 +5858,10 @@ const double *const pip = &amp;pi;</code></pre>
 <blockquote>
 <p>Singleton 类不再负责创建单件。</p>
 </blockquote>
-<p>为了保证唯一实例，还需要删除拷贝构造函数（和拷贝赋值操作符）。推荐 <a href="http://blog.sina.com.cn/s/blog_a146214401015l8v.html">真正的c++单例模式实现</a>，讲解很到位。另外，用户获得指针之后可能会以为他负责释放，进而对 <code>Singleton::Instance()</code> 的结果执行 <code>delete</code> 操作，如果我们并不希望如此，可以将析构函数声明为私有的。</p>
+<p>为了保证唯一实例，还需要删除拷贝构造函数（和拷贝赋值操作符）。另外，用户获得指针之后可能会以为他负责释放，进而对 <code>Singleton::Instance()</code> 的结果执行 <code>delete</code> 操作，如果我们并不希望如此，可以将析构函数声明为私有的。</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">Singleton* pSingleton = Singleton::Instance();</span><br><span class="line"><span class="comment">// 以下两个操作是违背单例模式特性的，必须禁止掉。</span></span><br><span class="line">Singleton singleton = *pSingleton;</span><br><span class="line"><span class="function">Singleton <span class="title">singleton2</span><span class="params">(*pSingleton)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 但是这个样子可以</span></span><br><span class="line">Singleton&amp; refSingleton = *pSingleton;</span><br><span class="line"><span class="function">Singleton&amp; <span class="title">refSingleton2</span><span class="params">(*pSingleton)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;singleton&#x27;addr is: &quot;</span> &lt;&lt; &amp;singleton &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;pSingleton is: &quot;</span> &lt;&lt; pSingleton &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;singleton2&#x27;addr is: &quot;</span> &lt;&lt; &amp;singleton2 &lt;&lt; <span class="built_in">endl</span>;</span><br></pre></td></tr></table></figure>
 <p><strong>作业一</strong>：移动构造函数、移动赋值操作符需不需要禁止？不禁止的话有什么影响？这些影响中有优点吗？</p>
-<h1 id="单线程·Lazy-Singleton"><a href="#单线程·Lazy-Singleton" class="headerlink" title="单线程·Lazy Singleton"></a>单线程·Lazy Singleton</h1><p>在 GoF 书中给出的实现如下：</p>
+<h1 id="单线程-Lazy-Singleton"><a href="#单线程-Lazy-Singleton" class="headerlink" title="单线程 Lazy Singleton"></a>单线程 Lazy Singleton</h1><p>在 GoF 书中给出的实现如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">Singleton* Singleton::_instance = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">Singleton::Singleton() &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">Singleton* <span class="title">Singleton::Instance</span><span class="params">()</span> </span>&#123;</span><br><span class="line">	<span class="keyword">if</span> (_instance == <span class="number">0</span>) &#123;</span><br><span class="line">		_instance = <span class="keyword">new</span> Singleton;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">return</span> _instance;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>这种实现被称为“Lazy Singleton”，它使用了惰性初始化：它的返回值直到被第一次访问时才创建和保存。</p>
 <p>惰性初始化：实例直到用到的时候（用户通过 <code>Singleton::Instance()</code> 要获取实例时）才创建，在此之前实例对象是不存在的，避免了潜在浪费资源的可能。对比非惰性初始化的 Eager Singleton 理解，提前把对象初始化，但应用的执行逻辑可能就没有用到此实例。</p>
@@ -5829,14 +5895,7 @@ const double *const pip = &amp;pi;</code></pre>
 <p><strong>作业二</strong>：对比下一节 Meyers Singleton，函数外的 static 对象和函数内的 static 对象有哪些区别？</p>
 <h2 id="Meyers-Singleton"><a href="#Meyers-Singleton" class="headerlink" title="Meyers Singleton"></a>Meyers Singleton</h2><p>Scott Meyers 在《Effective C++》（Item 04）中的提出另一种更优雅的单例模式实现，使用 local static 对象（函数内的 static 对象）。当第一次访问 <code>Instance()</code> 方法时才创建实例。</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Singleton</span>  </span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">        <span class="function"><span class="keyword">static</span> Singleton&amp; <span class="title">Instance</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    	</span>&#123;</span><br><span class="line">        	<span class="keyword">static</span> Singleton instance;</span><br><span class="line">        	<span class="keyword">return</span> instance;</span><br><span class="line">    	&#125;</span><br><span class="line">    <span class="keyword">private</span>:</span><br><span class="line">        Singleton();</span><br><span class="line">        ~Singleton();</span><br><span class="line">        Singleton(<span class="keyword">const</span> Singleton&amp;);</span><br><span class="line">        Singleton&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> Singleton&amp;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>C++0X以后，要求编译器保证内部静态变量的线程安全性，所以<strong>C++0x之后该实现是线程安全的</strong>，有兴趣可以读相关的标准草案（section 6.7）。编译器支持程度不一定，但是 G++4.0 及以上是支持的。</p>
-<p>根据网上看到的资料，猜测此实现最初只是区别于 GoF 单例模式的另一种实现，也是非线程安全的，而且当时新标准未出，并不存在移动构造的概念。但后来被 C++0x 标准针对，添加新特性后以满足多线程安全。</p>
-<p>可以在 stackoverflow 等网站上找到一些佐证：</p>
-<ul>
-<li><a href="http://stackoverflow.com/questions/12302057/c11-safe-double-checked-locking-for-lazy-initialization-possible/12302355#12302355">C++11: Safe double checked locking for lazy initialization. Possible?</a></li>
-<li><a href="http://stackoverflow.com/questions/11711920/how-to-implement-multithread-safe-singleton-in-c11-without-using-mutex">How to implement multithread safe singleton in C++11 without using <mutex></a></li>
-<li><a href="http://blog.sina.com.cn/s/blog_a146214401015l8v.html">真正的c++单例模式实现</a> </li>
-</ul>
+<p>C++0X 以后，要求编译器保证内部静态变量 <strong>初始化</strong> 的线程安全，所以<strong>C++0x之后该实现是线程安全的</strong>，<a href="https://stackoverflow.com/questions/1661529/is-meyers-implementation-of-the-singleton-pattern-thread-safe">is-meyers-implementation-of-the-singleton-pattern-thread-safe</a>。</p>
 <p><strong>作业三</strong>：返回单件指针和返回引用的区别？</p>
 <h1 id="实例销毁"><a href="#实例销毁" class="headerlink" title="实例销毁"></a>实例销毁</h1><p>在上述几种实现中，大多使用了 <code>new</code> 操作符实例化对象。我们一般的编程观念是，<code>new</code> 操作符是需要和 <code>delete</code> 操作进行匹配的——这种观念是正确的。接下来我们说一个例外。</p>
 <p>针对单例模式中的唯一实例，在实际项目中，特别是客户端开发，其实是不在乎这个实例的销毁的。因为，全局就这么一个变量，全局都要用，它的生命周期伴随着软件的生命周期，软件结束了，它也就自然而然的结束了，因为一个程序关闭之后，它会释放它占用的内存资源的，所以，也就没有所谓的内存泄漏了。但针对这种特殊性也有例外的地方：</p>
@@ -5853,7 +5912,7 @@ const double *const pip = &amp;pi;</code></pre>
 <p>此时我们不再需要用户销毁实例（避免用户 <code>delete</code> 实例带来的不确定性），应该将析构函数声明为私有的。</p>
 <h2 id="Meyers-Singleton-1"><a href="#Meyers-Singleton-1" class="headerlink" title="Meyers Singleton"></a>Meyers Singleton</h2><p>如果没有 <code>new</code>，当然也就不需要 <code>delete</code>。</p>
 <p>对于 2.3 节 Meyers Singleton 实现，其 <code>Singleton::Instance()</code> 函数中的局部静态变量会自动析构，所以 Singleton 类的析构函数会顺利执行。</p>
-<h1 id="boost-中的单例模式"><a href="#boost-中的单例模式" class="headerlink" title="boost 中的单例模式"></a>boost 中的单例模式</h1><p><a href="https://blog.csdn.net/taurance/article/details/42389193">boost 中的单例模式</a></p>
+<h1 id="boost-中的单例模式"><a href="#boost-中的单例模式" class="headerlink" title="boost 中的单例模式"></a>boost 中的单例模式</h1><p><a href="https://www.jianshu.com/p/333d4b37db56">boost 中的单例模式</a></p>
 <p><a href="https://www.chenxuefei.com/2016/boost-singleton-do_nothing/">关于Boost Singleton <code>do_nothing()</code> 的那点事</a></p>
 <h1 id="参考来源"><a href="#参考来源" class="headerlink" title="参考来源"></a>参考来源</h1><p>第二章多线程安全部分主要参考自 <a href="http://www.zkt.name/dan-li-mo-shi-singleton-ji-c-shi-xian/">单例模式(Singleton)及其C++实现</a>；第三章实例销毁参考自 <a href="http://www.jellythink.com/archives/82">C++设计模式——单例模式</a>。当然，最主要的参考还是 GoF 的经典著作《设计模式：可复用面向对象软件的基础》。</p>
 <p>这里再重复一次，在书中提到了“单件注册表方法”，此方法与上述所有实现最大的一个区别在于：Singleton 类不再负责创建单件实例，而上述实现无论返回单件指针还是引用都是在 Singleton 类中创建。</p>
@@ -6133,6 +6192,46 @@ const double *const pip = &amp;pi;</code></pre>
       </categories>
   </entry>
   <entry>
+    <title>-std= 语言标准</title>
+    <url>/2017/03/10/standardOfLanguage/</url>
+    <content><![CDATA[<p>2016/5/27 13:13:10</p>
+<p>gcc 版本：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cts@SuSe-CTS2:~&gt; gcc --version</span><br><span class="line">gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973]</span><br><span class="line">Copyright (C) 2008 Free Software Foundation, Inc.</span><br><span class="line">This is free software; see the source for copying conditions.  There is NO</span><br><span class="line">warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</span><br><span class="line">cts@SuSe-CTS2:~&gt; man gcc</span><br><span class="line">...(略)</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+
+<blockquote>
+<p>-std=<br>Determine the language standard.   This option is currently only supported when compiling C or C++.</p>
+<p>The compiler can accept several <strong>base standards</strong>, such as c89 or c++98, and <strong>GNU dialects（方言；同源语） of those standards</strong>, such as gnu89 or gnu++98.  By specifing a base standard, the compiler will accept all programs following that standard and those using GNU extensions that do not contradict it.  For example, -std=c89 turns off certain features of GCC that are incompatible with ISO C90, such as the “asm” and “typeof” keywords, <strong>but not other GNU extensions</strong> that do not have a meaning in ISO C90, such as omitting the middle term of a “?:” expression. On the other hand, by specifing a GNU dialect of a standard, all features the compiler support are enabled, even when those features change the meaning of the base standard and some strict-conforming programs may be rejected.  The particular standard is used by <strong>-pedantic（迂腐的；学究式的）</strong> to identify which features are GNU extensions given that version of the standard. For example -std=gnu89 -pedantic would warn about C++ style // comments, while -std=gnu99 -pedantic would not.</p>
+<p>A value for this option must be provided; possible values are</p>
+<p>c89<br>iso9899:1990<br>    Support all ISO C90 programs (certain GNU extensions that conflict with ISO C90 are disabled). Same as -ansi for C code.</p>
+<p>iso9899:199409<br>    ISO C90 as modified in amendment 1.</p>
+<p>c99<br>c9x<br>iso9899:1999<br>iso9899:199x<br>    ISO C99.  Note that this standard is not yet fully supported; see <a href="http://gcc.gnu.org/gcc-4.3/c99status.html">http://gcc.gnu.org/gcc-4.3/c99status.html</a> for more information.  The names c9x and  iso9899:199x are deprecated.</p>
+<p>gnu89<br>    GNU dialect of ISO C90 (including some C99 features). This is <strong>the default for C code</strong>.</p>
+<p>gnu99<br>gnu9x<br>    GNU dialect of ISO C99.  When ISO C99 is fully implemented in GCC, this will become the default.  The name gnu9x is deprecated.</p>
+<p>c++98<br>    The 1998 ISO C++ standard plus amendments. Same as -ansi for C++ code.</p>
+<p>gnu++98<br>    GNU dialect of -std=c++98.  This is <strong>the default for C++ code.</strong></p>
+<p>c++0x<br>    The working draft of the upcoming ISO C++0x standard. This option enables experimental features that are likely to be included in C++0x. The working draft is constantly changing, and any feature that is enabled by this flag may be removed from future versions of GCC if it is not part of the C++0x standard.</p>
+<p>gnu++0x<br>    GNU dialect of -std=c++0x. This option enables experimental features that may be removed in future versions of GCC.</p>
+</blockquote>
+<p>目前在 gcc 官方上最新版为 gcc 6.1 ，其中：</p>
+<blockquote>
+<p>‘gnu11’<br>‘gnu1x’<br>GNU dialect of ISO C11. This is <strong>the default</strong> for C code. The name ‘gnu1x’ is deprecated. </p>
+<p>‘c++98’<br>‘c++03’<br>The 1998 ISO C++ standard plus the 2003 technical corrigendum and some additional defect reports. Same as -ansi for C++ code. </p>
+<p>‘gnu++98’<br>‘gnu++03’<br>GNU dialect of -std=c++98. </p>
+<p>‘c++11’<br>‘c++0x’<br>The 2011 ISO C++ standard plus amendments. The name ‘c++0x’ is deprecated. </p>
+<p>‘gnu++11’<br>‘gnu++0x’<br>GNU dialect of -std=c++11. The name ‘gnu++0x’ is deprecated. </p>
+<p>‘c++14’<br>‘c++1y’<br>The 2014 ISO C++ standard plus amendments. The name ‘c++1y’ is deprecated. </p>
+<p>‘gnu++14’<br>‘gnu++1y’<br>GNU dialect of -std=c++14. This is <strong>the default</strong> for C++ code. The name ‘gnu++1y’ is deprecated. </p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>linux</category>
+      </categories>
+      <tags>
+        <tag>develop</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>sscanf 和正则表达式</title>
     <url>/2016/11/30/sscanf-regular/</url>
     <content><![CDATA[<p>有一篇很好的入门的帖子：<a href="http://blog.csdn.net/kenby/article/details/4051018">sscanf 函数和正则表达式</a> </p>
@@ -6188,46 +6287,6 @@ const double *const pip = &amp;pi;</code></pre>
         <category>cpp</category>
         <category>cpp-code</category>
       </categories>
-  </entry>
-  <entry>
-    <title>-std= 语言标准</title>
-    <url>/2017/03/10/standardOfLanguage/</url>
-    <content><![CDATA[<p>2016/5/27 13:13:10</p>
-<p>gcc 版本：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cts@SuSe-CTS2:~&gt; gcc --version</span><br><span class="line">gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973]</span><br><span class="line">Copyright (C) 2008 Free Software Foundation, Inc.</span><br><span class="line">This is free software; see the source for copying conditions.  There is NO</span><br><span class="line">warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</span><br><span class="line">cts@SuSe-CTS2:~&gt; man gcc</span><br><span class="line">...(略)</span><br></pre></td></tr></table></figure>
-<a id="more"></a>
-
-<blockquote>
-<p>-std=<br>Determine the language standard.   This option is currently only supported when compiling C or C++.</p>
-<p>The compiler can accept several <strong>base standards</strong>, such as c89 or c++98, and <strong>GNU dialects（方言；同源语） of those standards</strong>, such as gnu89 or gnu++98.  By specifing a base standard, the compiler will accept all programs following that standard and those using GNU extensions that do not contradict it.  For example, -std=c89 turns off certain features of GCC that are incompatible with ISO C90, such as the “asm” and “typeof” keywords, <strong>but not other GNU extensions</strong> that do not have a meaning in ISO C90, such as omitting the middle term of a “?:” expression. On the other hand, by specifing a GNU dialect of a standard, all features the compiler support are enabled, even when those features change the meaning of the base standard and some strict-conforming programs may be rejected.  The particular standard is used by <strong>-pedantic（迂腐的；学究式的）</strong> to identify which features are GNU extensions given that version of the standard. For example -std=gnu89 -pedantic would warn about C++ style // comments, while -std=gnu99 -pedantic would not.</p>
-<p>A value for this option must be provided; possible values are</p>
-<p>c89<br>iso9899:1990<br>    Support all ISO C90 programs (certain GNU extensions that conflict with ISO C90 are disabled). Same as -ansi for C code.</p>
-<p>iso9899:199409<br>    ISO C90 as modified in amendment 1.</p>
-<p>c99<br>c9x<br>iso9899:1999<br>iso9899:199x<br>    ISO C99.  Note that this standard is not yet fully supported; see <a href="http://gcc.gnu.org/gcc-4.3/c99status.html">http://gcc.gnu.org/gcc-4.3/c99status.html</a> for more information.  The names c9x and  iso9899:199x are deprecated.</p>
-<p>gnu89<br>    GNU dialect of ISO C90 (including some C99 features). This is <strong>the default for C code</strong>.</p>
-<p>gnu99<br>gnu9x<br>    GNU dialect of ISO C99.  When ISO C99 is fully implemented in GCC, this will become the default.  The name gnu9x is deprecated.</p>
-<p>c++98<br>    The 1998 ISO C++ standard plus amendments. Same as -ansi for C++ code.</p>
-<p>gnu++98<br>    GNU dialect of -std=c++98.  This is <strong>the default for C++ code.</strong></p>
-<p>c++0x<br>    The working draft of the upcoming ISO C++0x standard. This option enables experimental features that are likely to be included in C++0x. The working draft is constantly changing, and any feature that is enabled by this flag may be removed from future versions of GCC if it is not part of the C++0x standard.</p>
-<p>gnu++0x<br>    GNU dialect of -std=c++0x. This option enables experimental features that may be removed in future versions of GCC.</p>
-</blockquote>
-<p>目前在 gcc 官方上最新版为 gcc 6.1 ，其中：</p>
-<blockquote>
-<p>‘gnu11’<br>‘gnu1x’<br>GNU dialect of ISO C11. This is <strong>the default</strong> for C code. The name ‘gnu1x’ is deprecated. </p>
-<p>‘c++98’<br>‘c++03’<br>The 1998 ISO C++ standard plus the 2003 technical corrigendum and some additional defect reports. Same as -ansi for C++ code. </p>
-<p>‘gnu++98’<br>‘gnu++03’<br>GNU dialect of -std=c++98. </p>
-<p>‘c++11’<br>‘c++0x’<br>The 2011 ISO C++ standard plus amendments. The name ‘c++0x’ is deprecated. </p>
-<p>‘gnu++11’<br>‘gnu++0x’<br>GNU dialect of -std=c++11. The name ‘gnu++0x’ is deprecated. </p>
-<p>‘c++14’<br>‘c++1y’<br>The 2014 ISO C++ standard plus amendments. The name ‘c++1y’ is deprecated. </p>
-<p>‘gnu++14’<br>‘gnu++1y’<br>GNU dialect of -std=c++14. This is <strong>the default</strong> for C++ code. The name ‘gnu++1y’ is deprecated. </p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>linux</category>
-      </categories>
-      <tags>
-        <tag>develop</tag>
-      </tags>
   </entry>
   <entry>
     <title>streambuf</title>
@@ -6557,7 +6616,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#101;&#x6c;&#111;&#x6e;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#x6c;&#111;&#x6e;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#101;&#108;&#x6f;&#110;&#103;&#x32;&#x30;&#x31;&#52;&#64;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#108;&#x6f;&#110;&#103;&#x32;&#x30;&#x31;&#52;&#64;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -6762,10 +6821,7 @@ const double *const pip = &amp;pi;</code></pre>
 <li>动态端口</li>
 <li>websocket + tls</li>
 </ul>
-<p>为了安全（和方便），提出以下要求或目标：</p>
-<ul>
-<li>禁用账号密码登录，全部改用密钥</li>
-</ul>
+<p>为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 <a href="https://tnie.github.io/2020/12/25/vps_first/">建立 vps 后的第一步</a></p>
 <a id="more"></a>
 
 <h1 id="v2ray"><a href="#v2ray" class="headerlink" title="v2ray"></a>v2ray</h1><p>在 shell 中修改 config.json 是不够友好的，推荐通过在线或离线的 json 工具编辑之后整体拷贝。</p>
@@ -6829,6 +6885,7 @@ const double *const pip = &amp;pi;</code></pre>
     <title>vcpkg 包管理器</title>
     <url>/2018/12/10/vcpkg/</url>
     <content><![CDATA[<p>除特别备注，全部摘自 <a href="https://docs.microsoft.com/en-us/cpp/vcpkg?view=vs-2017">vcpkg: A C++ package manager for Windows, Linux and MacOS</a></p>
+<p><strong>强调</strong>：安装 IDE 时不要变更默认路径！否则，使用 vcpkg 磨难重重，<a href="https://github.com/microsoft/vcpkg/issues/12488">vcpkg issue#12488</a>。我安装 Language English 就失败了，后面也就没尝试。</p>
 <h1 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h1><p>此章节类似读书（博客）笔记。</p>
 <h2 id="安装库"><a href="#安装库" class="headerlink" title="安装库"></a>安装库</h2><ol>
 <li><p>同时支持动态链接库，以及 <a href="https://blogs.msdn.microsoft.com/vcblog/2016/11/01/vcpkg-updates-static-linking-is-now-available/">静态链接</a>。Windows 下默认编译 32 位的动态库。</p>
@@ -7006,6 +7063,84 @@ const double *const pip = &amp;pi;</code></pre>
       </tags>
   </entry>
   <entry>
+    <title>建立 vps 后的第一步</title>
+    <url>/2020/12/25/vps_first/</url>
+    <content><![CDATA[<p>建立 vps 后首先要保证后续的使用安全。否则再多的功能都是空中楼阁。</p>
+<h1 id="SSH-登录"><a href="#SSH-登录" class="headerlink" title="SSH 登录"></a>SSH 登录</h1><p>非对称密钥算法的作用分为两种场景：</p>
+<ul>
+<li>加密数据：公钥加密，私钥解密。数据由前者发往后者，数据是安全的。</li>
+<li>认证：私钥加密，公钥解密。后者验证前者的身份，传输数据的安全性是没有保证的。</li>
+</ul>
+<p>那么远程登录呢？</p>
+<a id="more"></a>
+
+<blockquote>
+<p>SSH 本身提供两种级别的验证方法：基于口令的安全验证；基于密钥的安全验证。<a href="https://blog.csdn.net/li528405176/article/details/82810342">引用来源</a></p>
+</blockquote>
+<ul>
+<li><p>口令登录，属于加密数据的场景。</p>
+<blockquote>
+<p>首次登录时客户端获取服务端的公钥，询问其公钥指纹是否可信（客户需要通过其他方式验证真伪）。</p>
+<p>然后客户端以服务端公钥加密口令后传输，服务端使用自身的密钥解密后验证。<a href="https://blog.csdn.net/csm201314/article/details/78453579">参考</a></p>
+</blockquote>
+</li>
+<li><p>密钥登录，属于认证的场景，比如签名。</p>
+<blockquote>
+<p>需要将客户端的公钥上传给服务端（服务端通过其他方式验证是否可信）。</p>
+<p>客户端打个招呼要登录，服务端将一个随机字符串发给客户端。</p>
+<p>客户端使用自身的私钥加密后，服务端解密验证是否一致。</p>
+</blockquote>
+</li>
+</ul>
+<p>CentOS 上创建普通用户后，默认共用 <code>/etc/ssh/</code> 中的密钥。<del>应该进一步的分离，不同用户使用各自的密钥吧</del>？<code>/etc/ssh/</code> 中的证书可以认为是用于标识主机的，本就和用户无关。</p>
+<p><a href="https://alick9188.wordpress.com/2013/02/23/ssh-host-fingerprint/">查看 SSH 主机密钥的指纹</a> 的命令： <code>ssh-keygen -l </code></p>
+<p><a href="https://marskid.net/2018/02/05/how-to-verify-ssh-public-key-fingerprint/">验证远程主机 SSH 指纹</a>，通过 <strong>可信渠道</strong> 获得服务器的公钥指纹，与客户端首次登录服务器时的指纹对比。</p>
+<h1 id="centos-的基础操作"><a href="#centos-的基础操作" class="headerlink" title="centos 的基础操作"></a>centos 的基础操作</h1><p>为了某人能够业余时间练习、熟悉操作，方便工作。所以使用了与其公司服务器相同的操作系统。限于其公司版本过低， vultr 不提供一键安装服务（需要自行配置），所以采用了目前的</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看 centos 版本</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/redhat-release</span></span><br><span class="line">CentOS Linux release 8.1.1911 (Core)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看用户列表</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/passwd</span></span><br></pre></td></tr></table></figure>
+<p>linux 下查看进程占用的端口分为两步：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">查看nginx进程pid：</span></span><br><span class="line">ps -ef | grep nginx</span><br><span class="line"><span class="meta">#</span><span class="bash">通过nginx进程pid查看占用端口（进程pid为9836）</span></span><br><span class="line">netstat -nap | grep 9836</span><br></pre></td></tr></table></figure>
+<p>操作用户</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 新增用户</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> adduser v2ray</span></span><br><span class="line"><span class="meta">#</span><span class="bash">为这个用户初始化密码</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> passwd v2ray</span></span><br></pre></td></tr></table></figure>
+<h2 id="防火墙"><a href="#防火墙" class="headerlink" title="防火墙"></a>防火墙</h2><p>服务端配置完毕，通信失败时首先要确认的就是端口是否打开。</p>
+<blockquote>
+<p>Centos 升级到 7 之后，内置的防火墙已经从 iptables 变成了 firewalld</p>
+</blockquote>
+<p>所以这里只记录 firewall 的操作备忘。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看已经开放的端口：</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开启端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=80/tcp --permanent</span><br><span class="line"><span class="meta">#</span><span class="bash"> 批量开发端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=30000-40000/tcp --permanent</span><br></pre></td></tr></table></figure>
+<p>命令含义：</p>
+<ul>
+<li><code>–zone</code> #作用域</li>
+<li><code>–add-port=80/tcp</code> #添加端口，格式为：端口/通讯协议</li>
+<li><code>–permanent</code> #永久生效，没有此参数重启后失效</li>
+</ul>
+<p>调整防火墙（比如删减端口）之后，重启生效。</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">重启防火墙</span></span><br><span class="line">firewall-cmd --reload</span><br><span class="line"><span class="meta">#</span><span class="bash">查看默认防火墙状态</span></span><br><span class="line">firewall-cmd --state</span><br></pre></td></tr></table></figure>
+<h2 id="启停服务"><a href="#启停服务" class="headerlink" title="启停服务"></a>启停服务</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">停止firewall</span></span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开机启动</span></span><br><span class="line">systemctl enable firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">禁止firewall开机启动</span></span><br><span class="line">systemctl disable firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看状态</span></span><br><span class="line">systemctl status firewalld</span><br></pre></td></tr></table></figure>
+<h2 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h2><p>2020年6月2日，今天发现在公司的联通网络下无法登录 vps 了，连接总是失败，提示超时。</p>
+<p>通过其他主机访问 vps 能够成功，但进入之后看到警告信息：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">There were 2897 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
+<p>提示主机被尝试暴力破解。通过 <code>systemctl status sshd</code> 或者查看 <code>ll /var/log/secure -h</code> 等方式都能够看到异常。</p>
+<h3 id="修改端口"><a href="#修改端口" class="headerlink" title="修改端口"></a>修改端口</h3><p>尝试修改 <code>vim /etc/ssh/sshd_config</code> 默认的 22 端口，重启服务器失败。查询发现报错信息</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">SELinux is preventing /usr/sbin/sshd from name_bind access on the tcp_socket port 88888.</span><br></pre></td></tr></table></figure>
+<p>解决方式其实在配置文件的注释中也说明了：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> If you want to change the port on a SELinux system, you have to tell</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> SELinux about this change.</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> semanage port -a -t ssh_port_t -p tcp <span class="comment">#PORTNUMBER</span></span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash"><span class="comment">#Port 22</span></span></span><br><span class="line">Port 88888</span><br></pre></td></tr></table></figure>
+<p>改完端口之后，公司的主机还是无法登录，依然是超时报错。</p>
+<p>2020年6月24日13:21:37 修改端口并不能一劳永逸，今天发现 /var/log/secure 文件已经 12M 了，从上次成功登陆到刚刚，有 4500+ 次的错误尝试。</p>
+<h3 id="禁用-root-远程登陆"><a href="#禁用-root-远程登陆" class="headerlink" title="禁用 root 远程登陆"></a>禁用 root 远程登陆</h3><p>先创建普通用户。</p>
+<p>修改 <code>/etc/ssh/sshd_config</code> 文件，将</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#PermitRootLogin yes</span><br><span class="line"># 修改为 -&gt;</span><br><span class="line">PermitRootLogin no</span><br></pre></td></tr></table></figure>
+<p>重启 sshd 服务生效。禁止以后，可以使用普通用户 ssh 登录，登录后可以切换到 root 权限。</p>
+<p>更安全了，但登录失败的暴力破解日志还是会一直生成，不开心。</p>
+<p>2020年6月30日13:30:50 普通用户登录，切换 root 登录时提示</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Last login: Wed Jun 24 05:51:51 UTC 2020 on pts/0</span><br><span class="line">Last failed login: Tue Jun 30 05:28:48 UTC 2020 from 106.13.69.8 on ssh:notty</span><br><span class="line">There were 14744 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
+<h3 id="添加禁止-ip"><a href="#添加禁止-ip" class="headerlink" title="添加禁止 ip"></a>添加禁止 ip</h3><p>参考 <a href="http://www.cpacm.net/2019/09/23/%E9%98%B2%E6%AD%A2%E6%9C%8D%E5%8A%A1%E5%99%A8SSH%E8%A2%AB%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3/">防止服务器SSH暴力破解</a>，拷贝其脚本，在服务器定时执行 /root/a.txt 脚本。</p>
+<h3 id="秘钥登录"><a href="#秘钥登录" class="headerlink" title="秘钥登录"></a>秘钥登录</h3><p>为了保证使用的便捷性，<a href="http://ivo-wang.github.io/2019/04/08/vps-%E6%9C%8D%E5%8A%A1%E5%99%A8-%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4%E8%AE%BE%E7%BD%AE/">更改秘钥登录</a></p>
+]]></content>
+      <categories>
+        <category>tools</category>
+      </categories>
+  </entry>
+  <entry>
     <title>windbg</title>
     <url>/2019/11/04/windbg/</url>
     <content><![CDATA[<h1 id="获取"><a href="#获取" class="headerlink" title="获取"></a>获取</h1><p>看一下 pageheap 针对的是什么问题？ <a href="https://blog.csdn.net/xiaohyy/article/details/4174493">堆调试工具——pageheap的使用和原理分析</a></p>
@@ -7053,47 +7188,42 @@ const double *const pip = &amp;pi;</code></pre>
   <entry>
     <title>码字，第一篇博客</title>
     <url>/2016/10/27/writing/</url>
-    <content><![CDATA[<p>个人学习笔记，学习的总结，肯定是采用文字的形式记录。是以纸笔墨砚的形式，还是以更现代的码字的形式？上学的时候还固执于前者，写写画画了好几个本子，每个上面都有些文字，却也都不成系统，而且基本上全是个人日记，记录心情，发泄情绪。工作后渐渐放弃了纸笔间的习惯，喜欢在键盘上码字，整理的内容也由日记全部过渡成了技术帖。一开始在印象笔记中零零散散保存，后来同时使用为知笔记并逐渐过渡了日记使用前者，技术帖使用后者（因为基本不再写日记，所以印象笔记也只是变成了存储记忆的空间，还是不翻书的那种）。</p>
-<p>后来迷恋上 markdown，有半个月打算放弃为知笔记，后来发现 markdown 只能替代为知笔记默认编辑器的位置，而个人知识管理的体系、框架的建立与维护还是得靠为知笔记。但两者的结合并不完美，核心问题在于技术人员（指我自己）使用 GFM，而为知笔记的 markdown 解释器并不能完全支持 GFM，尤其是语法高亮方面（主要使用 shell、vimL、console 的支持），GFM 不支持 <code>[TOC]</code> 标签。</p>
-<p>使用 MarkdownPad 2 编辑文字很爽，但保存的 <code>.md</code> 文档在查阅时并不直接。将其拷贝到为知笔记中在首部添加 <code>[TOC]</code> 标签后发布，阅读时直观，查找时无论是根据多层级文件级树形查找还是直接使用内建的搜索框直接搜索都是很方便的，不足之处在于：一方面即便其支持 markdown 编辑，但并不友好，尤其是在使用 MarkdownPad 2 之后；另一方面，使用 markdown 语法的前提下，无法实现在笔记中插入对另一篇笔记的引用（链接），这在整理系列笔记时尤其不能容忍。</p>
+    <content><![CDATA[<p>个人学习笔记，学习的总结，肯定是采用文字的形式记录。是以纸笔墨砚的形式，还是以更现代的码字的形式？上学的时候还固执于前者，写写画画了好几个本子，每个上面都有些文字，却也都不成系统，而且基本上全是个人日记，记录心情，发泄情绪。工作后渐渐放弃了纸笔间的习惯，喜欢在键盘上码字，整理的内容也由日记全部过渡成了技术帖。一开始在印象笔记中零零散散保存，后来同时使用为知笔记并逐渐过渡了日记使用前者，技术帖使用后者。因为基本不再写日记，印象笔记也就变成了存储记忆的空间，还是不翻书的那种。</p>
+<p>后来迷上 markdown，有半个月打算放弃为知笔记，后来发现 markdown 只能替代为知笔记默认编辑器的位置，而个人知识管理的体系、框架的建立与维护还是得靠为知笔记。但两者的结合并不完美，核心问题在于技术人员（指我自己）使用 GFM，而为知笔记的 markdown 解释器并不能完全支持 GFM，尤其是语法高亮方面（主要使用 shell、vimL、console 的支持），GFM 不支持 <code>[TOC]</code> 标签。</p>
+<p>使用 MarkdownPad 2 编辑文字很爽，但保存的 <code>.md</code> 文档在查阅时并不直接。将其拷贝到为知笔记中在首部添加 <code>[TOC]</code> 标签后发布，阅读时直观，查找时无论是根据多层级文件级树形查找还是直接使用内建的搜索框直接搜索都是很方便的，不足之处在于：</p>
+<ul>
+<li>一方面即便其支持 markdown 编辑，但并不友好，尤其是在使用 MarkdownPad 2 之后；</li>
+<li>另一方面，使用 markdown 语法的前提下，无法实现在笔记中插入对另一篇笔记的引用（链接），这在整理系列笔记时尤其不能容忍。</li>
+</ul>
 <p>想通过搭建个人的博客网站来解决上述矛盾：保留使用 MarkdownPad 2 编辑文字的习惯，放弃为知笔记，将文字直接发布到外网上就可以解决无法链接、笔记之间相互跳转的问题。此种情况下带来一点点不便，如果帖子中涉及个人隐私、公司商业机密（我笑），需要仔细筛选。</p>
 <p>在搭建个人博客的摸索阶段，从为知笔记到博客网站的过渡阶段，依然会使用为知笔记，并不在时间轴上一刀切，一下子将为知笔记中的内容全部拷贝到网站中，然后清空、销户。</p>
 <p>使用 GitHub Pages 和 Hexo 搭建个人博客，静态网页会在 Github 中保留有版本记录，但源 <code>.md</code> 文件的存储（乃至版本控制）尚需考虑：</p>
 <ul>
-<li><p>【×】对编辑的过程（版本控制）要求高，考虑在 <code>~\hexo\source</code> 创建版本库；2020/12/25 17:25:24 ,折腾一遭还是选择此方案</p>
+<li><p><del>对编辑的过程（版本控制）要求高，考虑</del> 在 <code>~\hexo\source</code> 创建版本库；2020/12/25，折腾一遭还是选择此方案</p>
 </li>
-<li><p>【√】<del>只要求结果（对版本控制要求低），有 <code>.md</code> 文件的备份即可，考虑整体迁移到 Dropbox 中；</del> </p>
-<p>  因为 <code>hexo\blog\source\_posts</code> 目录（<code>.md</code> 源）只能在 hexo 树形目录的固定节点，所以想将其备份到 dropbox 中，需要 trick / workaround，<a href="09">Windows下硬链接、软链接和快捷方式的区别</a></p>
+<li><p><del>只要求结果（对版本控制要求低），有 <code>.md</code> 文件的备份即可，考虑整体迁移到 Dropbox 中；</del> </p>
+<p>  <del>因为 <code>hexo\blog\source\_posts</code> 目录（<code>.md</code> 源）只能在 hexo 树形目录的固定节点，所以想将其备份到 dropbox 中，需要 trick / workaround，<a href="09">Windows下硬链接、软链接和快捷方式的区别</a></del></p>
+</li>
+<li><p>图片库的问题，考虑使用图床；2020/12/25，PicGo+GitHub，谁用谁知道</p>
+</li>
+<li><p>对目录有需求，使用哪种实现呢？<code>[TOC]</code> 不解析，使用支持目录的主题。</p>
 </li>
 </ul>
-<p>另外，</p>
-<ul>
-<li>图片库的问题，考虑使用图床；2020/12/25 17:25:32 ,PicGo+GitHub，谁用谁知道</li>
-<li>【√】对目录有需求，使用哪种实现呢？<code>[TOC]</code> 不解析，so，使用 Jacman 主题。</li>
-</ul>
-<h1 id="搭建博客"><a href="#搭建博客" class="headerlink" title="搭建博客"></a>搭建博客</h1><p> 在网上查找两篇教程，按部就班的操作就能得到结果。目前对于博客没有任何复杂的要求，对评论、对布局、主题都没有挑拣的欲望。博客只是用来将自己的整理的笔记、学习总结放到互联网上存储，查阅时不用再打开 为知笔记，不用打开 MarkdownPad2 实时生成，带来查阅时的便利即可。</p>
-<p>对于评论，教程中多提及中文用户推荐“多说”，起步阶段没有需求，加上暂时不想再多花时间在这些“边缘”上。所以未开启评论功能。总的来说，博客还是处于自我查阅阶段。</p>
-<ol>
-<li><p>阮一峰 的 <a href="http://www.ruanyifeng.com/blog/2012/08/blogging_with_jekyll.html">搭建一个免费的，无限流量的Blog</a>，其中还是以 <a href="https://pages.github.com/">Github Pages</a> 官方推荐的 Jekyll 为搭建工具的。喜欢写Blog的人，会经历三个阶段:</p>
+<h1 id="搭建博客"><a href="#搭建博客" class="headerlink" title="搭建博客"></a>搭建博客</h1><p>阮一峰说喜欢写Blog的人，会经历三个阶段:</p>
 <blockquote>
 <p>第一阶段，刚接触Blog，觉得很新鲜，试着选择一个免费空间来写。<br>第二阶段，发现免费空间限制太多，就自己购买域名和空间，搭建独立博客。<br>第三阶段，觉得独立博客的管理太麻烦，最好在保留控制权的前提下，让别人来管，自己只负责写文章。</p>
 </blockquote>
-</li>
-<li><p>参考以下两篇教程，互为印证最终搭建成功。</p>
+<p>在网上查找两篇教程，按部就班的操作就能得到结果。目前对于博客没有任何复杂的要求，对评论、对布局、主题都没有挑选的欲望。博客只是用来将自己的整理的笔记、学习总结放到互联网上存储，查阅时不用再打开为知笔记，不用打开 MarkdownPad2 实时生成，带来查阅时的便利即可。</p>
+<p>对于评论，教程中多提及中文用户推荐“多说”，起步阶段没有需求，加上暂时不想再多花时间在这些“边缘”上，所以未开启评论功能。总的来说，博客还是处于自我查阅阶段。</p>
+<p>参考 <a href="https://hexo.io/zh-cn/">hexo 官方站点</a> 的介绍，在 <a href="https://nodejs.org/zh-cn/">下载安装 Node.js</a> 之后，执行以下命令即可完成搭建。 </p>
 <ul>
-<li><a href="http://www.ido321.com/1650.html">简洁轻便的博客平台: Hexo详解</a></li>
-<li><a href="http://ashleyren.github.io/2015/05/13/%E8%8F%9C%E9%B8%9F%E7%AF%87%EF%BC%9A%E6%8A%80%E6%9C%AF%E5%8D%9A%E5%AE%A2%E5%B9%B3%E5%8F%B0%E5%88%B0%E5%BA%95%E5%93%AA%E5%AE%B6%E5%BC%BA%EF%BC%9FHexo-%E5%88%9D%E7%BA%A7%E5%85%A5%E9%97%A8/#post">菜鸟篇：技术博客平台哪家强？Hexo 初级入门</a></li>
+<li>下载 Node.js 时，不使用代理时下载飞快；</li>
+<li>安装 Node.js 的过程会自动配置 Path，安装完毕使用 powershell 输入 <code>node</code> 验证</li>
 </ul>
-</li>
-<li><p>其中，在 Debian8 上安装 nodejs 使用 <a href="https://nodejs.org/en/download/">其官方</a> 的 Linux Binaries (.tar.xz) 版本。解压之后直接配置系统 PATH 路径即可。</p>
- <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">tar xJvf node-v4.4.7-linux-x64.tar.xz</span><br></pre></td></tr></table></figure></li>
-<li><p>绑定本地 hexo 和个人的 Github Pages 后（修改全局配置文件），执行 <code>hexo deploy</code> 命令部署时需要先安装  hexo-deployer-git</p>
- <figure class="highlight sh"><table><tr><td class="code"><pre><span class="line">npm install hexo-deployer-git -S</span><br></pre></td></tr></table></figure></li>
-<li><p>使用的主题，从 <a href="https://github.com/hexojs/hexo/wiki/Themes">Hexo Themes</a> 翻出来的：<a href="http://arvinxiang.com/landscape-plus/">Landscape Plus</a></p>
-</li>
-<li><p>如果有更换域名的需求，可以参考 <a href="http://www.jianshu.com/p/05289a4bc8b2">简明Github Pages与Hexo教程</a>，而且作者是在 win7 环境下搭建的，同时文末给出了大量的参考资料。</p>
-</li>
-</ol>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> npm install hexo-cli -g</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> hexo init blog <span class="comment">#解释：初始化了一个文件夹叫做blog，如果不想叫blog可以改为别的名字</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> <span class="built_in">cd</span> blog</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> npm install</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> hexo server</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#</span><span class="bash"> 通过 github 发布需要</span></span><br><span class="line">npm install hexo-deployer-git -S</span><br><span class="line"><span class="meta">#</span><span class="bash"> 使用本地搜索需要</span></span><br><span class="line">npm install hexo-generator-searchdb --save</span><br></pre></td></tr></table></figure>
+<p>拉取笔记仓库，并替换 source 目录：进入 <code>blog\</code> 目录，执行 <code>git clone git@github.com:tnie/notes.git</code>，然后 <code>rm source -rf &amp;&amp; move notes source</code></p>
+<p>使用仓库中的配置文件，更新 blog 的配置项目。</p>
+<p><strong>注意</strong>：绑定本地 hexo 和个人的 Github Pages 后（修改全局配置文件），执行 <code>hexo deploy</code> 命令部署时需要先安装  hexo-deployer-git. <code>npm install hexo-deployer-git -S</code></p>
 <h1 id="发布博客"><a href="#发布博客" class="headerlink" title="发布博客"></a>发布博客</h1><p>整理完笔记之后，怎么发布到 github.io 上？在这里针对具体的步骤做一份备忘录，防止因为懒惰或其他原因较长时间不发博客，“回归”时还要再次花费时间查阅 Hexo + GitHub Pages 技术帖子。而且，技术相通，但每个人都会培养出属于自己的习惯，不想“回归”时再摸索。</p>
 <ol>
 <li><p>在 Git Shell 中打开至 hexo 目录。<code> cd hexo</code></p>
@@ -7117,26 +7247,16 @@ const double *const pip = &amp;pi;</code></pre>
 </li>
 <li><p>敲入 <code>hexo deploy</code> 发布到互联网。</p>
 </li>
-<li><p>已正式发布的静态网页无需考虑备份的问题，因为其自身就是 github 的版本库；但生成静态网页的 _post 目录下的 md 文件需要做备份，将来需要修改静态网页什么的。</p>
-<ul>
-<li><del>使用 Dropbox 备份，需要 <a href="http://www.chenxuanyi.cn/skydrive-dropbox-baidu-syn-folder.html">windows 下创建硬链接的技术</a>。因为这些 md 文件并不关注版本变迁，所以不考虑使用版本控制的 OSChina GitHub 等</del>。</li>
-</ul>
-</li>
 <li><p>迁移为知笔记中的内容。“迁移”顾名思义，要从为知笔记中删除。</p>
 </li>
 </ol>
 <h1 id="参考链接"><a href="#参考链接" class="headerlink" title="参考链接"></a>参考链接</h1><p>有讲述整体流程的，有着眼于模块的——描述主题的、强调分类和标签的、添加站内搜索、添加评论的……</p>
-<ul>
-<li><a href="https://wsgzao.github.io/post/hexo-guide/">使用GitHub和Hexo搭建免费静态Blog</a></li>
-<li><a href="http://sunwhut.com/2015/10/30/buildBlog/">如何利用GitHub Pages和Hexo快速搭建个人博客</a></li>
-</ul>
+<ol start="3">
+<li>其中，在 Debian8 上安装 Node.js 使用 <a href="https://nodejs.org/en/download/">其官方</a> 的 Linux Binaries (.tar.xz) 版本。解压之后直接配置系统 PATH 路径即可。<code>tar xJvf node-v4.4.7-linux-x64.tar.xz</code></li>
+<li>如果有更换域名的需求，可以参考 <a href="http://www.jianshu.com/p/05289a4bc8b2">简明Github Pages与Hexo教程</a>，而且作者是在 win7 环境下搭建的，同时文末给出了大量的参考资料。</li>
+</ol>
 <h2 id="主题"><a href="#主题" class="headerlink" title="主题"></a>主题</h2><p>官方是有 <a href="https://hexo.io/themes/">辣么多的主题</a> 让我们选，挑花了眼。</p>
-<p>讲解 Jacman 主题的，我现在（2016/12/15 11:36:10）用的就是这个主题，因为其自带目录功能。</p>
-<ul>
-<li><a href="https://wsgzao.github.io/post/hexo-jacman/">Jacman基于Pacman修改的Hexo主题</a></li>
-<li><a href="http://jacman.wuchong.me/2014/11/20/how-to-use-jacman/">如何使用 Jacman 主题</a></li>
-</ul>
-<p>2017/4/13 15:08:23 ，使用新的主题 <a href="http://theme-next.iissnan.com/getting-started.html">NexT</a>。原因有二：</p>
+<p>2017/4/13，使用新的主题 <a href="https://github.com/theme-next/hexo-theme-next">NexT</a>。原因有二：</p>
 <ul>
 <li>Jacman 的搜索不能用。网上有很多其搭配 swiftype，但其他的第三方（比如谷歌）却怎么都调试不成功。</li>
 <li>Jacman 作者自己貌似都放弃了，<a href="http://wuchong.me/">作者自己的博客</a> 使用 NexT 主题是其一，不再维护 Jacman 是关键。</li>
@@ -7149,21 +7269,15 @@ const double *const pip = &amp;pi;</code></pre>
 <h2 id="目录和标签"><a href="#目录和标签" class="headerlink" title="目录和标签"></a>目录和标签</h2><p><a href="http://ijiaober.github.io/2014/08/05/hexo/hexo-04/">Hexo使用攻略：（四）Hexo的分类和标签设置</a></p>
 <p>目录和标签有什么区别？关键词：一个目录，多个标签；树状结构，网状结构；</p>
 <ol>
-<li><p>怎么给文章添加合适的标签呢？</p>
-<p> 不建议你“未雨绸缪”的打上标签。而是在有一定数量的笔记有大量相同性时，再打上标签，目录也是如此。</p>
-<p> 遵循这么一个原则：想一下读者看了这篇文章后，还会对哪些其他的文章感兴趣，然后这些文章就都添加上同一个标签。这样标签就可以实现目录交叉</p>
-</li>
-<li><p>在目录上尽可能的粗放，再用标签进行管理</p>
-</li>
-<li><p>使用树状目录尽量不要超过3级。</p>
-</li>
-<li><p>树状目录应该是和标签系统互补的；</p>
-</li>
-<li><p>标签起一种聚合作用，将相关性很强的东西联系到一起；分类目录则是相当于存放同类文章的容器，里面的文章虽属同类，相关性却可能不太强。</p>
-</li>
-<li><p>多参考大牛们的网站</p>
-</li>
+<li>怎么给文章添加合适的标签呢？</li>
+<li>在目录上尽可能的粗放，再用标签进行管理</li>
+<li>使用树状目录尽量不要超过3级。</li>
+<li>树状目录应该是和标签系统互补的；</li>
+<li>标签起一种聚合作用，将相关性很强的东西联系到一起；分类目录则是相当于存放同类文章的容器，里面的文章虽属同类，相关性却可能不太强。</li>
+<li>多参考大牛们的网站</li>
 </ol>
+<p>不建议你“未雨绸缪”的打上标签。而是在有一定数量的笔记有大量相同性时，再打上标签，目录也是如此。</p>
+<p>遵循这么一个原则：想一下读者看了这篇文章后，还会对哪些其他的文章感兴趣，然后这些文章就都添加上同一个标签。这样标签就可以实现目录交叉</p>
 <h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p><a href="http://www.jerryfu.net/post/search-engine-for-hexo-with-swiftype-v2.html">利用swiftype为hexo添加站内搜索v2.0</a></p>
 <p>swiftype 试用结束后，只能付费。免费试用期到期后，官网登录之后无论点击哪里都是“Your Swiftype free trial has come to an end” 页面，猜测 swiftype 不再提供免费版本，<a href="https://github.com/iissnan/hexo-theme-next/issues/841">佐证</a>。需要寻找备案了……</p>
 <p><a href="https://www.sqlsec.com/2017/12/hexosearch.html">使用本地搜索</a>，安装插件（需要相应的配置项）。</p>
@@ -9346,81 +9460,5 @@ const double *const pip = &amp;pi;</code></pre>
       <tags>
         <tag>git</tag>
       </tags>
-  </entry>
-  <entry>
-    <title>建立 vps 后的第一步</title>
-    <url>/2020/12/25/vps_first/</url>
-    <content><![CDATA[<p>建立 vps 后首先要保证后续的使用安全。否则再多的功能都是空中楼阁。</p>
-<h1 id="SSH-登录"><a href="#SSH-登录" class="headerlink" title="SSH 登录"></a>SSH 登录</h1><p>非对称密钥算法的作用分为两种场景：</p>
-<ul>
-<li>加密数据：公钥加密，私钥解密。数据由前者发往后者，数据是安全的。</li>
-<li>认证：私钥加密，公钥解密。后者验证前者的身份，传输数据的安全性是没有保证的。</li>
-</ul>
-<p>那么远程登录呢？</p>
-<blockquote>
-<p>SSH 本身提供两种级别的验证方法：基于口令的安全验证；基于密钥的安全验证。<a href="https://blog.csdn.net/li528405176/article/details/82810342">引用来源</a></p>
-</blockquote>
-<ul>
-<li><p>口令登录，属于加密数据的场景。</p>
-<blockquote>
-<p>首次登录时客户端获取服务端的公钥，询问其公钥指纹是否可信（客户需要通过其他方式验证真伪）。</p>
-<p>然后客户端以服务端公钥加密口令后传输，服务端使用自身的密钥解密后验证。<a href="https://blog.csdn.net/csm201314/article/details/78453579">参考</a></p>
-</blockquote>
-</li>
-<li><p>密钥登录，属于认证的场景，比如签名。</p>
-<blockquote>
-<p>需要将客户端的公钥上传给服务端（服务端通过其他方式验证是否可信）。</p>
-<p>客户端打个招呼要登录，服务端将一个随机字符串发给客户端。</p>
-<p>客户端使用自身的私钥加密后，服务端解密验证是否一致。</p>
-</blockquote>
-</li>
-</ul>
-<p>CentOS 上创建普通用户后，默认共用 <code>/etc/ssh/</code> 中的密钥。<del>应该进一步的分离，不同用户使用各自的密钥吧</del>？<code>/etc/ssh/</code> 中的证书可以认为是用于标识主机的，本就和用户无关。</p>
-<p><a href="https://alick9188.wordpress.com/2013/02/23/ssh-host-fingerprint/">查看 SSH 主机密钥的指纹</a> 的命令： <code>ssh-keygen -l </code></p>
-<p><a href="https://marskid.net/2018/02/05/how-to-verify-ssh-public-key-fingerprint/">验证远程主机 SSH 指纹</a>，通过 <strong>可信渠道</strong> 获得服务器的公钥指纹，与客户端首次登录服务器时的指纹对比。</p>
-<h1 id="centos-的基础操作"><a href="#centos-的基础操作" class="headerlink" title="centos 的基础操作"></a>centos 的基础操作</h1><p>为了某人能够业余时间练习、熟悉操作，方便工作。所以使用了与其公司服务器相同的操作系统。限于其公司版本过低， vultr 不提供一键安装服务（需要自行配置），所以采用了目前的</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看 centos 版本</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/redhat-release</span></span><br><span class="line">CentOS Linux release 8.1.1911 (Core)</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看用户列表</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> cat /etc/passwd</span></span><br></pre></td></tr></table></figure>
-<p>linux 下查看进程占用的端口分为两步：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">查看nginx进程pid：</span></span><br><span class="line">ps -ef | grep nginx</span><br><span class="line"><span class="meta">#</span><span class="bash">通过nginx进程pid查看占用端口（进程pid为9836）</span></span><br><span class="line">netstat -nap | grep 9836</span><br></pre></td></tr></table></figure>
-<p>操作用户</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 新增用户</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> adduser v2ray</span></span><br><span class="line"><span class="meta">#</span><span class="bash">为这个用户初始化密码</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> passwd v2ray</span></span><br></pre></td></tr></table></figure>
-<h2 id="防火墙"><a href="#防火墙" class="headerlink" title="防火墙"></a>防火墙</h2><p>服务端配置完毕，通信失败时首先要确认的就是端口是否打开。</p>
-<blockquote>
-<p>Centos 升级到 7 之后，内置的防火墙已经从 iptables 变成了 firewalld</p>
-</blockquote>
-<p>所以这里只记录 firewall 的操作备忘。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 查看已经开放的端口：</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开启端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=80/tcp --permanent</span><br><span class="line"><span class="meta">#</span><span class="bash"> 批量开发端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=30000-40000/tcp --permanent</span><br></pre></td></tr></table></figure>
-<p>命令含义：</p>
-<ul>
-<li><code>–zone</code> #作用域</li>
-<li><code>–add-port=80/tcp</code> #添加端口，格式为：端口/通讯协议</li>
-<li><code>–permanent</code> #永久生效，没有此参数重启后失效</li>
-</ul>
-<p>调整防火墙（比如删减端口）之后，重启生效。</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">重启防火墙</span></span><br><span class="line">firewall-cmd --reload</span><br><span class="line"><span class="meta">#</span><span class="bash">查看默认防火墙状态</span></span><br><span class="line">firewall-cmd --state</span><br></pre></td></tr></table></figure>
-<h2 id="启停服务"><a href="#启停服务" class="headerlink" title="启停服务"></a>启停服务</h2><figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">停止firewall</span></span><br><span class="line">systemctl stop firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 开机启动</span></span><br><span class="line">systemctl enable firewalld</span><br><span class="line"><span class="meta">#</span><span class="bash">禁止firewall开机启动</span></span><br><span class="line">systemctl disable firewalld.service</span><br><span class="line"><span class="meta">#</span><span class="bash"> 查看状态</span></span><br><span class="line">systemctl status firewalld</span><br></pre></td></tr></table></figure>
-<h2 id="登录"><a href="#登录" class="headerlink" title="登录"></a>登录</h2><p>2020年6月2日，今天发现在公司的联通网络下无法登录 vps 了，连接总是失败，提示超时。</p>
-<p>通过其他主机访问 vps 能够成功，但进入之后看到警告信息：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">There were 2897 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
-<p>提示主机被尝试暴力破解。通过 <code>systemctl status sshd</code> 或者查看 <code>ll /var/log/secure -h</code> 等方式都能够看到异常。</p>
-<h3 id="修改端口"><a href="#修改端口" class="headerlink" title="修改端口"></a>修改端口</h3><p>尝试修改 <code>vim /etc/ssh/sshd_config</code> 默认的 22 端口，重启服务器失败。查询发现报错信息</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">SELinux is preventing /usr/sbin/sshd from name_bind access on the tcp_socket port 88888.</span><br></pre></td></tr></table></figure>
-<p>解决方式其实在配置文件的注释中也说明了：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> If you want to change the port on a SELinux system, you have to tell</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> SELinux about this change.</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> semanage port -a -t ssh_port_t -p tcp <span class="comment">#PORTNUMBER</span></span></span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash"><span class="comment">#Port 22</span></span></span><br><span class="line">Port 88888</span><br></pre></td></tr></table></figure>
-<p>改完端口之后，公司的主机还是无法登录，依然是超时报错。</p>
-<p>2020年6月24日13:21:37 修改端口并不能一劳永逸，今天发现 /var/log/secure 文件已经 12M 了，从上次成功登陆到刚刚，有 4500+ 次的错误尝试。</p>
-<h3 id="禁用-root-远程登陆"><a href="#禁用-root-远程登陆" class="headerlink" title="禁用 root 远程登陆"></a>禁用 root 远程登陆</h3><p>先创建普通用户。</p>
-<p>修改 <code>/etc/ssh/sshd_config</code> 文件，将</p>
-<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">#PermitRootLogin yes</span><br><span class="line"># 修改为 -&gt;</span><br><span class="line">PermitRootLogin no</span><br></pre></td></tr></table></figure>
-<p>重启 sshd 服务生效。禁止以后，可以使用普通用户 ssh 登录，登录后可以切换到 root 权限。</p>
-<p>更安全了，但登录失败的暴力破解日志还是会一直生成，不开心。</p>
-<p>2020年6月30日13:30:50 普通用户登录，切换 root 登录时提示</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Last login: Wed Jun 24 05:51:51 UTC 2020 on pts/0</span><br><span class="line">Last failed login: Tue Jun 30 05:28:48 UTC 2020 from 106.13.69.8 on ssh:notty</span><br><span class="line">There were 14744 failed login attempts since the last successful login.</span><br></pre></td></tr></table></figure>
-<h3 id="添加禁止-ip"><a href="#添加禁止-ip" class="headerlink" title="添加禁止 ip"></a>添加禁止 ip</h3><p>参考 <a href="http://www.cpacm.net/2019/09/23/%E9%98%B2%E6%AD%A2%E6%9C%8D%E5%8A%A1%E5%99%A8SSH%E8%A2%AB%E6%9A%B4%E5%8A%9B%E7%A0%B4%E8%A7%A3/">防止服务器SSH暴力破解</a>，拷贝其脚本，在服务器定时执行 /root/a.txt 脚本。</p>
-<h3 id="秘钥登录"><a href="#秘钥登录" class="headerlink" title="秘钥登录"></a>秘钥登录</h3><p>为了保证使用的便捷性，<a href="http://ivo-wang.github.io/2019/04/08/vps-%E6%9C%8D%E5%8A%A1%E5%99%A8-%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4%E8%AE%BE%E7%BD%AE/">更改秘钥登录</a></p>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
   </entry>
 </search>
