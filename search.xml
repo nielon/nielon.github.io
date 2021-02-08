@@ -125,16 +125,25 @@
   <entry>
     <title>跨平台使用文本文件时的陷阱</title>
     <url>/2017/03/21/Cross-Platform-Text/</url>
-    <content><![CDATA[<p>问题主要发生于将 windows 下的文本（源代码、脚本等）拷贝到 Linux 平台；反之，因为 windows 的霸道，其开发工具、编辑器会强制转换，所以一般不会产生问题。</p>
+    <content><![CDATA[<p>问题主要发生于将 windows 下的文本（源代码、脚本等）拷贝到 Linux 平台；反之，因为 windows 的“主动”，其开发工具、编辑器会强制转换，所以一般不会产生问题。</p>
 <ul>
 <li>gcc 编译报错让我认识到，utf8 格式的文本还分带 BOM 头，不带 BOM 头；</li>
 <li>vim 启动有问题认识到换行、回车到现在还在影响着跨平台；</li>
 </ul>
 <a id="more"></a>
 
-<h1 id="UTF-8-是否带-BOM-头"><a href="#UTF-8-是否带-BOM-头" class="headerlink" title="UTF-8 是否带 BOM 头"></a>UTF-8 是否带 BOM 头</h1><p>2016年1月14日 17:37:30</p>
-<p>ps 【…有4个链接要看】</p>
-<h2 id="BOM-概念"><a href="#BOM-概念" class="headerlink" title="BOM 概念"></a>BOM 概念</h2><p>BOM，就是 utf8-bom 中的 bom。</p>
+<h1 id="字符集和字符编码"><a href="#字符集和字符编码" class="headerlink" title="字符集和字符编码"></a>字符集和字符编码</h1><h2 id="ansi-体系和-unicode"><a href="#ansi-体系和-unicode" class="headerlink" title="ansi 体系和 unicode"></a>ansi 体系和 unicode</h2><p>参考：<a href="http://blog.csdn.net/stephen1315/article/details/7476236">Unicode 字符集和多字节字符集关系</a></p>
+<p>ansi 机构最初的 ascii 字符集，后来各国各自扩充，中国大陆和新加坡等地区使用本地编码是 GB2312 或 GBK，中国港台地区使用的本地编码是 BIG5，韩国和日本的本地编码分别是 euc-kr 和 Shift_JIS。这些从 ANSI 标准派生的字符集被习惯的统称为 ANSI 字符集，它们正式的名称应该是 MBCS(Multi-Byte Chactacter System，即多字节字符系统)。ansi 体系，字符集一般只对应一种字符编码。</p>
+<p>再后来，为了大一统，出现了 unicode 字符集。</p>
+<h2 id="mbsc-和宽字节"><a href="#mbsc-和宽字节" class="headerlink" title="mbsc 和宽字节"></a>mbsc 和宽字节</h2><p>参考：<a href="http://blog.csdn.net/leixiaohua1020/article/details/12753723">单字节字符集，多字节字符集，Unicode</a></p>
+<p>ASCII 是 SBCS。一个字节表示的 <code>0</code> 用来标志 SBCS 字符串的结束。  </p>
+<p>DBCS 字符串的结束标志也是一个单字节表示的 <code>0</code>。  </p>
+<p>Unicode 字符串使用两个字节表示的 <code>0</code> 作为它的结束标志。</p>
+<ul>
+<li>多字节（mbsc）包括 sbsc 和 dbsc 等。ascii 基本代表了 sbsc。ansi 和 mbsc 基本算同义词。</li>
+<li>宽字节，unicode 基本代表了宽字节。</li>
+</ul>
+<h1 id="BOM-概念"><a href="#BOM-概念" class="headerlink" title="BOM 概念"></a>BOM 概念</h1><p>BOM，就是 utf8-bom 中的 bom。</p>
 <p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
 <ul>
 <li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
@@ -152,10 +161,10 @@
 <p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
 <p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
-<h2 id="“error-stray-‘-357’-in-program”"><a href="#“error-stray-‘-357’-in-program”" class="headerlink" title="“error: stray ‘\357’ in program”"></a>“error: stray ‘\357’ in program”</h2><p>在 linux 上某次编译时老是报错，错误信息如下：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> g++ -I../../include unit_test.cpp -o unit_test</span></span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\357&#x27;</span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\273&#x27;</span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\277&#x27;</span><br><span class="line">In file included from unit_test.cpp:63:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="error-stray-‘-357’-in-program"><a href="#error-stray-‘-357’-in-program" class="headerlink" title="error: stray ‘\357’ in program"></a>error: stray ‘\357’ in program</h2><p>在 linux 上某次编译时老是报错，错误信息如下：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> g++ -I../../include unit_test.cpp -o unit_test</span></span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\357&#x27;</span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\273&#x27;</span><br><span class="line">unit_test.cpp:1: 错误： 程序中有游离的&#x27;\277&#x27;</span><br><span class="line">In file included from unit_test.cpp:63:</span><br></pre></td></tr></table></figure>
 <p>或在英文系统下：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> g++ -I../../include unit_test.cpp -o unit_test</span></span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\357&#x27; in program</span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\273&#x27; in program</span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\277&#x27; in program</span><br><span class="line">In file included from unit_test.cpp:63:</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> g++ -I../../include unit_test.cpp -o unit_test</span></span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\357&#x27; in program</span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\273&#x27; in program</span><br><span class="line">unit_test.cpp:1: error: stray &#x27;\277&#x27; in program</span><br><span class="line">In file included from unit_test.cpp:63:</span><br></pre></td></tr></table></figure>
 <p><code>\357\273\277</code> （八进制）就是 <code>EF BB BF</code>（十六进制），这是 utf8 格式文本文件的 BOM 头。so……</p>
 <p>产生原因:</p>
 <p>文本文件（源代码文件 .cpp .h 等也是文本文件）的编码格式各种各样，没有明确的区分。而一些浏览文本文件的软件大多是用猜测的算法来区分这些编码，这里涉及内容很多，不多说。windows 下为了区分 UTF-8 编码格式，在以 UTF-8 编码的文本文件前写入三个字节的标志（0xef 0xbb 0xbf）来区分 UTF-8 编码的文本文件，也就是带 BOM 的 UTF-8。而 linux 下的一些编译器不识别 BOM，所以就会报错。</p>
@@ -170,16 +179,10 @@
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> cat unit_test.cpp |hd -n 10</span></span><br><span class="line">00000000 ef bb bf 2f 2a 2a 2a 2a 2a 2a |.../******|</span><br><span class="line">0000000a</span><br></pre></td></tr></table></figure>
 <p>ps: <code>hd</code> 命令在 13x 系列服务器上不存在，在 Debian8 中有。 猜测应该是 <code>hexdump</code> 命令？？</p>
 <h1 id="回车、换行是两个字符"><a href="#回车、换行是两个字符" class="headerlink" title="回车、换行是两个字符"></a>回车、换行是两个字符</h1><p>虽然很早就意识到回车、换行的区别，在不同平台上不一致。但在新的系统、新的应用中，这个问题一般会被“抹掉”，不会再暴露出来。但在 N 年前的老机子就得注意了！</p>
-<h2 id="Not-an-editor-command-M"><a href="#Not-an-editor-command-M" class="headerlink" title="Not an editor command: ^M"></a>Not an editor command: ^M</h2><p>2015年11月20日 17:32:39</p>
-<p>转载自：<a href="http://www.cnblogs.com/ini_always/archive/2012/03/03/2378554.html">http://www.cnblogs.com/ini_always/archive/2012/03/03/2378554.html</a></p>
-<p>将 windows 下的 vim 配置文件 _vimrc 拷贝到 mac 下，重命名为 .vimrc，本指望实现共用配置文件。但在启动 vim 时却报了以下错误：</p>
+<p><a href="http://www.ruanyifeng.com/blog/2006/04/post_213.html">回车和换行</a></p>
+<h2 id="Not-an-editor-command-M"><a href="#Not-an-editor-command-M" class="headerlink" title="Not an editor command: ^M"></a>Not an editor command: ^M</h2><p>将 windows 下的 vim 配置文件 _vimrc 拷贝到 mac 下，重命名为 .vimrc，本指望实现共用配置文件。但在启动 vim 时却报了以下错误：</p>
 <figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">E492: Not an editor command: ^M</span><br><span class="line">E488: Trailing characters: nocompatible^M</span><br><span class="line">E15: Invalid expression: has(&quot;syntax&quot;)^M</span><br><span class="line">E171: Missing :endif</span><br></pre></td></tr></table></figure>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Not-an-enditor-command.png" alt="报错信息"></p>
-<p>Mac OS 的本质是 unix，而 unix-like 的文件换行符为 <code>\n</code>，但 windows 却非要把 <code>\r\n</code> 作为换行符，所以，vim 在解析从 windows 拷贝到 mac 的的 vimrc 时，因为遇到无法解析的 <code>\r</code>，所以报错。</p>
-<p>这个简单，用vim的神替换功能处理一下就好：<code>:%s/^M//gc</code>，<code>g</code> 选项表示全局替换，<code>c</code> 选项表示每次替换都需要确认。</p>
-<p>但要注意：这里的 <code>^M</code> 是特殊字符，并不是使用 <code>^</code>和 <code>M</code> 两个字符输入的，而是通过两个组合键 <code>C-V</code> <code>C-M</code> 输入的（C 代指 Ctrl），当然，<code>^M</code> 也可以使用 <code>\r</code> 表示。</p>
-<p>问题：我按照上面的执行替换指令后，报错 未找到 <code>\r</code>。不清楚为什么，反正不好用。</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Pattern-not-found.png" alt="未找到 \r"></p>
 <p>从网上搜到的相关问题的解决办法： <a href="http://blog.csdn.net/alex_xhl/article/details/6097191">vim 替换^M</a></p>
 <p>使用 <code>dos2unix</code> 命令。一般的分发版本中都带有这个小工具（如果没有可以根据下面的连接去下载），使用起来很方便：<code>$ dos2unix myfile.txt</code></p>
 <p>上面的命令会去掉行尾的^M。</p>
@@ -1653,31 +1656,6 @@
       </tags>
   </entry>
   <entry>
-    <title>BOM 字节顺序标记</title>
-    <url>/2019/11/04/bom/</url>
-    <content><![CDATA[<p>BOM，就是 utf8-bom 中的 bom。</p>
-<p><a href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
-<ul>
-<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
-<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
-</ul>
-<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
-<blockquote>
-<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
-</blockquote>
-<a id="more"></a>
-
-<p>另外，在 c++11 起，新增了两个 <a href="https://zh.cppreference.com/w/cpp/language/escape">转义字符</a>：</p>
-<ul>
-<li><code>\unnnn</code>，    通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnn</code></li>
-<li><code>\Unnnnnnnn</code>，通用字符名（任意 Unicode 值）可能生成多个字符，表示编码点 <code>U+nnnnnnnn</code></li>
-</ul>
-<p>因为 <a href="https://zh.wikipedia.org/wiki/Unicode%E5%AD%97%E7%AC%A6%E5%B9%B3%E9%9D%A2%E6%98%A0%E5%B0%84">BMP 基本多文种平面</a> 基本包含了我们目前接触到的所有字符，所以 <code>\U</code> 大写的转移字符一般是用不到的。</p>
-<p>由此，如果我们想通过 C++ 的输出流创建 utf8-bom 文件并写入 <code>niel水</code> 有多样的代码可选：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// UTF-8 data with BOM</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">u8&quot;\ufeff&quot;</span> &lt;&lt; <span class="string">u8&quot;niel\u6c34&quot;</span>;</span><br><span class="line"><span class="comment">// or</span></span><br><span class="line"><span class="built_in">std</span>::ofstream(<span class="string">&quot;text.txt&quot;</span>) &lt;&lt; <span class="string">&quot;\xef\xbb\xbf&quot;</span> &lt;&lt; <span class="string">u8&quot;niel水&quot;</span>;</span><br><span class="line"><span class="comment">// 两者并无本质区别：我们优先做了转码工作或者交给预处理器去做</span></span><br></pre></td></tr></table></figure>
-]]></content>
-  </entry>
-  <entry>
     <title>构建 build</title>
     <url>/2016/08/13/build/</url>
     <content><![CDATA[<p>整理为知笔记中和 make makefile automake 有关内容，成此篇。</p>
@@ -2114,43 +2092,79 @@
       </categories>
   </entry>
   <entry>
-    <title>零散</title>
-    <url>/2017/04/28/cherry/</url>
-    <content><![CDATA[<p> 2016/3/14 10:51:03</p>
-<p>办公室抽屉中草稿纸上的内容，挑拣有用的信息誊录在此。草稿纸扔掉。</p>
-<blockquote>
-<p>以下每一项都可以展开，写一篇笔记的</p>
-</blockquote>
+    <title>cmake 备忘</title>
+    <url>/2018/12/03/cmake/</url>
+    <content><![CDATA[<p>automake 系列工具友好性的确不咋地，而且只限于 *inux 平台。跨平台还是 cmake 为佳，也有越来越多的项目在使用 cmake，比如 google 的 gRPC，比如 zlib 也支持 cmake。</p>
+<p>如果只是说要编译三方库为自己所用，一般来说不需要掌握怎么编写 <code>CMakeLists.txt</code>；只有当自己的项目需要用 cmake 管理、组织编译时才需要弄懂 <code>CMakeLists.txt</code> 中的“语言”怎么编写。</p>
+<h1 id="使用-cmake"><a href="#使用-cmake" class="headerlink" title="使用 cmake"></a>使用 cmake</h1><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake .. &amp;&amp; cmake --build . --target install</code></pre>
+<p><code>cmake --build .</code> 在 linux 下等价于 <code>make</code>，在 windows 下等同于 msvc 生成解决方案 </p>
 <a id="more"></a>
 
-<h1 id="VS2010-学习笔记整理"><a href="#VS2010-学习笔记整理" class="headerlink" title="VS2010 学习笔记整理"></a>VS2010 学习笔记整理</h1><ul>
-<li><p>启用行号</p>
-</li>
-<li><p>F5 调试，ctrl+F5 运行不调试</p>
-</li>
-<li><p>多显示器</p>
-<p>  <img src="http://img.article.pchome.net/00/47/36/04/3.jpg" alt="是不是有种很爽的感觉"></p>
-</li>
-<li><p>目录配置 </p>
-</li>
+<h2 id="外部编译"><a href="#外部编译" class="headerlink" title="外部编译"></a>外部编译</h2><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake ..</code></pre>
+<blockquote>
+<p>就是让源码文件和 cmake 生成的工程文件分开，将 cmake 生成的工程文件放在一个单独的目录下面。</p>
+</blockquote>
+<p>坚持使用 build 目录，进行外部编译。以避免在源码目录中混杂垃圾文件。</p>
+<h2 id="生成器-generator-G"><a href="#生成器-generator-G" class="headerlink" title="生成器 generator -G"></a>生成器 generator <code>-G</code></h2><pre><code>cmake -G &quot;&lt;generator&gt;&quot; -DCMAKE_INSTALL_PREFIX=stage ..</code></pre>
+<p><a href="https://cmake.org/cmake/help/v3.13/manual/cmake-generators.7.html">cmake-generators 文档</a> 描述</p>
+<h3 id="Command-Line-Build-Tool-Generators"><a href="#Command-Line-Build-Tool-Generators" class="headerlink" title="Command-Line Build Tool Generators"></a>Command-Line Build Tool Generators</h3><p>……</p>
+<h3 id="IDE-Build-Tool-Generators"><a href="#IDE-Build-Tool-Generators" class="headerlink" title="IDE Build Tool Generators"></a>IDE Build Tool Generators</h3><p>These generators support Integrated Development Environment (IDE) project files. Since <strong>the IDEs configure their own environment</strong> one may launch CMake from any environment.</p>
+<h4 id="Visual-Studio-Generators"><a href="#Visual-Studio-Generators" class="headerlink" title="Visual Studio Generators"></a>Visual Studio Generators</h4><ul>
+<li>……</li>
+<li>Visual Studio 12 2013</li>
+<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2014%202015.html">Visual Studio 14 2015</a></li>
+<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2015%202017.html">Visual Studio 15 2017</a></li>
 </ul>
-<h1 id="UML-类图类与类之间关系表示方法：手机图片"><a href="#UML-类图类与类之间关系表示方法：手机图片" class="headerlink" title="UML 类图类与类之间关系表示方法：手机图片"></a>UML 类图类与类之间关系表示方法：<em>手机图片</em></h1><p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/WP_20160314_003.jpg" alt="流程图"></p>
-<h1 id="VIM-常用命令学习笔记整理"><a href="#VIM-常用命令学习笔记整理" class="headerlink" title="VIM 常用命令学习笔记整理"></a>VIM 常用命令学习笔记整理</h1><h1 id="复习-shell-及变量，进一步整理"><a href="#复习-shell-及变量，进一步整理" class="headerlink" title="复习 shell 及变量，进一步整理"></a>复习 shell 及变量，进一步整理</h1><h1 id="字符集和字符编码"><a href="#字符集和字符编码" class="headerlink" title="字符集和字符编码"></a>字符集和字符编码</h1><p>2015年10月29日 17:54:36</p>
-<h2 id="字符集和字符编码，usc-和-unicode"><a href="#字符集和字符编码，usc-和-unicode" class="headerlink" title="字符集和字符编码，usc 和 unicode"></a><del>字符集和字符编码，usc 和 unicode</del></h2><p><del>参考：<a href="http://blog.csdn.net/revilwang/article/details/8763911">字符集与字符编码和宽字符之间的关系</a></del></p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/cherry/fd19526e-273d-40a0-8dee-b0599e7fa862.png" alt="excel"></p>
-<p><del>“UTF-8 编码还有一个优点，它是符合 C 语言字符串的要求，以 <code>&#39;\0&#39;</code> 结束，因此所有的普通字符串操作如 <code>strcpy</code> 等对 UTF-8 编码的字符完全有效，而 UTF-16, UTF-32等中间填充大量的 <code>&#39;\0&#39;</code> 字符，则不能使用这些函数。”</del></p>
-<h2 id="ansi-体系和-unicode"><a href="#ansi-体系和-unicode" class="headerlink" title="ansi 体系和 unicode"></a>ansi 体系和 unicode</h2><p>参考：<a href="http://blog.csdn.net/stephen1315/article/details/7476236">Unicode 字符集和多字节字符集关系</a></p>
-<p>ansi 机构最初的 ascii 字符集，后来各国各自扩充，中国大陆和新加坡等地区使用本地编码是 GB2312 或 GBK，中国港台地区使用的本地编码是 BIG5，韩国和日本的本地编码分别是 euc-kr 和 Shift_JIS。这些从 ANSI 标准派生的字符集被习惯的统称为 ANSI 字符集，它们正式的名称应该是 MBCS(Multi-Byte Chactacter System，即多字节字符系统)。ansi 体系，字符集一般只对应一种字符编码。</p>
-<p>再后来，为了大一统，出现了 unicode 字符集。</p>
-<h2 id="mbsc-和宽字节"><a href="#mbsc-和宽字节" class="headerlink" title="mbsc 和宽字节"></a>mbsc 和宽字节</h2><p>参考：<a href="http://blog.csdn.net/leixiaohua1020/article/details/12753723">单字节字符集，多字节字符集，Unicode</a></p>
-<p>ASCII 是 SBCS。一个字节表示的 <code>0</code> 用来标志 SBCS 字符串的结束。  </p>
-<p>DBCS 字符串的结束标志也是一个单字节表示的 <code>0</code>。  </p>
-<p>Unicode 字符串使用两个字节表示的 <code>0</code> 作为它的结束标志。</p>
-<p>——多字节（mbsc）包括 sbsc 和 dbsc 等。ascii 基本代表了 sbsc；ansi 和 mbsc 基本算同义词。</p>
-<p>——宽字节，unicode 基本代表了宽字节。</p>
-]]></content>
+<blockquote>
+<p>VS 2017 supports <strong>multiple installations</strong> on the same machine. The <code>CMAKE_GENERATOR_INSTANCE</code> variable may be set as a cache entry containing the absolute path to a Visual Studio instance. If the value is not specified explicitly by the user or a toolchain file, CMake queries the Visual Studio Installer to locate VS instances, chooses one, and sets the variable as a cache entry to hold the value persistently.</p>
+</blockquote>
+<h5 id="Platform-Selection-A"><a href="#Platform-Selection-A" class="headerlink" title="Platform Selection -A"></a>Platform Selection <code>-A</code></h5><p>The <code>CMAKE_GENERATOR_PLATFORM</code> variable may be set, perhaps via the cmake(1) <code>-A</code> option, to specify a target platform name (architecture)<sup>1</sup>. For example:</p>
+<ul>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A Win32</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A Win32</code></li>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A x64</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A x64</code></li>
+<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A ARM</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM</code></li>
+<li><code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM64</code></li>
+</ul>
+<p>For compatibility with CMake versions prior to 3.1, one may specify a target platform name optionally at the end of the generator name. This is supported only for:</p>
+<ul>
+<li><code>Visual Studio 14 2015 Win64</code> / <code>Visual Studio 15 2017 Win64</code>, Specify target platform <code>x64</code>.</li>
+<li><code>Visual Studio 14 2015 ARM</code> / <code>Visual Studio 15 2017 ARM</code>, Specify target platform <code>ARM</code>.</li>
+</ul>
+<p><em>sup 1</em>：<a href="https://docs.microsoft.com/en-us/cpp/supported-platforms-visual-cpp?view=vs-2017">Supported Platforms (Visual C++)</a></p>
+<h5 id="Toolset-Selection-T"><a href="#Toolset-Selection-T" class="headerlink" title="Toolset Selection -T"></a>Toolset Selection <code>-T</code></h5><p>The <code>v140</code> toolset that comes with <strong>Visual Studio 14 2015</strong> is selected by default. The <code>CMAKE_GENERATOR_TOOLSET</code> option may be set, perhaps via the cmake(1) <code>-T</code> option, to specify another toolset.</p>
+<blockquote>
+<p>The <code>v141</code> toolset that comes with <strong>Visual Studio 15 2017</strong> is selected by default.</p>
+</blockquote>
+<p>For each toolset that comes with this version of Visual Studio, there are variants that are themselves compiled for 32-bit (x86) and 64-bit (x64) hosts (independent of the architecture they target). By default Visual Studio chooses the 32-bit variant even on a 64-bit host. One may request use of the 64-bit host tools by adding a <code>host=x64</code> option to the toolset specification. See the <code>CMAKE_GENERATOR_TOOLSET</code> variable for details.</p>
+<p><strong>针对 MSVC 总结</strong>：三种或四种平台，桌面开发主要针对 win32 和 x64；工具集基本对应 MSVC 版本，高版本 MSVC 可选择低版本的工具集；另外，还有个平台版本（即 SDK version），似乎在 cmake 中并不重要。</p>
+<blockquote>
+<p>安装各版本的平台工具集：VS2010 之后版本的 VS 都有这个功能, 可以通过切换平台工具集, 在使用最新的 IDE 的同时, 用旧版本来进行编译, 彻底杜绝兼容问题<sup>2</sup>。<a href="https://junkboy.gitee.io/posts/2018/06/05/MSVC-VER.html">摘自</a></p>
+</blockquote>
+<p><em>sup 2</em>: MSVC 各版本之间的兼容问题是个老梗了，ε=(´ο｀*)))唉，不过 <a href="https://blogs.msdn.microsoft.com/vcblog/2017/03/07/binary-compatibility-and-pain-free-upgrade-why-moving-to-visual-studio-2017-is-almost-too-easy/"> v141 is binary compatible with v140</a></p>
+<h3 id="Extra-Generators"><a href="#Extra-Generators" class="headerlink" title="Extra Generators"></a>Extra Generators</h3><p>……</p>
+<h2 id="增删变量-D"><a href="#增删变量-D" class="headerlink" title="增删变量 -D"></a>增删变量 <code>-D</code></h2><p><code>-D&lt;var&gt;:&lt;type&gt;=&lt;value&gt;</code> 添加变量及值到 CMakeCache.txt 中。注意 <code>-D</code> 后面不能有空格，type 为 string 时可省略。例如：<code>cmake -DCMAKE_BUILD_TYPE:STRING=Debug</code>。MinGW Generator 默认生成 <code>CMAKE_BUILD_TYPE</code> 为空，即 release；NMake Generator默认生成 <code>CMAKE_BUILD_TYPE</code> 为 Debug。</p>
+<p><code>-U&lt;globbing_expr&gt;</code> 删除 CMakeCache.txt 中的变量。注意 <code>-U</code> 后面不能有空格,支持 globbing 表达式，比如 <code>*,?</code> 等。例如：<code>cmake -UCMAKE_BUILD_TYPE</code>。</p>
+<h3 id="编译模式"><a href="#编译模式" class="headerlink" title="编译模式"></a>编译模式</h3><figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">cmake .. <span class="literal">-G</span> <span class="string">&quot;Visual Studio 14 2015&quot;</span> <span class="literal">-DCMAKE_INSTALL_PREFIX</span>=<span class="string">&quot;install_root&quot;</span> <span class="comment"># -DCMAKE_BUILD_TYPE=&quot;Release&quot;</span></span><br><span class="line">cmake -<span class="literal">-build</span> . -<span class="literal">-target</span> install -<span class="literal">-config</span> Release</span><br></pre></td></tr></table></figure>
+<p>如果前一条命令不指定 <code>-DCMAKE_BUILD_TYPE=&quot;Release&quot;</code>，只是单独在第二条命令中 <code>--config=Release</code>，会造成什么后果？无任何后果。当使用 MSVC 时，<a href="https://stackoverflow.com/questions/24460486/cmake-build-type-not-being-used-in-cmakelists-txt"><code>CMAKE_BUILD_TYPE</code> 选项被忽略</a>。</p>
+<blockquote>
+<p>Specifies the build type on <strong>single</strong>-configuration generators. <a href="https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html"><code>CMAKE_BUILD_TYPE</code> 的意义</a></p>
+<p>This variable is only meaningful to single-configuration generators <del>(such as Makefile Generators and Ninja) i.e. those which choose a single configuration when CMake runs to generate a build tree</del> as opposed to multi-configuration generators <del>which offer selection of the build configuration within the generated build environment</del>.</p>
+</blockquote>
+<h3 id="调试版本后缀"><a href="#调试版本后缀" class="headerlink" title="调试版本后缀"></a>调试版本后缀</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">-DCMAKE_DEBUG_POSTFIX=<span class="string">&quot;d&quot;</span></span><br><span class="line"><span class="comment"># -DCMAKE_RELEASE_POSTFIX=xx</span></span><br></pre></td></tr></table></figure>
+<h3 id="MT-和-MD"><a href="#MT-和-MD" class="headerlink" title="MT 和 MD"></a>MT 和 MD</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 1. 追加 `CMAKE_CXX_FLAGS_Build Type`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_RELEASE&#125; /MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_DEBUG&#125; /MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 替换 `CMAKE_CXX_FLAGS_Build`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;/MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;/MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 或者将已经存在的 `/MD、/MDd` 替换为 `/MT、/MTd`</span></span><br><span class="line"><span class="keyword">if</span> (MSVC)</span><br><span class="line">    <span class="keyword">set</span>(CompilerFlags</span><br><span class="line">        CMAKE_CXX_FLAGS</span><br><span class="line">        CMAKE_CXX_FLAGS_DEBUG</span><br><span class="line">        CMAKE_CXX_FLAGS_RELEASE</span><br><span class="line">        CMAKE_C_FLAGS</span><br><span class="line">        CMAKE_C_FLAGS_DEBUG</span><br><span class="line">        CMAKE_C_FLAGS_RELEASE</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">foreach</span>(CompilerFlag <span class="variable">$&#123;CompilerFlags&#125;</span>)</span><br><span class="line">        <span class="keyword">string</span>(REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> <span class="variable">$&#123;CompilerFlag&#125;</span> <span class="string">&quot;$&#123;$&#123;CompilerFlag&#125;&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">endforeach</span>()</span><br><span class="line"><span class="keyword">endif</span>(MSVC)</span><br></pre></td></tr></table></figure>
+<p>摘自：<a href="https://blog.csdn.net/frank_liuxing/article/details/74010939">https://blog.csdn.net/frank_liuxing/article/details/74010939</a> </p>
+<p>原文描述提到“<del>如果CMAKE Flags已经设置了<code>/MD</code>，可以不能发挥作用。可以采用方法2</del>” 但很可能是错误的，后者覆盖前者：</p>
+<blockquote>
+<p>If your CMake flags already contain <code>/MD</code>, you can ensure that the above commands are executed after the point at which <code>/MD</code> is inserted (the later addition of <code>/MT</code> <strong>overrides</strong> the conflicting existing option) <a href="https://stackoverflow.com/questions/14172856/cmake-compile-with-mt-instead-of-md">来自 stackoverflow</a></p>
+</blockquote>
+<h3 id="安装路径"><a href="#安装路径" class="headerlink" title="安装路径"></a>安装路径</h3><pre><code>-DCMAKE_INSTALL_PREFIX</code></pre>
+<h2 id="其他参数"><a href="#其他参数" class="headerlink" title="其他参数"></a>其他参数</h2><h2 id="清理之后重新构建、编译"><a href="#清理之后重新构建、编译" class="headerlink" title="清理之后重新构建、编译"></a>清理之后重新构建、编译</h2><p>当出现 xx 等无法理解的问题时（尤其是在同一目录下同时编译 Debug 和 Release 版本时出现依赖库异常时），尝试删除 cmake 临时文件（<code>CMakeCache.txt</code> <code>CMakeFiles\</code> 等）所在目录，再次执行试试</p>
+<h2 id="cmake-gui"><a href="#cmake-gui" class="headerlink" title="cmake-gui"></a>cmake-gui</h2><h1 id="编写-CMakeLists-txt"><a href="#编写-CMakeLists-txt" class="headerlink" title="编写 CMakeLists.txt"></a>编写 CMakeLists.txt</h1>]]></content>
+      <categories>
+        <category>make</category>
+      </categories>
       <tags>
-        <tag>memo</tag>
+        <tag>make</tag>
       </tags>
   </entry>
   <entry>
@@ -2303,82 +2317,6 @@
       <categories>
         <category>linux</category>
       </categories>
-  </entry>
-  <entry>
-    <title>cmake 备忘</title>
-    <url>/2018/12/03/cmake/</url>
-    <content><![CDATA[<p>automake 系列工具友好性的确不咋地，而且只限于 *inux 平台。跨平台还是 cmake 为佳，也有越来越多的项目在使用 cmake，比如 google 的 gRPC，比如 zlib 也支持 cmake。</p>
-<p>如果只是说要编译三方库为自己所用，一般来说不需要掌握怎么编写 <code>CMakeLists.txt</code>；只有当自己的项目需要用 cmake 管理、组织编译时才需要弄懂 <code>CMakeLists.txt</code> 中的“语言”怎么编写。</p>
-<h1 id="使用-cmake"><a href="#使用-cmake" class="headerlink" title="使用 cmake"></a>使用 cmake</h1><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake .. &amp;&amp; cmake --build . --target install</code></pre>
-<p><code>cmake --build .</code> 在 linux 下等价于 <code>make</code>，在 windows 下等同于 msvc 生成解决方案 </p>
-<a id="more"></a>
-
-<h2 id="外部编译"><a href="#外部编译" class="headerlink" title="外部编译"></a>外部编译</h2><pre><code>mkdir build &amp;&amp; cd build &amp;&amp; cmake ..</code></pre>
-<blockquote>
-<p>就是让源码文件和 cmake 生成的工程文件分开，将 cmake 生成的工程文件放在一个单独的目录下面。</p>
-</blockquote>
-<p>坚持使用 build 目录，进行外部编译。以避免在源码目录中混杂垃圾文件。</p>
-<h2 id="生成器-generator-G"><a href="#生成器-generator-G" class="headerlink" title="生成器 generator -G"></a>生成器 generator <code>-G</code></h2><pre><code>cmake -G &quot;&lt;generator&gt;&quot; -DCMAKE_INSTALL_PREFIX=stage ..</code></pre>
-<p><a href="https://cmake.org/cmake/help/v3.13/manual/cmake-generators.7.html">cmake-generators 文档</a> 描述</p>
-<h3 id="Command-Line-Build-Tool-Generators"><a href="#Command-Line-Build-Tool-Generators" class="headerlink" title="Command-Line Build Tool Generators"></a>Command-Line Build Tool Generators</h3><p>……</p>
-<h3 id="IDE-Build-Tool-Generators"><a href="#IDE-Build-Tool-Generators" class="headerlink" title="IDE Build Tool Generators"></a>IDE Build Tool Generators</h3><p>These generators support Integrated Development Environment (IDE) project files. Since <strong>the IDEs configure their own environment</strong> one may launch CMake from any environment.</p>
-<h4 id="Visual-Studio-Generators"><a href="#Visual-Studio-Generators" class="headerlink" title="Visual Studio Generators"></a>Visual Studio Generators</h4><ul>
-<li>……</li>
-<li>Visual Studio 12 2013</li>
-<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2014%202015.html">Visual Studio 14 2015</a></li>
-<li><a href="https://cmake.org/cmake/help/v3.13/generator/Visual%20Studio%2015%202017.html">Visual Studio 15 2017</a></li>
-</ul>
-<blockquote>
-<p>VS 2017 supports <strong>multiple installations</strong> on the same machine. The <code>CMAKE_GENERATOR_INSTANCE</code> variable may be set as a cache entry containing the absolute path to a Visual Studio instance. If the value is not specified explicitly by the user or a toolchain file, CMake queries the Visual Studio Installer to locate VS instances, chooses one, and sets the variable as a cache entry to hold the value persistently.</p>
-</blockquote>
-<h5 id="Platform-Selection-A"><a href="#Platform-Selection-A" class="headerlink" title="Platform Selection -A"></a>Platform Selection <code>-A</code></h5><p>The <code>CMAKE_GENERATOR_PLATFORM</code> variable may be set, perhaps via the cmake(1) <code>-A</code> option, to specify a target platform name (architecture)<sup>1</sup>. For example:</p>
-<ul>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A Win32</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A Win32</code></li>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A x64</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A x64</code></li>
-<li><code>cmake -G &quot;Visual Studio 14 2015&quot; -A ARM</code> / <code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM</code></li>
-<li><code>cmake -G &quot;Visual Studio 15 2017&quot; -A ARM64</code></li>
-</ul>
-<p>For compatibility with CMake versions prior to 3.1, one may specify a target platform name optionally at the end of the generator name. This is supported only for:</p>
-<ul>
-<li><code>Visual Studio 14 2015 Win64</code> / <code>Visual Studio 15 2017 Win64</code>, Specify target platform <code>x64</code>.</li>
-<li><code>Visual Studio 14 2015 ARM</code> / <code>Visual Studio 15 2017 ARM</code>, Specify target platform <code>ARM</code>.</li>
-</ul>
-<p><em>sup 1</em>：<a href="https://docs.microsoft.com/en-us/cpp/supported-platforms-visual-cpp?view=vs-2017">Supported Platforms (Visual C++)</a></p>
-<h5 id="Toolset-Selection-T"><a href="#Toolset-Selection-T" class="headerlink" title="Toolset Selection -T"></a>Toolset Selection <code>-T</code></h5><p>The <code>v140</code> toolset that comes with <strong>Visual Studio 14 2015</strong> is selected by default. The <code>CMAKE_GENERATOR_TOOLSET</code> option may be set, perhaps via the cmake(1) <code>-T</code> option, to specify another toolset.</p>
-<blockquote>
-<p>The <code>v141</code> toolset that comes with <strong>Visual Studio 15 2017</strong> is selected by default.</p>
-</blockquote>
-<p>For each toolset that comes with this version of Visual Studio, there are variants that are themselves compiled for 32-bit (x86) and 64-bit (x64) hosts (independent of the architecture they target). By default Visual Studio chooses the 32-bit variant even on a 64-bit host. One may request use of the 64-bit host tools by adding a <code>host=x64</code> option to the toolset specification. See the <code>CMAKE_GENERATOR_TOOLSET</code> variable for details.</p>
-<p><strong>针对 MSVC 总结</strong>：三种或四种平台，桌面开发主要针对 win32 和 x64；工具集基本对应 MSVC 版本，高版本 MSVC 可选择低版本的工具集；另外，还有个平台版本（即 SDK version），似乎在 cmake 中并不重要。</p>
-<blockquote>
-<p>安装各版本的平台工具集：VS2010 之后版本的 VS 都有这个功能, 可以通过切换平台工具集, 在使用最新的 IDE 的同时, 用旧版本来进行编译, 彻底杜绝兼容问题<sup>2</sup>。<a href="https://junkboy.gitee.io/posts/2018/06/05/MSVC-VER.html">摘自</a></p>
-</blockquote>
-<p><em>sup 2</em>: MSVC 各版本之间的兼容问题是个老梗了，ε=(´ο｀*)))唉，不过 <a href="https://blogs.msdn.microsoft.com/vcblog/2017/03/07/binary-compatibility-and-pain-free-upgrade-why-moving-to-visual-studio-2017-is-almost-too-easy/"> v141 is binary compatible with v140</a></p>
-<h3 id="Extra-Generators"><a href="#Extra-Generators" class="headerlink" title="Extra Generators"></a>Extra Generators</h3><p>……</p>
-<h2 id="增删变量-D"><a href="#增删变量-D" class="headerlink" title="增删变量 -D"></a>增删变量 <code>-D</code></h2><p><code>-D&lt;var&gt;:&lt;type&gt;=&lt;value&gt;</code> 添加变量及值到 CMakeCache.txt 中。注意 <code>-D</code> 后面不能有空格，type 为 string 时可省略。例如：<code>cmake -DCMAKE_BUILD_TYPE:STRING=Debug</code>。MinGW Generator 默认生成 <code>CMAKE_BUILD_TYPE</code> 为空，即 release；NMake Generator默认生成 <code>CMAKE_BUILD_TYPE</code> 为 Debug。</p>
-<p><code>-U&lt;globbing_expr&gt;</code> 删除 CMakeCache.txt 中的变量。注意 <code>-U</code> 后面不能有空格,支持 globbing 表达式，比如 <code>*,?</code> 等。例如：<code>cmake -UCMAKE_BUILD_TYPE</code>。</p>
-<h3 id="编译模式"><a href="#编译模式" class="headerlink" title="编译模式"></a>编译模式</h3><figure class="highlight powershell"><table><tr><td class="code"><pre><span class="line">cmake .. <span class="literal">-G</span> <span class="string">&quot;Visual Studio 14 2015&quot;</span> <span class="literal">-DCMAKE_INSTALL_PREFIX</span>=<span class="string">&quot;install_root&quot;</span> <span class="comment"># -DCMAKE_BUILD_TYPE=&quot;Release&quot;</span></span><br><span class="line">cmake -<span class="literal">-build</span> . -<span class="literal">-target</span> install -<span class="literal">-config</span> Release</span><br></pre></td></tr></table></figure>
-<p>如果前一条命令不指定 <code>-DCMAKE_BUILD_TYPE=&quot;Release&quot;</code>，只是单独在第二条命令中 <code>--config=Release</code>，会造成什么后果？无任何后果。当使用 MSVC 时，<a href="https://stackoverflow.com/questions/24460486/cmake-build-type-not-being-used-in-cmakelists-txt"><code>CMAKE_BUILD_TYPE</code> 选项被忽略</a>。</p>
-<blockquote>
-<p>Specifies the build type on <strong>single</strong>-configuration generators. <a href="https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html"><code>CMAKE_BUILD_TYPE</code> 的意义</a></p>
-<p>This variable is only meaningful to single-configuration generators <del>(such as Makefile Generators and Ninja) i.e. those which choose a single configuration when CMake runs to generate a build tree</del> as opposed to multi-configuration generators <del>which offer selection of the build configuration within the generated build environment</del>.</p>
-</blockquote>
-<h3 id="调试版本后缀"><a href="#调试版本后缀" class="headerlink" title="调试版本后缀"></a>调试版本后缀</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line">-DCMAKE_DEBUG_POSTFIX=<span class="string">&quot;d&quot;</span></span><br><span class="line"><span class="comment"># -DCMAKE_RELEASE_POSTFIX=xx</span></span><br></pre></td></tr></table></figure>
-<h3 id="MT-和-MD"><a href="#MT-和-MD" class="headerlink" title="MT 和 MD"></a>MT 和 MD</h3><figure class="highlight cmake"><table><tr><td class="code"><pre><span class="line"></span><br><span class="line"><span class="comment"># 1. 追加 `CMAKE_CXX_FLAGS_Build Type`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_RELEASE&#125; /MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;$&#123;CMAKE_CXX_FLAGS_DEBUG&#125; /MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 2. 替换 `CMAKE_CXX_FLAGS_Build`</span></span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_RELEASE <span class="string">&quot;/MT&quot;</span>)</span><br><span class="line"><span class="keyword">set</span>(CMAKE_CXX_FLAGS_DEBUG <span class="string">&quot;/MTd&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 3. 或者将已经存在的 `/MD、/MDd` 替换为 `/MT、/MTd`</span></span><br><span class="line"><span class="keyword">if</span> (MSVC)</span><br><span class="line">    <span class="keyword">set</span>(CompilerFlags</span><br><span class="line">        CMAKE_CXX_FLAGS</span><br><span class="line">        CMAKE_CXX_FLAGS_DEBUG</span><br><span class="line">        CMAKE_CXX_FLAGS_RELEASE</span><br><span class="line">        CMAKE_C_FLAGS</span><br><span class="line">        CMAKE_C_FLAGS_DEBUG</span><br><span class="line">        CMAKE_C_FLAGS_RELEASE</span><br><span class="line">        )</span><br><span class="line">    <span class="keyword">foreach</span>(CompilerFlag <span class="variable">$&#123;CompilerFlags&#125;</span>)</span><br><span class="line">        <span class="keyword">string</span>(REPLACE <span class="string">&quot;/MD&quot;</span> <span class="string">&quot;/MT&quot;</span> <span class="variable">$&#123;CompilerFlag&#125;</span> <span class="string">&quot;$&#123;$&#123;CompilerFlag&#125;&#125;&quot;</span>)</span><br><span class="line">    <span class="keyword">endforeach</span>()</span><br><span class="line"><span class="keyword">endif</span>(MSVC)</span><br></pre></td></tr></table></figure>
-<p>摘自：<a href="https://blog.csdn.net/frank_liuxing/article/details/74010939">https://blog.csdn.net/frank_liuxing/article/details/74010939</a> </p>
-<p>原文描述提到“<del>如果CMAKE Flags已经设置了<code>/MD</code>，可以不能发挥作用。可以采用方法2</del>” 但很可能是错误的，后者覆盖前者：</p>
-<blockquote>
-<p>If your CMake flags already contain <code>/MD</code>, you can ensure that the above commands are executed after the point at which <code>/MD</code> is inserted (the later addition of <code>/MT</code> <strong>overrides</strong> the conflicting existing option) <a href="https://stackoverflow.com/questions/14172856/cmake-compile-with-mt-instead-of-md">来自 stackoverflow</a></p>
-</blockquote>
-<h3 id="安装路径"><a href="#安装路径" class="headerlink" title="安装路径"></a>安装路径</h3><pre><code>-DCMAKE_INSTALL_PREFIX</code></pre>
-<h2 id="其他参数"><a href="#其他参数" class="headerlink" title="其他参数"></a>其他参数</h2><h2 id="清理之后重新构建、编译"><a href="#清理之后重新构建、编译" class="headerlink" title="清理之后重新构建、编译"></a>清理之后重新构建、编译</h2><p>当出现 xx 等无法理解的问题时（尤其是在同一目录下同时编译 Debug 和 Release 版本时出现依赖库异常时），尝试删除 cmake 临时文件（<code>CMakeCache.txt</code> <code>CMakeFiles\</code> 等）所在目录，再次执行试试</p>
-<h2 id="cmake-gui"><a href="#cmake-gui" class="headerlink" title="cmake-gui"></a>cmake-gui</h2><h1 id="编写-CMakeLists-txt"><a href="#编写-CMakeLists-txt" class="headerlink" title="编写 CMakeLists.txt"></a>编写 CMakeLists.txt</h1>]]></content>
-      <categories>
-        <category>make</category>
-      </categories>
-      <tags>
-        <tag>make</tag>
-      </tags>
   </entry>
   <entry>
     <title>C++11 的重大改变</title>
@@ -2908,6 +2846,15 @@
 <td>当发生数学下溢时，会抛出该异常。</td>
 </tr>
 </tbody></table>
+<h1 id="跨线程使用异常"><a href="#跨线程使用异常" class="headerlink" title="跨线程使用异常"></a>跨线程使用异常</h1><p>跨线程使用异常，优先使用 <code>std::future</code>，或者请移步 <code>std::exception_ptr</code> 类型。</p>
+<blockquote>
+<p>定义 <code>std::future</code> 使用了后者；而后者就是为跨线程捕获异常新增的特性。 </p>
+</blockquote>
+<ul>
+<li><a href="https://www.cnblogs.com/xiaoshiwang/p/10023543.html">多线程 等待一次性事件 异常处理</a></li>
+<li><a href="http://bitdewy.github.io/blog/2013/09/23/exception-and-multithread/">异常与多线程</a></li>
+<li><a href="https://stackoverflow.com/questions/41288428/is-stdexception-ptr-thread-safe">Is std::exception_ptr thread safe?</a></li>
+</ul>
 <h1 id="logic-error"><a href="#logic-error" class="headerlink" title="logic_error"></a>logic_error</h1><p>It reports <del>errors that are a consequence of</del> faulty logic within the program <del>such as violating logical preconditions or class invariants</del> and may be preventable.</p>
 <p>No standard library components throw this exception directly</p>
 <h2 id="invalid-argument"><a href="#invalid-argument" class="headerlink" title="invalid_argument."></a>invalid_argument.</h2><p>an argument value has not been accepted.</p>
@@ -4900,45 +4847,6 @@
       </tags>
   </entry>
   <entry>
-    <title>内存泄漏</title>
-    <url>/2019/11/29/memoryLeak/</url>
-    <content><![CDATA[<h1 id="检查内存泄漏"><a href="#检查内存泄漏" class="headerlink" title="检查内存泄漏"></a>检查内存泄漏</h1><p>Linux 下使用 Valgrind；Windows 下使用 Visual Leak Detector。前者没接触过，后者的确不错。</p>
-<p>虽然在 Windows 下可以使用 CRT：<a href="https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2017">Find memory leaks with the CRT library</a>，但因为其也会报全局变量以及 <code>static</code> 变量（报告早于这两者的析构），当项目体量较大，全局变量或 <code>static</code> 变量较多时，没有有效的区分，查找真实的内存泄漏就会比较棘手。</p>
-<ol>
-<li><p>Enable memory leak detection，如何启用</p>
-<p> 只在启用 <code>_DEBUG</code> 时有效；若程序存在多个退出点，可以使用 <code>_CrtSetDbgFlag</code> 函数；报告默认在“输出”窗口打印，但可以自定义。</p>
-</li>
-<li><p>Interpret the memory-leak report，报告怎么看</p>
-<p> 重点强调了检测只针对 <code>malloc</code> 函数，无法检测 <code>new</code> 操作符。但其提供了使用 <code>_malloc_dbg</code> 实现的 <code>operator new</code> 重载版本：</p>
-</li>
-<li><p>Set breakpoints on a memory allocation number，如何打断点</p>
-</li>
-<li><p>Compare memory states，对比不同时刻的快照</p>
-</li>
-<li><p>False positives，误报现象</p>
-</li>
-</ol>
-<a id="more"></a>
-
-<p>虽然文章中特别提到：</p>
-<blockquote>
-<p>We don’t recommend you create a preprocessor macro named <code>new</code>, or any other language keyword.</p>
-</blockquote>
-<p>但是在好多中文博客中都是通过直接定义 <code>new</code> 的同名宏来避免对代码主体的修改（文件头和 main 的修改无可避免）：比如 <a href="https://www.zhihu.com/question/63946754/answer/215606096">vczh</a></p>
-<p>在网络上找到一篇 <a href="https://blog.csdn.net/crybird/article/details/80907192">关于全局变量内存泄漏的误报和解决方案</a>，但并未验证。</p>
-<h2 id="crt"><a href="#crt" class="headerlink" title="crt"></a>crt</h2><p>待补充</p>
-<h2 id="vld"><a href="#vld" class="headerlink" title="vld"></a>vld</h2><p><a href="https://github.com/KindDragon/vld/wiki/Using-Visual-Leak-Detector">Using Visual Leak Detector</a>，其使用是非常简单的。建议在每个程序中都默认启用。</p>
-<p><a href="https://blog.csdn.net/chaipp0607/article/details/79182471">VS内存泄漏工具Visual Leak Detector2.5.1安装与使用</a></p>
-<h2 id="linux-平台内存泄漏"><a href="#linux-平台内存泄漏" class="headerlink" title="linux 平台内存泄漏"></a>linux 平台内存泄漏</h2><p><a href="https://blog.csdn.net/gatieme/article/details/51959654">Linux下几款C++程序中的内存泄露检查工具</a></p>
-]]></content>
-      <categories>
-        <category>cpp</category>
-      </categories>
-      <tags>
-        <tag>cpp</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>从 static 到对象的内存布局</title>
     <url>/2016/11/03/memoryLayout/</url>
     <content><![CDATA[<p>2016/9/8 17:07:08</p>
@@ -5019,6 +4927,45 @@
       </tags>
   </entry>
   <entry>
+    <title>内存泄漏</title>
+    <url>/2019/11/29/memoryLeak/</url>
+    <content><![CDATA[<h1 id="检查内存泄漏"><a href="#检查内存泄漏" class="headerlink" title="检查内存泄漏"></a>检查内存泄漏</h1><p>Linux 下使用 Valgrind；Windows 下使用 Visual Leak Detector。前者没接触过，后者的确不错。</p>
+<p>虽然在 Windows 下可以使用 CRT：<a href="https://docs.microsoft.com/en-us/visualstudio/debugger/finding-memory-leaks-using-the-crt-library?view=vs-2017">Find memory leaks with the CRT library</a>，但因为其也会报全局变量以及 <code>static</code> 变量（报告早于这两者的析构），当项目体量较大，全局变量或 <code>static</code> 变量较多时，没有有效的区分，查找真实的内存泄漏就会比较棘手。</p>
+<ol>
+<li><p>Enable memory leak detection，如何启用</p>
+<p> 只在启用 <code>_DEBUG</code> 时有效；若程序存在多个退出点，可以使用 <code>_CrtSetDbgFlag</code> 函数；报告默认在“输出”窗口打印，但可以自定义。</p>
+</li>
+<li><p>Interpret the memory-leak report，报告怎么看</p>
+<p> 重点强调了检测只针对 <code>malloc</code> 函数，无法检测 <code>new</code> 操作符。但其提供了使用 <code>_malloc_dbg</code> 实现的 <code>operator new</code> 重载版本：</p>
+</li>
+<li><p>Set breakpoints on a memory allocation number，如何打断点</p>
+</li>
+<li><p>Compare memory states，对比不同时刻的快照</p>
+</li>
+<li><p>False positives，误报现象</p>
+</li>
+</ol>
+<a id="more"></a>
+
+<p>虽然文章中特别提到：</p>
+<blockquote>
+<p>We don’t recommend you create a preprocessor macro named <code>new</code>, or any other language keyword.</p>
+</blockquote>
+<p>但是在好多中文博客中都是通过直接定义 <code>new</code> 的同名宏来避免对代码主体的修改（文件头和 main 的修改无可避免）：比如 <a href="https://www.zhihu.com/question/63946754/answer/215606096">vczh</a></p>
+<p>在网络上找到一篇 <a href="https://blog.csdn.net/crybird/article/details/80907192">关于全局变量内存泄漏的误报和解决方案</a>，但并未验证。</p>
+<h2 id="crt"><a href="#crt" class="headerlink" title="crt"></a>crt</h2><p>待补充</p>
+<h2 id="vld"><a href="#vld" class="headerlink" title="vld"></a>vld</h2><p><a href="https://github.com/KindDragon/vld/wiki/Using-Visual-Leak-Detector">Using Visual Leak Detector</a>，其使用是非常简单的。建议在每个程序中都默认启用。</p>
+<p><a href="https://blog.csdn.net/chaipp0607/article/details/79182471">VS内存泄漏工具Visual Leak Detector2.5.1安装与使用</a></p>
+<h2 id="linux-平台内存泄漏"><a href="#linux-平台内存泄漏" class="headerlink" title="linux 平台内存泄漏"></a>linux 平台内存泄漏</h2><p><a href="https://blog.csdn.net/gatieme/article/details/51959654">Linux下几款C++程序中的内存泄露检查工具</a></p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>cpp</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Markdown 标准及其语法</title>
     <url>/2016/12/15/messOfMarkdown/</url>
     <content><![CDATA[<p>Markdown 简洁好用是毋庸置疑的。但是在使用中碰到过以下几个困惑：</p>
@@ -5095,7 +5042,7 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#105;&#x65;&#x6c;&#x6f;&#110;&#x67;&#x32;&#x30;&#x31;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#x6d;">&#x6e;&#105;&#x65;&#x6c;&#x6f;&#110;&#x67;&#x32;&#x30;&#x31;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#x6d;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#x65;&#x6c;&#x6f;&#x6e;&#x67;&#x32;&#x30;&#49;&#52;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#109;">&#x6e;&#x69;&#x65;&#x6c;&#x6f;&#x6e;&#x67;&#x32;&#x30;&#49;&#52;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#109;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
@@ -6333,46 +6280,6 @@ const double *const pip = &amp;pi;</code></pre>
       </categories>
   </entry>
   <entry>
-    <title>-std= 语言标准</title>
-    <url>/2017/03/10/standardOfLanguage/</url>
-    <content><![CDATA[<p>2016/5/27 13:13:10</p>
-<p>gcc 版本：</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cts@SuSe-CTS2:~&gt; gcc --version</span><br><span class="line">gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973]</span><br><span class="line">Copyright (C) 2008 Free Software Foundation, Inc.</span><br><span class="line">This is free software; see the source for copying conditions.  There is NO</span><br><span class="line">warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</span><br><span class="line">cts@SuSe-CTS2:~&gt; man gcc</span><br><span class="line">...(略)</span><br></pre></td></tr></table></figure>
-<a id="more"></a>
-
-<blockquote>
-<p>-std=<br>Determine the language standard.   This option is currently only supported when compiling C or C++.</p>
-<p>The compiler can accept several <strong>base standards</strong>, such as c89 or c++98, and <strong>GNU dialects（方言；同源语） of those standards</strong>, such as gnu89 or gnu++98.  By specifing a base standard, the compiler will accept all programs following that standard and those using GNU extensions that do not contradict it.  For example, -std=c89 turns off certain features of GCC that are incompatible with ISO C90, such as the “asm” and “typeof” keywords, <strong>but not other GNU extensions</strong> that do not have a meaning in ISO C90, such as omitting the middle term of a “?:” expression. On the other hand, by specifing a GNU dialect of a standard, all features the compiler support are enabled, even when those features change the meaning of the base standard and some strict-conforming programs may be rejected.  The particular standard is used by <strong>-pedantic（迂腐的；学究式的）</strong> to identify which features are GNU extensions given that version of the standard. For example -std=gnu89 -pedantic would warn about C++ style // comments, while -std=gnu99 -pedantic would not.</p>
-<p>A value for this option must be provided; possible values are</p>
-<p>c89<br>iso9899:1990<br>    Support all ISO C90 programs (certain GNU extensions that conflict with ISO C90 are disabled). Same as -ansi for C code.</p>
-<p>iso9899:199409<br>    ISO C90 as modified in amendment 1.</p>
-<p>c99<br>c9x<br>iso9899:1999<br>iso9899:199x<br>    ISO C99.  Note that this standard is not yet fully supported; see <a href="http://gcc.gnu.org/gcc-4.3/c99status.html">http://gcc.gnu.org/gcc-4.3/c99status.html</a> for more information.  The names c9x and  iso9899:199x are deprecated.</p>
-<p>gnu89<br>    GNU dialect of ISO C90 (including some C99 features). This is <strong>the default for C code</strong>.</p>
-<p>gnu99<br>gnu9x<br>    GNU dialect of ISO C99.  When ISO C99 is fully implemented in GCC, this will become the default.  The name gnu9x is deprecated.</p>
-<p>c++98<br>    The 1998 ISO C++ standard plus amendments. Same as -ansi for C++ code.</p>
-<p>gnu++98<br>    GNU dialect of -std=c++98.  This is <strong>the default for C++ code.</strong></p>
-<p>c++0x<br>    The working draft of the upcoming ISO C++0x standard. This option enables experimental features that are likely to be included in C++0x. The working draft is constantly changing, and any feature that is enabled by this flag may be removed from future versions of GCC if it is not part of the C++0x standard.</p>
-<p>gnu++0x<br>    GNU dialect of -std=c++0x. This option enables experimental features that may be removed in future versions of GCC.</p>
-</blockquote>
-<p>目前在 gcc 官方上最新版为 gcc 6.1 ，其中：</p>
-<blockquote>
-<p>‘gnu11’<br>‘gnu1x’<br>GNU dialect of ISO C11. This is <strong>the default</strong> for C code. The name ‘gnu1x’ is deprecated. </p>
-<p>‘c++98’<br>‘c++03’<br>The 1998 ISO C++ standard plus the 2003 technical corrigendum and some additional defect reports. Same as -ansi for C++ code. </p>
-<p>‘gnu++98’<br>‘gnu++03’<br>GNU dialect of -std=c++98. </p>
-<p>‘c++11’<br>‘c++0x’<br>The 2011 ISO C++ standard plus amendments. The name ‘c++0x’ is deprecated. </p>
-<p>‘gnu++11’<br>‘gnu++0x’<br>GNU dialect of -std=c++11. The name ‘gnu++0x’ is deprecated. </p>
-<p>‘c++14’<br>‘c++1y’<br>The 2014 ISO C++ standard plus amendments. The name ‘c++1y’ is deprecated. </p>
-<p>‘gnu++14’<br>‘gnu++1y’<br>GNU dialect of -std=c++14. This is <strong>the default</strong> for C++ code. The name ‘gnu++1y’ is deprecated. </p>
-</blockquote>
-]]></content>
-      <categories>
-        <category>linux</category>
-      </categories>
-      <tags>
-        <tag>develop</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>sscanf 和正则表达式</title>
     <url>/2016/11/30/sscanf-regular/</url>
     <content><![CDATA[<p>有一篇很好的入门的帖子：<a href="http://blog.csdn.net/kenby/article/details/4051018">sscanf 函数和正则表达式</a> </p>
@@ -6428,6 +6335,46 @@ const double *const pip = &amp;pi;</code></pre>
         <category>cpp</category>
         <category>cpp-code</category>
       </categories>
+  </entry>
+  <entry>
+    <title>-std= 语言标准</title>
+    <url>/2017/03/10/standardOfLanguage/</url>
+    <content><![CDATA[<p>2016/5/27 13:13:10</p>
+<p>gcc 版本：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">cts@SuSe-CTS2:~&gt; gcc --version</span><br><span class="line">gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973]</span><br><span class="line">Copyright (C) 2008 Free Software Foundation, Inc.</span><br><span class="line">This is free software; see the source for copying conditions.  There is NO</span><br><span class="line">warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</span><br><span class="line">cts@SuSe-CTS2:~&gt; man gcc</span><br><span class="line">...(略)</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
+
+<blockquote>
+<p>-std=<br>Determine the language standard.   This option is currently only supported when compiling C or C++.</p>
+<p>The compiler can accept several <strong>base standards</strong>, such as c89 or c++98, and <strong>GNU dialects（方言；同源语） of those standards</strong>, such as gnu89 or gnu++98.  By specifing a base standard, the compiler will accept all programs following that standard and those using GNU extensions that do not contradict it.  For example, -std=c89 turns off certain features of GCC that are incompatible with ISO C90, such as the “asm” and “typeof” keywords, <strong>but not other GNU extensions</strong> that do not have a meaning in ISO C90, such as omitting the middle term of a “?:” expression. On the other hand, by specifing a GNU dialect of a standard, all features the compiler support are enabled, even when those features change the meaning of the base standard and some strict-conforming programs may be rejected.  The particular standard is used by <strong>-pedantic（迂腐的；学究式的）</strong> to identify which features are GNU extensions given that version of the standard. For example -std=gnu89 -pedantic would warn about C++ style // comments, while -std=gnu99 -pedantic would not.</p>
+<p>A value for this option must be provided; possible values are</p>
+<p>c89<br>iso9899:1990<br>    Support all ISO C90 programs (certain GNU extensions that conflict with ISO C90 are disabled). Same as -ansi for C code.</p>
+<p>iso9899:199409<br>    ISO C90 as modified in amendment 1.</p>
+<p>c99<br>c9x<br>iso9899:1999<br>iso9899:199x<br>    ISO C99.  Note that this standard is not yet fully supported; see <a href="http://gcc.gnu.org/gcc-4.3/c99status.html">http://gcc.gnu.org/gcc-4.3/c99status.html</a> for more information.  The names c9x and  iso9899:199x are deprecated.</p>
+<p>gnu89<br>    GNU dialect of ISO C90 (including some C99 features). This is <strong>the default for C code</strong>.</p>
+<p>gnu99<br>gnu9x<br>    GNU dialect of ISO C99.  When ISO C99 is fully implemented in GCC, this will become the default.  The name gnu9x is deprecated.</p>
+<p>c++98<br>    The 1998 ISO C++ standard plus amendments. Same as -ansi for C++ code.</p>
+<p>gnu++98<br>    GNU dialect of -std=c++98.  This is <strong>the default for C++ code.</strong></p>
+<p>c++0x<br>    The working draft of the upcoming ISO C++0x standard. This option enables experimental features that are likely to be included in C++0x. The working draft is constantly changing, and any feature that is enabled by this flag may be removed from future versions of GCC if it is not part of the C++0x standard.</p>
+<p>gnu++0x<br>    GNU dialect of -std=c++0x. This option enables experimental features that may be removed in future versions of GCC.</p>
+</blockquote>
+<p>目前在 gcc 官方上最新版为 gcc 6.1 ，其中：</p>
+<blockquote>
+<p>‘gnu11’<br>‘gnu1x’<br>GNU dialect of ISO C11. This is <strong>the default</strong> for C code. The name ‘gnu1x’ is deprecated. </p>
+<p>‘c++98’<br>‘c++03’<br>The 1998 ISO C++ standard plus the 2003 technical corrigendum and some additional defect reports. Same as -ansi for C++ code. </p>
+<p>‘gnu++98’<br>‘gnu++03’<br>GNU dialect of -std=c++98. </p>
+<p>‘c++11’<br>‘c++0x’<br>The 2011 ISO C++ standard plus amendments. The name ‘c++0x’ is deprecated. </p>
+<p>‘gnu++11’<br>‘gnu++0x’<br>GNU dialect of -std=c++11. The name ‘gnu++0x’ is deprecated. </p>
+<p>‘c++14’<br>‘c++1y’<br>The 2014 ISO C++ standard plus amendments. The name ‘c++1y’ is deprecated. </p>
+<p>‘gnu++14’<br>‘gnu++1y’<br>GNU dialect of -std=c++14. This is <strong>the default</strong> for C++ code. The name ‘gnu++1y’ is deprecated. </p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>linux</category>
+      </categories>
+      <tags>
+        <tag>develop</tag>
+      </tags>
   </entry>
   <entry>
     <title>streambuf</title>
@@ -6757,7 +6704,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#101;&#108;&#x6f;&#110;&#103;&#x32;&#x30;&#x31;&#52;&#64;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#108;&#x6f;&#110;&#103;&#x32;&#x30;&#x31;&#52;&#64;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#110;&#105;&#x65;&#108;&#111;&#110;&#x67;&#50;&#x30;&#x31;&#x34;&#64;&#49;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#110;&#105;&#x65;&#108;&#111;&#110;&#x67;&#50;&#x30;&#x31;&#x34;&#64;&#49;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -6867,43 +6814,6 @@ const double *const pip = &amp;pi;</code></pre>
         <category>cpp</category>
         <category>cpp-code</category>
       </categories>
-  </entry>
-  <entry>
-    <title>使用 Unicode 字符集，慎用中文</title>
-    <url>/2017/03/21/unicodeInWindows/</url>
-    <content><![CDATA[<p>2015年10月29日 17:54:48</p>
-<h1 id="问题一：输出异常"><a href="#问题一：输出异常" class="headerlink" title="问题一：输出异常"></a>问题一：输出异常</h1><figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;tchar.h&gt;</span></span></span><br><span class="line"><span class="keyword">void</span> _tmain()&#123;</span><br><span class="line">	TCHAR *ch=_T(<span class="string">&quot;china&quot;</span>);</span><br><span class="line">	_tprintf(_T(<span class="string">&quot;%s\n&quot;</span>),ch);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>以上代码在以下 2 种字符集都可以正常输出，显示。</p>
-<a id="more"></a>
-
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/chooseUnicode.png" alt="使用 Unicode 字符集"></p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;tchar.h&gt;</span></span></span><br><span class="line"><span class="keyword">void</span> _tmain()&#123;</span><br><span class="line">	TCHAR *ch=_T(<span class="string">&quot;中国&quot;</span>);</span><br><span class="line">	_tprintf(_T(<span class="string">&quot;%s\n&quot;</span>),ch);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>以上代码在多字节字符集下可以正常显示，而在 Unicode 字符集下显示异常</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/canntPrintNormally.png" alt="输出异常"></p>
-<p>结论一：windows 本身自带的 <strong>cmd 工具不能输出 unicode 编码的中文内容。</strong></p>
-<h1 id="问题二：更多的限制"><a href="#问题二：更多的限制" class="headerlink" title="问题二：更多的限制"></a>问题二：更多的限制</h1><p><strong>UNICODE 字符集下 CStdioFile 的 Writestring 无法写入中文。</strong></p>
-<p>提供三种解决思路：</p>
-<ul>
-<li>宽字节转换为多字节编码。不推荐</li>
-<li>使用setlocale语句设定区域。 参考：<a href="http://blog.csdn.net/ljz888666555/article/details/5511247">CStdioFile的Writestring无法写入中文的问题</a></li>
-<li>以二进制形式写入，同时指定文件编码类型。参考： <a href="http://bbs.csdn.net/topics/370037016">CStdioFile以Unicode编码方式写入字符串的文题</a>、<a href="http://www.cppblog.com/greatws/archive/2008/08/31/60546.html">Ansi、Unicode、UTF8字符串之间的转换和写入文本文件</a></li>
-</ul>
-<p>使用CFile</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">WriteToLog</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	CString cstr = _T(<span class="string">&quot;在unicode编码下使用CFile()写入中文需要在文件头部写入开头字节FFFE。\n&quot;</span>);</span><br><span class="line">	CString logPath = _T(<span class="string">&quot;c:\\_logTest.txt&quot;</span>);</span><br><span class="line">	CFile logFile;</span><br><span class="line">	<span class="keyword">if</span>(!logFile.Open( logPath ,CFile::modeCreate | CFile::modeWrite | CFile::modeNoTruncate))</span><br><span class="line">	&#123;</span><br><span class="line">		AfxMessageBox(_T(<span class="string">&quot;运行日志文件打开失败&quot;</span>),MB_ICONERROR);</span><br><span class="line">		<span class="keyword">return</span>  <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	logFile.Write(<span class="string">&quot;\xff\xfe&quot;</span>, <span class="number">2</span>);							<span class="comment">//开头字节 Charset/encoding </span></span><br><span class="line">	logFile.SeekToEnd();</span><br><span class="line">	logFile.Write(cstr, _tcsclen(cstr) * <span class="keyword">sizeof</span>(TCHAR));	<span class="comment">//注意第2个参数</span></span><br><span class="line">	logFile.Close();</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>使用CStdioFile</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">WriteToLog</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	CString cstr = _T(<span class="string">&quot;在unicode编码下使用CStdioFile()写入中文需要设置二元模式(CFile::typeBinary)。……\n&quot;</span>);</span><br><span class="line">	CString logPath = _T(<span class="string">&quot;c:\\_logTest.txt&quot;</span>);</span><br><span class="line">	CStdioFile logFile;</span><br><span class="line">	<span class="keyword">if</span>(!logFile.Open( logPath ,CFile::modeCreate | CFile::modeWrite | CFile::modeNoTruncate | CFile::typeBinary))</span><br><span class="line">	&#123;</span><br><span class="line">		AfxMessageBox(_T(<span class="string">&quot;运行日志文件打开失败&quot;</span>),MB_ICONERROR);</span><br><span class="line">		<span class="keyword">return</span>  <span class="number">-1</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	logFile.Write(<span class="string">&quot;\xff\xfe&quot;</span>, <span class="number">2</span>);							<span class="comment">//开头字节 Charset/encoding </span></span><br><span class="line">	logFile.SeekToEnd();</span><br><span class="line">	logFile.Write(cstr, _tcsclen(cstr) * <span class="keyword">sizeof</span>(TCHAR));	<span class="comment">//注意第2个参数</span></span><br><span class="line">	logFile.Close();</span><br><span class="line">	<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在百度百科中，CFile 词条提到“CFile 是 MFC 文件类的基类，它直接提供非缓冲的<strong>二进制</strong>磁盘输入/输出设备，并直接地通过派生类支持文本文件和内存文件。”CStdioFile 词条提到“流式文件是被缓冲的，而且可以以<strong>文本方式（缺省）</strong>或二进制方式打开。”</p>
-<p>因此，使用 CStdioFile 需明确指定二元模式。</p>
-<p>ps：因为指定了文件的编码类型，所以以上两段代码在多字节字符集下会有问题，虽然可以正常运行，但是写入文件的内容为乱码。</p>
-<p>另，在 msdn 中明确指出 typeUnicode 模式，可是在 VS2010 调试中提示无此模式：</p>
-<p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/CFile-typeUnicode.png" alt="模式"></p>
-]]></content>
-      <categories>
-        <category>windows</category>
-      </categories>
-      <tags>
-        <tag>develop</tag>
-      </tags>
   </entry>
   <entry>
     <title>使用 Debian</title>

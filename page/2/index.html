@@ -215,87 +215,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2019/11/04/bom/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
-      <meta itemprop="name" content="tnie & ilyw">
-      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="不积小流，无以成江海">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2019/11/04/bom/" class="post-title-link" itemprop="url">BOM 字节顺序标记</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2019-11-04 15:53:28" itemprop="dateCreated datePublished" datetime="2019-11-04T15:53:28+08:00">2019-11-04</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-11-19 13:23:39" itemprop="dateModified" datetime="2019-11-19T13:23:39+08:00">2019-11-19</time>
-              </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>BOM，就是 utf8-bom 中的 bom。</p>
-<p><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E4%BD%8D%E5%85%83%E7%B5%84%E9%A0%86%E5%BA%8F%E8%A8%98%E8%99%9F">字节顺序标记</a>（英语：byte-order mark，BOM）是位于码点 <code>U+FEFF</code> 的统一码字符的名称。统一码中，值为 <code>U+FFFE</code> 的码位被保证将不会被指定成一个统一码字符。Unicode 的编码点是唯一的，但表达方式（存储方式）多样。表达方式涉及 utf8,utf16 等；存储方式除了前者还涉及 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E5%AD%97%E8%8A%82%E5%BA%8F">字节顺序</a>。在 UTF-16 中：</p>
-<ul>
-<li>大尾序存储形式：数值的低有效位存储在存储地址高的位置。即 <code>0xFE,0xFF</code></li>
-<li>小尾序存储形式：数值的低有效位存储在存储地址低的位置。即 <code>0xFF,0xFE</code></li>
-</ul>
-<p>UTF-8 是否应该携有 BOM 是历史问题，不做讨论。当其携有 BOM 时，按照其 <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/UTF-8#UTF-8%E7%9A%84%E7%B7%A8%E7%A2%BC%E6%96%B9%E5%BC%8F">编码方式</a>，码点 <code>U+FEFF(1111,1110,1111,1111)</code> 会被存储为三个字节 <code>1110(1111),10(111011),10(111111)</code>，即 <code>0xef,0xbb,0xbf</code>。虽然携有 BOM，但</p>
-<blockquote>
-<p>它只用来标示一个 UTF-8 的文件，而不用来说明字节顺序</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2019/11/04/bom/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2019/11/04/develop-cpp-windows/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1074,11 +993,108 @@
   
   
 
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2018/09/06/singleton3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
+      <meta itemprop="name" content="tnie & ilyw">
+      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不积小流，无以成江海">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/09/06/singleton3/" class="post-title-link" itemprop="url">单例很糟糕？</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-06 17:28:52" itemprop="dateCreated datePublished" datetime="2018-09-06T17:28:52+08:00">2018-09-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2019-12-17 14:09:02" itemprop="dateModified" datetime="2019-12-17T14:09:02+08:00">2019-12-17</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cpp/" itemprop="url" rel="index">
+                    <span itemprop="name">cpp</span>
+                  </a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cpp/cpp-idioms/" itemprop="url" rel="index">
+                    <span itemprop="name">cpp-idioms</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>之前专门整理过 C++ 怎么写单例类，平日项目中涉及的场景大多简单，使用最基本的实现就完全能够应付过来。但是，还是有些复杂的场景需要考虑。</p>
+<h1 id="相互引用的单例们"><a href="#相互引用的单例们" class="headerlink" title="相互引用的单例们"></a>相互引用的单例们</h1><p>也就是 singletonA、singletonB 两者的构造相互调用。</p>
+<ul>
+<li><p>使用常用的局部静态变量方式（<a target="_blank" rel="noopener" href="https://github.com/tnie/MarkdownPhotos/blob/master/gof/lazy_result_loop.cpp">lazy_result_loop.cpp</a>），也是懒汉模式一种：相互依赖初始化，<strong>死循环</strong>，阻塞</p>
+  <figure class="highlight console"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Object_2B_1::Object_2B_1() this:[00BFC14C] data_2b_1_ [1].</span><br><span class="line">Object_2B_2::Object_2B_2() this:[00BFC154] data_2b_2_ [2].</span><br><span class="line"></span><br></pre></td></tr></table></figure></li>
+<li><p>使用全局静态变量方式（<a target="_blank" rel="noopener" href="https://github.com/tnie/MarkdownPhotos/blob/master/gof/hungry_result_different.cpp">hungry_result_different.cpp</a>），饿汗模式：不会死循环，但奇葩在 Debug、Release 模式执行<strong>结果不一致</strong></p>
+</li>
+</ul>
+<p>代码摘抄自 <a target="_blank" rel="noopener" href="http://www.cnblogs.com/fullsail/archive/2013/01/03/2842618.html">BOOST 的 Singleton 模版详解</a>，以上就是“2B 实现有问题”。虽然作者自述“BOOST 的实现如何规避问题”，但在 msvc2015 中实测其代码<strong>并未解决问题</strong>，依旧是<strong>阻塞</strong>结果。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2018/09/06/singleton3/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
   </div>
 
   
   <nav class="pagination">
-    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <a class="extend prev" rel="prev" href="/"><i class="fa fa-angle-left" aria-label="上一页"></i></a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/3/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1124,7 +1140,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

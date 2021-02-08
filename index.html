@@ -517,7 +517,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-02-04 11:29:39" itemprop="dateModified" datetime="2021-02-04T11:29:39+08:00">2021-02-04</time>
+                <time title="修改时间：2021-02-04 15:37:25" itemprop="dateModified" datetime="2021-02-04T15:37:25+08:00">2021-02-04</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -642,6 +642,15 @@
 <td>当发生数学下溢时，会抛出该异常。</td>
 </tr>
 </tbody></table>
+<h1 id="跨线程使用异常"><a href="#跨线程使用异常" class="headerlink" title="跨线程使用异常"></a>跨线程使用异常</h1><p>跨线程使用异常，优先使用 <code>std::future</code>，或者请移步 <code>std::exception_ptr</code> 类型。</p>
+<blockquote>
+<p>定义 <code>std::future</code> 使用了后者；而后者就是为跨线程捕获异常新增的特性。 </p>
+</blockquote>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.cnblogs.com/xiaoshiwang/p/10023543.html">多线程 等待一次性事件 异常处理</a></li>
+<li><a target="_blank" rel="noopener" href="http://bitdewy.github.io/blog/2013/09/23/exception-and-multithread/">异常与多线程</a></li>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/41288428/is-stdexception-ptr-thread-safe">Is std::exception_ptr thread safe?</a></li>
+</ul>
 <h1 id="logic-error"><a href="#logic-error" class="headerlink" title="logic_error"></a>logic_error</h1><p>It reports <del>errors that are a consequence of</del> faulty logic within the program <del>such as violating logical preconditions or class invariants</del> and may be preventable.</p>
 <p>No standard library components throw this exception directly</p>
 <h2 id="invalid-argument"><a href="#invalid-argument" class="headerlink" title="invalid_argument."></a>invalid_argument.</h2><p>an argument value has not been accepted.</p>
@@ -1247,7 +1256,7 @@
 
   
   <nav class="pagination">
-    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/13/">13</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
+    <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><span class="space">&hellip;</span><a class="page-number" href="/page/12/">12</a><a class="extend next" rel="next" href="/page/2/"><i class="fa fa-angle-right" aria-label="下一页"></i></a>
   </nav>
 
 
@@ -1293,7 +1302,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">122</span>
+          <span class="site-state-item-count">119</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
