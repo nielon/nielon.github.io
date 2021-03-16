@@ -46,15 +46,15 @@
   };
 </script>
 
-  <meta name="description" content="function 模板到底是什么？ https:&#x2F;&#x2F;github.com&#x2F;tnie&#x2F;YDData2&#x2F;issues&#x2F;163 为什么 function&lt;&gt; 对象递归调用自身不能使用 auto? https:&#x2F;&#x2F;stackoverflow.com&#x2F;questions&#x2F;2067988&#x2F;recursive-lambda-functions-in-c11 vc2015 IntelliSence 提">
+  <meta name="description" content="std::function&lt;&gt; 模板到底是什么？ YDData2&#x2F;issue，可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。 为什么 function&lt;&gt; 对象递归调用自身不能使用 auto? vc2015 IntelliSence 提示  使用 auto 类型说明符声明的变量不能出现在其自身的初始值设定项中">
 <meta property="og:type" content="article">
 <meta property="og:title" content="函数模板">
 <meta property="og:url" content="https://tnie.github.io/2021/02/02/function-template/index.html">
 <meta property="og:site_name" content="不积小流，无以成江海">
-<meta property="og:description" content="function 模板到底是什么？ https:&#x2F;&#x2F;github.com&#x2F;tnie&#x2F;YDData2&#x2F;issues&#x2F;163 为什么 function&lt;&gt; 对象递归调用自身不能使用 auto? https:&#x2F;&#x2F;stackoverflow.com&#x2F;questions&#x2F;2067988&#x2F;recursive-lambda-functions-in-c11 vc2015 IntelliSence 提">
+<meta property="og:description" content="std::function&lt;&gt; 模板到底是什么？ YDData2&#x2F;issue，可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。 为什么 function&lt;&gt; 对象递归调用自身不能使用 auto? vc2015 IntelliSence 提示  使用 auto 类型说明符声明的变量不能出现在其自身的初始值设定项中">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-02-02T08:22:31.000Z">
-<meta property="article:modified_time" content="2021-02-02T08:22:45.243Z">
+<meta property="article:modified_time" content="2021-03-16T08:43:26.652Z">
 <meta property="article:author" content="tnie &amp; ilyw">
 <meta name="twitter:card" content="summary">
 
@@ -239,10 +239,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-02-02 16:22:31 / 修改时间：16:22:45" itemprop="dateCreated datePublished" datetime="2021-02-02T16:22:31+08:00">2021-02-02</time>
+              <time title="创建时间：2021-02-02 16:22:31" itemprop="dateCreated datePublished" datetime="2021-02-02T16:22:31+08:00">2021-02-02</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-03-16 16:43:26" itemprop="dateModified" datetime="2021-03-16T16:43:26+08:00">2021-03-16</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -272,17 +278,32 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>function 模板到底是什么？ <a target="_blank" rel="noopener" href="https://github.com/tnie/YDData2/issues/163">https://github.com/tnie/YDData2/issues/163</a></p>
-<p>为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>? <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11</a></p>
+        <p><code>std::function&lt;&gt;</code> 模板到底是什么？ <a target="_blank" rel="noopener" href="https://github.com/tnie/YDData2/issues/163">YDData2/issue</a>，可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>?</a></p>
 <p>vc2015 IntelliSence 提示</p>
 <blockquote>
 <p>使用 <code>auto</code> 类型说明符声明的变量不能出现在其自身的初始值设定项中</p>
 </blockquote>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
-<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// sum2 = ...</span></span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ERR，报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
 
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    sum2 = ...</span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ERR，末尾多余的 const 造成报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+<p>Lambda expressions </p>
+<blockquote>
+<p>Constructs a closure: an unnamed function object capable of capturing variables in scope. <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/language/lambda">摘自 lambda</a></p>
+</blockquote>
+<p>Function objects</p>
+<blockquote>
+<p>A function object is any object for which <strong>the function call operator</strong> is defined. <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/functional">摘自 functional</a></p>
+</blockquote>
+<p><code>std::function</code>，推荐查看其 Example</p>
+<blockquote>
+<p>Class template <code>std::function</code> is a general-purpose polymorphic function wrapper. Instances of <code>std::function</code> can store, copy, and invoke any CopyConstructible Callable target – functions, lambda expressions, bind expressions, or other function objects, as well as pointers to member functions and pointers to data members. <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/functional/function">摘自 function</a></p>
+</blockquote>
+<p>需要强调的是 C++ 标准未对 <code>std::bind</code> 表达式的返回类型做出定义，其返回值并不对应我们熟悉的任何类型，但可以直接赋值给 <code>std::function&lt;&gt;</code></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; func = <span class="built_in">std</span>::<span class="built_in">tolower</span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; lamb = [](<span class="keyword">int</span> a) &#123; <span class="keyword">return</span> a; &#125;;</span><br><span class="line"><span class="function"><span class="built_in">std</span>::<span class="built_in">string</span> <span class="title">str</span><span class="params">(<span class="string">&quot;niel&quot;</span>)</span></span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">void</span>)&gt; bind = <span class="built_in">std</span>::bind(&amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size, &amp;str);</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>, <span class="keyword">int</span>)&gt; object = <span class="built_in">std</span>::plus&lt;<span class="keyword">int</span>&gt;();</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; p2mf = &amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size;</span><br><span class="line"></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, std::ref(str));</span></span><br><span class="line"><span class="comment">//// 拷贝传参，请务必明白在做什么。also works, but str is copied</span></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, str);</span></span><br></pre></td></tr></table></figure>
 
     </div>
 
@@ -304,6 +325,9 @@
             <span class="post-nav-divider"></span>
 
             <div class="post-nav-prev post-nav-item">
+                <a href="/2021/02/18/openwrt/" rel="prev" title="软路由 OpenWRT">
+                  软路由 OpenWRT <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
       </footer>
@@ -358,7 +382,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">119</span>
+          <span class="site-state-item-count">120</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>

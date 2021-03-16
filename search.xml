@@ -2754,6 +2754,8 @@
 <blockquote>
 <p>因为不容许复制 <code>std::logic_error</code> 抛出异常，通常将此消息在内部存储为分离分配的<strong>引用计数</strong>字符串。这也是构造函数不接收 <code>std::string&amp;&amp;</code> 参数的理由：无论如何它必须复制内容。</p>
 </blockquote>
+<a id="more"></a>
+
 <ol>
 <li><p>为什么 <code>std::exception</code> 拷贝构造不允许抛出异常？ </p>
 <p> 反证法。如果允许其构造抛出异常，异常又继承自 <code>std::exception</code>，还是直接崩溃更合理。</p>
@@ -3096,17 +3098,32 @@
   <entry>
     <title>函数模板</title>
     <url>/2021/02/02/function-template/</url>
-    <content><![CDATA[<p>function 模板到底是什么？ <a href="https://github.com/tnie/YDData2/issues/163">https://github.com/tnie/YDData2/issues/163</a></p>
-<p>为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>? <a href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11</a></p>
+    <content><![CDATA[<p><code>std::function&lt;&gt;</code> 模板到底是什么？ <a href="https://github.com/tnie/YDData2/issues/163">YDData2/issue</a>，可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。</p>
+<p><a href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>?</a></p>
 <p>vc2015 IntelliSence 提示</p>
 <blockquote>
 <p>使用 <code>auto</code> 类型说明符声明的变量不能出现在其自身的初始值设定项中</p>
 </blockquote>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// sum2 = ...</span></span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ERR，报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+<a id="more"></a>
 
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    sum2 = ...</span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ERR，末尾多余的 const 造成报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+<p>Lambda expressions </p>
+<blockquote>
+<p>Constructs a closure: an unnamed function object capable of capturing variables in scope. <a href="https://en.cppreference.com/w/cpp/language/lambda">摘自 lambda</a></p>
+</blockquote>
+<p>Function objects</p>
+<blockquote>
+<p>A function object is any object for which <strong>the function call operator</strong> is defined. <a href="https://en.cppreference.com/w/cpp/utility/functional">摘自 functional</a></p>
+</blockquote>
+<p><code>std::function</code>，推荐查看其 Example</p>
+<blockquote>
+<p>Class template <code>std::function</code> is a general-purpose polymorphic function wrapper. Instances of <code>std::function</code> can store, copy, and invoke any CopyConstructible Callable target – functions, lambda expressions, bind expressions, or other function objects, as well as pointers to member functions and pointers to data members. <a href="https://en.cppreference.com/w/cpp/utility/functional/function">摘自 function</a></p>
+</blockquote>
+<p>需要强调的是 C++ 标准未对 <code>std::bind</code> 表达式的返回类型做出定义，其返回值并不对应我们熟悉的任何类型，但可以直接赋值给 <code>std::function&lt;&gt;</code></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; func = <span class="built_in">std</span>::<span class="built_in">tolower</span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; lamb = [](<span class="keyword">int</span> a) &#123; <span class="keyword">return</span> a; &#125;;</span><br><span class="line"><span class="function"><span class="built_in">std</span>::<span class="built_in">string</span> <span class="title">str</span><span class="params">(<span class="string">&quot;niel&quot;</span>)</span></span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">void</span>)&gt; bind = <span class="built_in">std</span>::bind(&amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size, &amp;str);</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>, <span class="keyword">int</span>)&gt; object = <span class="built_in">std</span>::plus&lt;<span class="keyword">int</span>&gt;();</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; p2mf = &amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size;</span><br><span class="line"></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, std::ref(str));</span></span><br><span class="line"><span class="comment">//// 拷贝传参，请务必明白在做什么。also works, but str is copied</span></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, str);</span></span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>cpp</category>
@@ -5042,7 +5059,7 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#x65;&#x6c;&#x6f;&#x6e;&#x67;&#x32;&#x30;&#49;&#52;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#109;">&#x6e;&#x69;&#x65;&#x6c;&#x6f;&#x6e;&#x67;&#x32;&#x30;&#49;&#52;&#64;&#49;&#54;&#51;&#x2e;&#x63;&#111;&#109;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#101;&#108;&#111;&#110;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#108;&#111;&#110;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
@@ -5224,6 +5241,150 @@
 ]]></content>
       <categories>
         <category>windows</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>软路由 OpenWRT</title>
+    <url>/2021/02/18/openwrt/</url>
+    <content><![CDATA[<p>TODO</p>
+<ol start="4">
+<li>蓝牙网络连接，什么作用？删掉或禁用有影响吗？</li>
+<li>如何自动切换网关</li>
+<li>将 共享目录从台式机移到笔记本中，使用网线已经没有带宽限制了。</li>
+</ol>
+<h1 id="装机"><a href="#装机" class="headerlink" title="装机"></a>装机</h1><p><a href="https://zh.wikipedia.org/wiki/Windows%E9%A0%90%E5%85%88%E5%AE%89%E8%A3%9D%E7%92%B0%E5%A2%83">Windows预先安装环境</a>（英语：Microsoft Windows Preinstallation Environment），简称 Windows PE 或 WinPE，是 Microsoft Windows 的轻量版本。</p>
+<p>关于装机的知识，通过 <a href="http://www.wepe.com.cn/ubook/">微PE优盘使用说明书</a> 可以学习，虽然我们并不购买他家的优盘。以下摘录部分笔记。</p>
+<a id="more"></a>
+
+<p>搞清楚 UEFI 和 Legacy (俗称 BIOS )启动方式区别很重要：</p>
+<ul>
+<li>当您的机器支持 UEFI 的话（新机器一般同时支持 Legacy 和 UEFI ），在这个启动项中一般会出现两个 U 盘的选项，一个是 UEFI 开头的，另一个是不带 UEFI 开头的或叫 Legacy 的：</li>
+<li>当您的机器（老机器）只支持 Legacy 时，在这个主板的启动项中就只会出现一个 U 盘的选项：</li>
+</ul>
+<blockquote>
+<p>一些新机器默认了只开通了 UEFI 启动，如果需要打开 Legacy 启动，需要进 BIOS 设置中关闭 SecureBoot。</p>
+</blockquote>
+<p>硬盘分区表有两种类型：</p>
+<ul>
+<li>GPT 新型分区表类型，需对应 UEFI 启动，支持快速启动，支持 2TB 以上硬盘</li>
+<li>MBR 传统分区表类型，需对应 Legacy 启动，旧机器上比较常见</li>
+</ul>
+<p>原版的 Windows7 比较老，原生连 USB3.0 驱动都没有，只能装到比较老的机器上。在新机器上要么蓝屏，要么鼠标键盘动不了。</p>
+<p>优盘量产的概念有二：恢复和分区。后者可以在淘宝店的介绍 <a href="https://item.taobao.com/item.htm?id=531137342803">U 盘 PE 的写入方式</a> 中了解。</p>
+<h1 id="虚拟机"><a href="#虚拟机" class="headerlink" title="虚拟机"></a>虚拟机</h1><p>虚拟机在宿主机上模拟的两张 VMnet1 和 VMnet8 分别是什么作用？参考 <a href="https://blog.csdn.net/u012110719/article/details/42318717">虚拟机vmnet0、vmnet1和vmnet8的区别</a></p>
+<ul>
+<li>vmnet1，Host-Only 网络模式下虚拟机的网关</li>
+<li>vmnet8，NAT 方式下虚拟机的网关 </li>
+<li>桥接模式，和这两张网卡无关</li>
+</ul>
+<h2 id="开机后自动启动虚拟机"><a href="#开机后自动启动虚拟机" class="headerlink" title="开机后自动启动虚拟机"></a>开机后自动启动虚拟机</h2><p>网上很容易就能查到启动虚拟机的脚本，和一些开机自启的设定。分为计划任务和组策略两种方式。</p>
+<p>需要注意的是，好多帖子里并非开机自启动，而是要求用户登录的“登录后自动启动”。比如 <a href="https://blog.51cto.com/4746316/2330911">Windows 设置 VMware workstation 虚拟机开机启动</a></p>
+<p>目前是通过计划任务实现的：开机启动虚拟机计划任务，以及每周固定时间的关机任务，都不要使用默认的“只有在用户登录时运行”选项，要切换到“不管用户是否登录都要运行+不存储密码”。</p>
+<p>虽然 <a href="https://blog.csdn.net/CJF_iceKing/article/details/71725935">Windows中实现不依赖账户登录的开机启动程序</a> 提到要使用 SYSYTEM 用户，但我实际操作后并不需要。</p>
+<p>组策略分为计算机配置和用户配置：前者包含脚本（启动/关机）；后者包含脚本（登录/注销）。我自己尝试组策略-计算机配置（而非用户配置），也不行的。计划任务能实现，也就没有再深究。使用组策略可能以下问题：</p>
+<ul>
+<li><a href="https://docs.microsoft.com/zh-cn/troubleshoot/windows-client/group-policy/logon-scripts-not-run-for-long-time">登录脚本在用户登录到基于 Windows 8.1 的计算机后 5 分钟不运行</a></li>
+<li><a href="https://bbs.kafan.cn/thread-2039459-1-1.html">windows10通过组策略添加关机脚本不执行</a></li>
+</ul>
+<h1 id="软路由"><a href="#软路由" class="headerlink" title="软路由"></a>软路由</h1><p>先区分两类网口：</p>
+<blockquote>
+<p>LAN，全称Local Area Network，中文名叫做局域网。WAN，全称Wide Area Network，中文名叫做广域网。</p>
+</blockquote>
+<h2 id="OpenWrt-介绍"><a href="#OpenWrt-介绍" class="headerlink" title="OpenWrt 介绍"></a>OpenWrt 介绍</h2><p><a href="https://zh.wikipedia.org/wiki/OpenWrt">OpenWrt</a> 分支：</p>
+<ul>
+<li>lede, OpenWrt 另有一个复刻分支项目，名为 LEDE，两者于 2018年1月合并，合并后的项目使用 OpenWrt 的名字、LEDE 的源代码。</li>
+<li>Lean 的 Openwrt 源码，<a href="https://github.com/coolsnowwolf/lede/issues/6197">另立门户</a></li>
+<li><a href="https://github.com/Lienol/openwrt">lienol 的 openwrt</a>，群雄乱起。<a href="https://github.com/coolsnowwolf/lede/issues/5659">PassWall和Clash怎么安装</a>，由此问题了解到 passwall 是 lienol 项目的。但大神因为政策已经从源码中删掉科学上网插件了</li>
+<li>eSir 的精品小包和高大全，基于 Lean 的源码编译</li>
+</ul>
+<p>在虚拟机中安装 openwrt 参考 <a href="https://www.jianshu.com/p/832af1b3b4cd">在VMWare虚拟机下创建Openwrt LEDE软路由系统</a></p>
+<blockquote>
+<p>帖子里端口给了个 8080 是错的，默认使用的就是 http 协议的 80 端口。</p>
+</blockquote>
+<p><a href="https://firmware.koolshare.cn/LEDE_X64_fw867/">kookshare 网站</a> 是提供了虚拟机 vmdk 文件的。</p>
+<p>openwrt 安装完毕之后，更新不了酷软中心怎么做？如何科学上网呢？</p>
+<ul>
+<li>按照网上的说明自定义了 DNS 还是无法更新。<del>非关键步骤，暂缓处理</del> 忘了设置网关</li>
+<li>科学上网的插件从酷软中心移除，只能 <a href="https://hq450.github.io/fancyss/">屏蔽关键词</a> 进行 <a href="https://github.com/hq450/fancyss_history_package/tree/master/fancyss_X64">离线安装</a>，这个插件识别 v2ray 合法配置时报错，<strong>增删改配置存在重大 BUG</strong>，也不是大佬们常用插件，放弃</li>
+</ul>
+<blockquote>
+<p>由于软路由一般不带无线 WIFI，我们得自己连接无线路由器或无线 AP，设置为 AP 模式或静态地址，路由器 AP 模式只做无线转发，我们就能让他变成无线软路由啦！</p>
+</blockquote>
+<p>热门科学上网插件 ssr+ 和 passwall 不是 koolshare 上固件配套的，分别是国内两位 L 大神在各自分支中支持的。</p>
+<h2 id="Openwrt-开发与-Luci-介绍"><a href="#Openwrt-开发与-Luci-介绍" class="headerlink" title="Openwrt 开发与 Luci 介绍"></a>Openwrt 开发与 Luci 介绍</h2><p><a href="https://www.jianshu.com/p/bfb93c4e8dc9">https://www.jianshu.com/p/bfb93c4e8dc9</a></p>
+<blockquote>
+<p>Luci 是 Lua ConﬁgurationInterface的简称，意在 OpenWrt 整个系统的配置集中化。</p>
+</blockquote>
+<h2 id="旁路由和单臂路由"><a href="#旁路由和单臂路由" class="headerlink" title="旁路由和单臂路由"></a>旁路由和单臂路由</h2><p>旧笔记本可以做软路由吗？可以。先考虑做旁路由（网关服务器）而非主路由。</p>
+<ul>
+<li>网卡数量的限制，</li>
+<li>百兆无线网口的限制。</li>
+<li>有线网口是千兆的</li>
+<li>两个 usb3.0 数据口</li>
+</ul>
+<p>手机呢？</p>
+<p><strong>不能用无线网卡</strong>：网上搜到的文字教程或视频教程，我按部就班操作之后，配置宿主机或者手机之后就是无法上网。后来发现相同操作与配置，换用有线网卡之后没问题。 </p>
+<p>作为主路由的两种方法：<a href="https://www.youtube.com/watch?v=9AEL3Q0bhBI">旧笔记本改装软路由作为家里主路由</a></p>
+<ul>
+<li>单臂路由，单一网口同时作为 WAN 口和 LAN 口</li>
+<li>购买 usb 转千兆网口的线</li>
+</ul>
+<h2 id="定时开机"><a href="#定时开机" class="headerlink" title="定时开机"></a>定时开机</h2><p>因为 x240 系统是 win10，从稳定性和能耗两个角度希望能够定时关机、定时启动。比如每晚十一点关机，每天早上七点开机</p>
+<p>定时关机使用系统定时任务能够完成，操作并不复杂。但定时开机就需要考虑外部操作了。</p>
+<ul>
+<li>使用手机的 Tasker app 做局域网唤醒。多引入一套设备，不作为优先选项。</li>
+<li>路由器的局域网唤醒。手动唤醒我之前就使用过，在后台管理 web 页面傻瓜式操作</li>
+</ul>
+<p>但如何自动化呢？参考了好多篇帖子，踩了两个大坑之后总算补全了技术路线：其实就是三步走</p>
+<ol start="0">
+<li>远程 SSH 登录进去</li>
+<li>局域网唤醒的命令行 <code>ether-wake</code></li>
+<li>增加定时任务 <code>cru</code>，还得自行启动 <code>crond</code> 服务</li>
+<li>重启路由后定时任务依然有效</li>
+</ol>
+<p>首先要 SSH 进入路由器系统，需要先在“系统管理-系统设置-服务-Enable SSH” 中开启登录，用户名和密码就是 web 控制台的用户名和密码。</p>
+<p>参考 <a href="https://post.smzdm.com/p/a25dgzmq/">写个脚本让路由器网络更可靠</a> 学到日志：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 打印日志，可以在路由器 web 控制台“系统记录”中查看</span></span><br><span class="line">logger -c &quot;log message&quot;</span><br><span class="line">/usr/bin/logger -c &quot;log message&quot;</span><br></pre></td></tr></table></figure>
+<p><a href="https://koolshare.cn/thread-115602-1-1.html">定时自动唤醒</a>，这篇帖子的内容在我的路由器 AC1200G 上不适用，WOL 的指令在 <code>/usr/bin/ether-wake </code> 而非  <code>/usr/sbin/ether-wake</code> 中。创建定时任务，不是常用的 <code>crontab</code> 命令，而是 <code>cru</code> 指令，它并不是 <code>crontab</code> 的别名。</p>
+<p>增加定时任务之后，任务不执行。是因为 <code>crond</code> 服务默认并未启动 <code>ps | grep crond</code>，需要手动执行。</p>
+<p>以下定时任务执行完毕后，能够成功 wol 关机的台式机。但现在重启路由后，定时任务丢失</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></span><br><span class="line">touch /tmp/home/root/created_by_jffs.autorun_.txt</span><br><span class="line">logger &#x27;run jffs.autorun script, by x1502.&#x27;</span><br><span class="line"><span class="meta">#</span><span class="bash">cru a main <span class="string">&quot;* * * * * /usr/bin/logger &#x27;wol main of x1502&#x27; &amp;&amp; /usr/bin/ether-wake -i br0 2C:F0:5D:0A:CE:B4&quot;</span></span></span><br><span class="line">cru a x240 &quot;10 7 * * * /usr/bin/logger &#x27;wol x240 of x1502&#x27; &amp;&amp; /usr/bin/ether-wake -i br0 28:D2:44:E9:0D:91&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> start only one crond</span></span><br><span class="line">ps | grep crond | grep -v grep</span><br><span class="line">if [ $? -ne 0 ]</span><br><span class="line">then</span><br><span class="line">logger &quot;start crond by x1502&quot;</span><br><span class="line">crond</span><br><span class="line">else</span><br><span class="line">logger &quot;crond process is running. do nothing.&quot;</span><br><span class="line">fi</span><br></pre></td></tr></table></figure>
+<p>单独验证每条指令的有效性，再拼装：</p>
+<ol>
+<li>cru 指令的 “min hour day month week command” 如果 <del>使用了两个空格间隔就会失效，ε=(´ο｀*)))唉</del>，command 不要使用 #tag# 等特殊字符</li>
+<li>外接移动硬盘触发 <code>script_usbmount=</code> 脚本时，如果移动硬盘分区 n 个，也就会挂载 n 次，启动 n 个 crond 进程。所以需要判断 crond 进程是否存在</li>
+</ol>
+<h3 id="路由器启动后自动执行脚本"><a href="#路由器启动后自动执行脚本" class="headerlink" title="路由器启动后自动执行脚本"></a>路由器启动后自动执行脚本</h3><p>翻阅了好多帖子，都是中高端路由器或梅林系统，技术路线也都是 jffs 分区，启用 <code>jffs2_exec=</code> 配置。但我屡次尝试就是不执行，难免怀疑是不是低端路由器不支持（硬件架构差异或阉割软件）：</p>
+<ul>
+<li><a href="https://github.com/gygy/asus_factory_image">开启原厂固件 JFFS2</a>，我也碰到 <a href="https://github.com/gygy/asus_factory_image/issues/5">issue#5</a> 问题，可惜无解。</li>
+</ul>
+<p>付出是有回报的，我也是幸运的。<code>jffs2_exec=</code> 配置项已经不再支持（被阉割了），改用挂载 usb 设备触发脚本执行：</p>
+<ul>
+<li><a href="https://www.snbforums.com/threads/how-to-start-srcript-automatically-after-reboot-rt-ac86u.67453/#post-630902">Maybe the jffs2_exec option doesn’t work any more.</a></li>
+<li><a href="https://www.snbforums.com/threads/3-0-0-4-384-45717-removes-x-attribute-in-jffs-files.57334/#post-501965">I found several workarounds. The simplest one requires a USB stick or drive mounted to your router.</a></li>
+</ul>
+<h1 id="私有云-NAS"><a href="#私有云-NAS" class="headerlink" title="私有云 NAS"></a>私有云 NAS</h1><p>谷歌相册即将停止无限上传高质量画质的服务，考虑 NAS</p>
+<p>备选的方案有三个，每个都有亮点和痛点，似乎只能逐一尝试：</p>
+<ul>
+<li>黑群晖，传说插件完善，但 app 的评分都不及格，似乎只能亲自下场试试了</li>
+<li>Windows 阵营，吃资源，台式机还行，x240 的笔记本就有点捉急了。<a href="https://zhuanlan.zhihu.com/p/138153055">Windows server 2019 启用 SMB</a> 分析了好多，但落地也就只用了 SMB，作为媒体中心只读够用，但照片同步、外网访问怎么办呢</li>
+<li>OMV，<a href="https://post.smzdm.com/p/akmr2w9e/">OpenMediaVault 用作家用 NAS 和 HTPC</a> 有哪些插件呢，也是的亲自下场一试</li>
+</ul>
+<p>针对相册功能的讨论：<a href="https://www.chiphell.com/thread-2204942-1-1.html">自建 NAS 相册管理软件的选择</a></p>
+<p>Kodi 刮削器最近（2021年1月22日）都不能用了，需要“绕过局域网地址”翻墙才能够正常使用，如果还是异常就重启 kodi 再次“扫描新的内容”。</p>
+<h1 id="科学上网"><a href="#科学上网" class="headerlink" title="科学上网"></a>科学上网</h1><p>两个目标，稳定和简单。链路稳定，配置稳定，速度稳定；操作简单，家人使用时不晓得它的存在最好。</p>
+<p>YouTubekids 的画质</p>
+<p>youtube 720p 视频都无法流程播放</p>
+<h1 id="网关"><a href="#网关" class="headerlink" title="网关"></a>网关</h1><p>作用</p>
+<p>为什么要将上网设备的 DNS 改成软路由的 ip 地址呢？</p>
+<h1 id="科学上网速度"><a href="#科学上网速度" class="headerlink" title="科学上网速度"></a>科学上网速度</h1><p>vultr 是不是废了？为什么我的下载速度只有几百 K</p>
+<p>谷歌云</p>
+<h1 id="双系统"><a href="#双系统" class="headerlink" title="双系统"></a>双系统</h1><p><a href="https://blog.csdn.net/weixin_41649565/article/details/96441936">解决双系统 Windows 10 更新后进入 grub rescue 模式</a></p>
+<p><a href="https://www.cnblogs.com/shenyuanfeng/p/10990512.html">Debian 忘记密码重置</a></p>
+<p><a href="https://answers.microsoft.com/zh-hans/windows/forum/all/win10%E8%AE%BF%E9%97%AE%E5%B1%80%E5%9F%9F%E7%BD%91/94f80434-d5e8-4a7f-aa02-31f927709a2a">Win10 访问局域网中计算机共享文件要求输入网络凭据</a>，但安卓手机等就不用用户名、密码，能够直接访问文件。</p>
+]]></content>
+      <categories>
+        <category>tools</category>
       </categories>
   </entry>
   <entry>
@@ -5538,6 +5699,8 @@ const double *const pip = &amp;pi;</code></pre>
 <p>我们需要处理非常尴尬的情况：数据结构同时包含已初始化数据和未初始化数据。p341</p>
 </blockquote>
 <p>因为内置的数值类型都是小对象，所以可以一律初始化，无需在意开销。但对于自定义类型，初始化要有的放矢。</p>
+<a id="more"></a>
+
 <p>TODO 还是要自己手动写出 <code>tnie::vector</code> 才行</p>
 <p><code>std::allocator</code> 主要涉及 <a href="https://www.cnblogs.com/luxiaoxun/archive/2012/08/10/2631812.html">new/delete 函数和操作符</a></p>
 <blockquote>
@@ -6704,7 +6867,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#110;&#105;&#x65;&#108;&#111;&#110;&#x67;&#50;&#x30;&#x31;&#x34;&#64;&#49;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#110;&#105;&#x65;&#108;&#111;&#110;&#x67;&#50;&#x30;&#x31;&#x34;&#64;&#49;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#x65;&#108;&#111;&#110;&#103;&#x32;&#x30;&#49;&#x34;&#64;&#x31;&#x36;&#x33;&#x2e;&#x63;&#x6f;&#109;">&#x6e;&#x69;&#x65;&#108;&#111;&#110;&#103;&#x32;&#x30;&#49;&#x34;&#64;&#x31;&#x36;&#x33;&#x2e;&#x63;&#x6f;&#109;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -6935,10 +7098,11 @@ const double *const pip = &amp;pi;</code></pre>
   <entry>
     <title>vcpkg 包管理器</title>
     <url>/2018/12/10/vcpkg/</url>
-    <content><![CDATA[<p>除特别备注，全部摘自 <a href="https://docs.microsoft.com/en-us/cpp/vcpkg?view=vs-2017">vcpkg: A C++ package manager for Windows, Linux and MacOS</a></p>
-<p><strong>强调</strong>：安装 IDE 时不要变更默认路径！否则，使用 vcpkg 磨难重重，<a href="https://github.com/microsoft/vcpkg/issues/12488">vcpkg issue#12488</a>。我安装 Language English 就失败了，后面也就没尝试。</p>
-<h1 id="特点"><a href="#特点" class="headerlink" title="特点"></a>特点</h1><p>此章节类似读书（博客）笔记。</p>
-<h2 id="安装库"><a href="#安装库" class="headerlink" title="安装库"></a>安装库</h2><ol>
+    <content><![CDATA[<p><strong>强调</strong>：安装 IDE 时不要变更默认路径！否则，使用 vcpkg 磨难重重，<a href="https://github.com/microsoft/vcpkg/issues/12488">vcpkg issue#12488</a>。我安装 Language English 就失败了，后面也就没尝试。</p>
+<p>除特别备注，全部摘自 <a href="https://docs.microsoft.com/en-us/cpp/vcpkg?view=vs-2017">vcpkg: A C++ package manager for Windows, Linux and MacOS</a>。此章节类似读书（博客）笔记。</p>
+<a id="more"></a>
+
+<h1 id="安装库"><a href="#安装库" class="headerlink" title="安装库"></a>安装库</h1><ol>
 <li><p>同时支持动态链接库，以及 <a href="https://blogs.msdn.microsoft.com/vcblog/2016/11/01/vcpkg-updates-static-linking-is-now-available/">静态链接</a>。Windows 下默认编译 32 位的动态库。</p>
 <blockquote>
 <p> If no triplet is specified, vcpkg will install and compile for <strong>the default triplet</strong> for the target platform: <code>x86-windows</code>, <code>x64-linux.cmake</code>, or <code>x64-osx.cmake</code>.</p>
@@ -6952,7 +7116,6 @@ const double *const pip = &amp;pi;</code></pre>
 <blockquote>
 <p>This should be as easy as copying <code>triplets\x86-windows-static.cmake</code> to a new file of your own name (<code>triplets\x86-windows-static-md.cmake</code>, for example). Then change the setting for <code>VCPKG_CRT_LINKAGE</code> to <code>dynamic</code> instead of <code>static</code>.</p>
 </blockquote>
-<a id="more"></a>
 </li>
 <li><p>不改变环境变量，不依赖注册表 <del>或 Visual Studio</del> 在 Windwos 平台还是和后者密切关联的</p>
 <p> 为什么总要下载 ninja ? 不会弃用自家 Visual Studio，全面拥抱 ninja 了吧？</p>
@@ -6982,8 +7145,8 @@ const double *const pip = &amp;pi;</code></pre>
 <p> vcpkg 针对 git、cmake 设有最低版本，如果系统中查找到版本较低，依旧会重新下载 git 和 cmake。有点坑的地方在于 vcpkg 基本都在追踪最新版本。所以，交给 vcpkg 自己操心吧。下载慢就多等会儿。</p>
 </li>
 </ol>
-<h2 id="使用库"><a href="#使用库" class="headerlink" title="使用库"></a>使用库</h2><ol>
-<li><p>可以集成到 Visual Studio。当存在多个实例时，最后执行 <code>vcpkg integrate install</code> 的有效</p>
+<h1 id="使用库"><a href="#使用库" class="headerlink" title="使用库"></a>使用库</h1><ol>
+<li><p>可以集成到 Visual Studio。当存在多个 vcpkg 实例（目录）时，最后执行 <code>vcpkg integrate install</code> 的目录有效。</p>
 <p> 所以，改变目录后，重新执行上述命令即可！</p>
 </li>
 <li><p>从 Visual Studio 中解除 vcpkg，执行 <code>vcpkg.exe integrate remove</code> 即可。</p>
@@ -7001,17 +7164,18 @@ const double *const pip = &amp;pi;</code></pre>
 </blockquote>
 <p> 如何覆写 MSBuild 属性呢？——目前只发现，以文本形式手动修改 <code>.vxproj</code> 工程文件的方式。好蠢</p>
 <p> 试验 Property Sheets 总是莫名其妙无效，直接复制到 .vxproj 中又能生效。</p>
- <figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">PropertyGroup</span> <span class="attr">Label</span>=<span class="string">&quot;Globals&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">VcpkgTriplet</span> <span class="attr">Condition</span>=<span class="string">&quot;&#x27;$(Platform)&#x27;==&#x27;Win32&#x27;&quot;</span>&gt;</span>x86-windows-static<span class="tag">&lt;/<span class="name">VcpkgTriplet</span>&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- &lt;VcpkgEnabled&gt;true&lt;/VcpkgEnabled&gt; --&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- &lt;VcpkgTriplet Condition=&quot;&#x27;$(Platform)&#x27;==&#x27;x64&#x27;&quot;&gt;x64-windows-static&lt;/VcpkgTriplet&gt; --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">PropertyGroup</span>&gt;</span></span><br></pre></td></tr></table></figure>
-<h2 id="编译选项"><a href="#编译选项" class="headerlink" title="编译选项"></a>编译选项</h2></li>
+ <figure class="highlight xml"><table><tr><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">PropertyGroup</span> <span class="attr">Label</span>=<span class="string">&quot;Globals&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">VcpkgTriplet</span> <span class="attr">Condition</span>=<span class="string">&quot;&#x27;$(Platform)&#x27;==&#x27;Win32&#x27;&quot;</span>&gt;</span>x86-windows-static<span class="tag">&lt;/<span class="name">VcpkgTriplet</span>&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- &lt;VcpkgEnabled&gt;true&lt;/VcpkgEnabled&gt; --&gt;</span></span><br><span class="line">  <span class="comment">&lt;!-- &lt;VcpkgTriplet Condition=&quot;&#x27;$(Platform)&#x27;==&#x27;x64&#x27;&quot;&gt;x64-windows-static&lt;/VcpkgTriplet&gt; --&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">PropertyGroup</span>&gt;</span></span><br></pre></td></tr></table></figure></li>
+<li><p>Nothing</p>
+</li>
 </ol>
-<p>截止到目前版本，</p>
+<h1 id="编译选项"><a href="#编译选项" class="headerlink" title="编译选项"></a>编译选项</h1><p>截止到目前版本，</p>
 <figure class="highlight console"><table><tr><td class="code"><pre><span class="line">PS E:\vcpkg&gt; .\vcpkg.exe version</span><br><span class="line">Vcpkg package management program version 2018.10.20-nohash</span><br><span class="line"></span><br><span class="line">See LICENSE.txt for license information.</span><br></pre></td></tr></table></figure>
 <p>Vcpkg 单个 triplet 文件能够同时生成 <code>Debug/Release</code> 调试版本和发布版本的库。通过自定义 triplet 能够支持 「(<code>x64/win32</code>) &amp;（<code>动态链接库</code>/<code>静态链接库</code>）&amp;（<code>/MD(d)</code>运行时 /<code>/MT(d)</code>运行时）」。</p>
 <ol>
 <li>其内嵌对 「(<code>x64/win32</code>) &amp;（使用 <code>/MT(d) </code>运行时的<strong>静态链接库</strong> | 使用 <code>/MD(D) </code>运行时的<strong>动态链接库</strong>）」 的支持，在 <code>triplets</code> 文件夹中查看；</li>
 <li>其对 「（<code>动态链接库</code>/<code>静态链接库</code>）&amp;（<code>/MD(d)</code>运行时/<code>/MT(d)</code>运行时）」其他组合的支持，需要用户自行编写 triplet 文件实现。</li>
 </ol>
-<h3 id="IDE"><a href="#IDE" class="headerlink" title="IDE"></a>IDE</h3><p>在上述前提下，要求 Visual Studio 自动化支持 （<code>动态链接库</code>/<code>静态链接库</code>）&amp;（<code>/MD(d)</code>运行时/<code>/MT(d)</code>运行时）的任意组合不现实，尤其是场景 2 全权交给用户自行操作的情况。</p>
+<h2 id="IDE"><a href="#IDE" class="headerlink" title="IDE"></a>IDE</h2><p>在上述前提下，要求 Visual Studio 自动化支持 （<code>动态链接库</code>/<code>静态链接库</code>）&amp;（<code>/MD(d)</code>运行时/<code>/MT(d)</code>运行时）的任意组合不现实，尤其是场景 2 全权交给用户自行操作的情况。</p>
 <p>另外，由于 Visual Studio 并没有「<code>动态链接/静态连接</code>」的开关选项。所以，IDE 仅支持 (<code>Debug/Release</code>) X (<code>x64/win32</code>) X（<code>动态链接库</code>/<del><code>静态链接库</code></del>）X（<code>/MD(d)</code>运行时/<del><code>/MT(d)</code>运行时</del>）。</p>
 <ul>
 <li>其他组合，需要手动修改 Visual Studio 工程的 property sheet 实现。</li>
@@ -7519,11 +7683,16 @@ const double *const pip = &amp;pi;</code></pre>
 
 <p>参考帖子 ：<a href="https://blog.csdn.net/qq_36761831/article/details/81175736%EF%BC%8C">https://blog.csdn.net/qq_36761831/article/details/81175736，</a> 重启生效。</p>
 <p><strong>引导文件</strong></p>
-<p><a href="https://xpenology.club/downloads/%EF%BC%8C">https://xpenology.club/downloads/，</a> .img 格式</p>
+<p><a href="https://xpenology.club/downloads/">https://xpenology.club/downloads/</a> ， .img 格式</p>
 <p><strong>刷引导的工具</strong></p>
 <p>Roadkil’s Disk Image ，将 .img 格式刷入虚拟磁盘供 vm 使用</p>
-<p>（未验证）或者使用 StarWind V2V Image Converte 转换引导的.img文件到VM disk形式，直接被 vm 使用</p>
+<p>（未验证）或者使用 StarWind V2V Image Converter 转换引导的.img文件到VM disk形式，直接被 vm 使用</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://post.smzdm.com/p/ar0v4orw/">群晖折腾二：初学者使用VMware 虚拟机安装群晖体验DSM6.2系统</a></p>
+<p>作者的“群晖折腾一” 没有必要看。虚拟磁盘类型一定要选 SATA</p>
+<p>引导用的磁盘是单个文件。为了简洁，系统磁盘也建议使用“将虚拟磁盘存储为单个文件”，毕竟也没有多大。</p>
+<p><a href="https://post.smzdm.com/p/av7zn43p/">群晖NAS相册的正确玩法</a></p>
 <h1 id="联网"><a href="#联网" class="headerlink" title="联网"></a>联网</h1><p>nothing</p>
+<p>如果局域网内搜索不到，请返回确认虚拟磁盘类型：一定要选 SATA。</p>
 <h2 id="网关是什么"><a href="#网关是什么" class="headerlink" title="网关是什么"></a>网关是什么</h2><blockquote>
 <p>A gateway is a piece of networking hardware used in telecommunications for telecommunications networks that allows data to flow from one discrete network to another.</p>
 <p>使数据在两个离散的网络之间通信的硬件设备：回顾历史，早期的电话网络肯定是离散的，且各自很可能使用了不同的协议，彼此间要完成通信，就需要某种转换的设备。<del>好像早期的局域网协议和互联网协议也是不同的，我忘记在哪里看到的</del></p>
