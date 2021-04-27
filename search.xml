@@ -1163,28 +1163,10 @@
   <entry>
     <title>asio 网络库</title>
     <url>/2019/01/05/asio/</url>
-    <content><![CDATA[<p>asio 封装了平台差异性，在 windows 下本质就是 IOCP。</p>
-<h1 id="Overlapped-IO-重叠输入输出"><a href="#Overlapped-IO-重叠输入输出" class="headerlink" title="Overlapped IO 重叠输入输出"></a>Overlapped IO 重叠输入输出</h1><p><a href="https://blog.csdn.net/xiaoding133/article/details/7775139">异步 I/O 技术(Overlapped I/O)，避免使用多线程</a></p>
-<ol>
-<li><p>激发的文件 handles / 设备内核对象</p>
-</li>
-<li><p>激发的 event 对象 / 事件内核对象</p>
-<blockquote>
-<p>IOEvent 用的是 Overlapped IO 模型。使用起来也比较简单，仅需要将 fd buf overlapped(event) 这4者绑在一起，由内核完成数据的收发，并通过 event 通知应用层，应用层再进行数据操作已经完成后的操作，不需要多余的内存拷贝，数据已经在指定的 buf 上了。<a href="https://blog.csdn.net/nightwizard2030/article/details/77602612">C++ SOCKET通信模型（二）IOEvent</a></p>
-</blockquote>
-</li>
-<li><p>异步过程调用 APCs（Asynchronous Procedure Calls）</p>
-</li>
-<li><p>I/O completion ports（重要）适用于高负载服务器</p>
-</li>
-</ol>
-<a id="more"></a>
-
-<h1 id="IOCP-输入输出完成端口"><a href="#IOCP-输入输出完成端口" class="headerlink" title="IOCP 输入输出完成端口"></a>IOCP 输入输出完成端口</h1><p><a href="https://blog.csdn.net/PiggyXP/article/details/6922277">完成端口(Completion Port)详解</a></p>
-<blockquote>
-<p>最后，我的建议是，想要使用 基于事件通知的重叠 I/O 和基于完成例程的重叠 I/O 的朋友，如果不是特别必要，就不要去使用了，因为这两种方式不仅使用和理解起来也不算简单，而且还有性能上的明显瓶颈</p>
-</blockquote>
-<h1 id="ASIO"><a href="#ASIO" class="headerlink" title="ASIO"></a>ASIO</h1><p><a href="https://segmentfault.com/a/1190000007225464">基于 Asio 的 C++ 网络编程</a></p>
+    <content><![CDATA[<p>asio 封装了平台差异性，在 windows 下本质就是 IOCP。<a href="https://tnie.github.io/2020/12/25/iocp/">使用 IOCP 请看这里</a></p>
+<h1 id="ASIO"><a href="#ASIO" class="headerlink" title="ASIO"></a>ASIO</h1><p>Your program will have at least one <strong>I/O execution context</strong>, such as an <code>asio::io_context</code> object, <code>asio::thread_pool</code> object, or <code>asio::system_context</code>. This I/O execution context represents your program’s link to the operating system’s I/O services.</p>
+<p><a href="https://blog.csdn.net/qq_35976351/article/details/106959768">理解 C++ Executor 的设计理念</a>，查看 asio <a href="https://www.boost.org/doc/libs/1_76_0/doc/html/boost_asio/reference/Executor1.html#boost_asio.reference.Executor1.networking_ts_style_executors">Executor requirements</a>，就只是朴素的 callable thing 的执行器概念</p>
+<p><a href="https://segmentfault.com/a/1190000007225464">基于 Asio 的 C++ 网络编程</a></p>
 <p><a href="https://cloud.tencent.com/developer/article/1056970">Boost asio 官方教程</a></p>
 <p><a href="http://think-async.com/Asio/asio-1.12.2/doc/index.html">Documentation (non-Boost)</a></p>
 <p>查看 asio 源码，可以学到“错误代码 vs 异常”两种策略；可以学到“同步 vs 异步”两种接口形式。</p>
@@ -1204,108 +1186,108 @@
 </ul>
 <p>如果要在连续下载文件中使用 asio 异步模型，那么如何将下载后 sqlite3 入库改为嵌入 handler 中？</p>
 <h2 id="例子学习笔记"><a href="#例子学习笔记" class="headerlink" title="例子学习笔记"></a>例子学习笔记</h2><p>2019/8/29 16:07:03 因为多数函数都是模板，编码时信息提示本就是短板。结合 <code>co_await</code> 运算符使用时，更是得不到任何提示信息。只能“瞎写”参数数目和类型，编译报错 + 查看源码多次试验究竟怎么写入参。</p>
-<p><a href="http://think-async.com/Asio/asio-1.12.2/src/examples/cpp11/futures/daytime_client.cpp">http://think-async.com/Asio/asio-1.12.2/src/examples/cpp11/futures/daytime_client.cpp</a></p>
+<p><a href="http://think-async.com/Asio/asio-1.18.0/src/examples/cpp11/futures/daytime_client.cpp">daytime_client.cpp</a></p>
 <p>结合 c++11 <code>std::future</code> 使用 asio 的异步接口，只是在局部提升效率：每个异步接口返回的 <code>future</code>，在其他异步接口中使用时要传入 <code>future::get()</code> 结果，**而非 <code>future</code>**。从全局来看依旧是阻塞的。</p>
 <p>当然，有些业务场景恰好如此。一方面想改进每次同步 IO 的阻塞，因为两次 IO 之间可以做些其余工作；另一方面，下一次 IO 调用依赖前一次 IO 的结果。如果为了局部改进，整体改用「异步 + 回调」形式，开发耗时久：“回调地狱”真的很累，难写，看的人也累。</p>
 <p>在上述场景中，如果没有 <del>两次 IO 之间可以做些其余工作</del> 的需求，其实再次“退化”改用同步接口即可。</p>
-<h1 id="协程"><a href="#协程" class="headerlink" title="协程"></a>协程</h1><p>Boost ASIO supports 3 co routine types:</p>
+<h1 id="协程"><a href="#协程" class="headerlink" title="协程"></a>协程</h1><p>Boost ASIO supports 3 coroutine types:</p>
 <ul>
 <li><a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/reference/coroutine.html">Stackless Coroutines</a> - Boost ASIO own light weight co routine library using pre-processor macros (been around for a long time now)</li>
 <li><a href="https://www.boost.org/doc/libs/1_69_0/doc/html/boost_asio/overview/core/spawn.html">Stackful Coroutines</a> - Uses Boost Coroutine library</li>
 <li><a href="https://www.boost.org/doc/libs/1_71_0/doc/html/boost_asio/overview/core/coroutines_ts.html">Coroutines TS Support</a> (experimental) - Uses CO Routine TS (which is also stackless)</li>
 </ul>
-<h2 id="无栈协程-☆"><a href="#无栈协程-☆" class="headerlink" title="无栈协程 ☆"></a>无栈协程 ☆</h2><blockquote>
-<p>Boost 库中的协程支持两种方式：一种是封装了 Boost.Coroutine 的 <code>spawn</code>，是一个 stackful 类型的协程；一种是 asio 作者写出的 stackless 协程。</p>
-</blockquote>
-<p>asio 的爸爸通过 <a href="https://bbs.avplayer.org/t/asio/771">Duff’s Device 技术</a> 实现的无栈协程，用到了好多奇技淫巧。结合 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/reference/coroutine.html">coroutine 类</a> 的手册和 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp03/http/server4/server.cpp">官方 example</a> 学习过程中有以下问题或心得：</p>
-<p><strong>回调签名</strong></p>
+<h2 id="无栈协程-☆"><a href="#无栈协程-☆" class="headerlink" title="无栈协程 ☆"></a>无栈协程 ☆</h2><p>Boost 库中的协程支持两种方式：</p>
+<ul>
+<li>一种是封装了 <code>Boost.Coroutine</code> 的 <code>spawn</code>，是一个 stackful 类型的协程；</li>
+<li>一种是 asio 作者写出的 stackless 协程。</li>
+</ul>
+<p>asio 的作者通过 <a href="https://bbs.avplayer.org/t/asio/771">Duff’s Device 技术</a> 实现的无栈协程，用到了好多奇技淫巧。结合 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/reference/coroutine.html">coroutine 类</a> 的手册和 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp03/http/server4/server.cpp">官方 example</a> 学习过程中有以下问题或心得：</p>
 <p><code>std::function&lt;&gt;</code> 模板约定的签名是无法适配默认参数的：即 <code>void handler(asio::error_code, size_t len = 0)</code> 是无法赋值给 <code>std::function&lt;void(asio::error_code)&gt;</code> 类型的。</p>
 <p>一方面从 c++11 才开始支持 <code>std::function&lt;&gt;</code>，另一方面在 c++03 example 中 <code>async_accept()</code>/<code>async_read_some()</code>/<code>async_write()</code> 竟然全部可以使用回调对象：<code>void operator()( asio::error_code ec = asio::error_code(), std::size_t length = 0)</code> ，要知道 <code>async_accpet()</code> 的回调签名可是 <code>void(asio::error_code)</code></p>
-<p>几个关键的伪-关键词，其实都是宏。要知道<strong>宏是不支持断点调试</strong>的，除非手动把所有的宏展开。不过作为成熟的网络库，这些宏都是经过千锤百炼的，调试中根本无需展开。</p>
-<p><strong>达夫设备的 fall-through 理解起来太难</strong>了，我能理解简单的使用案例，但前述伪-关键词还是看不懂。查看 <a href="https://zh.cppreference.com/w/cpp/language/attributes/fallthrough">fallthrough </a></p>
+<p>几个关键的** 伪-关键词**，其实都是宏。宏是不支持断点调试的，除非手动把所有的宏展开。不过作为成熟的网络库，这些宏都是经过千锤百炼的，调试中根本无需展开。</p>
+<p>达夫设备的 fall-through 理解起来太难了，我能理解简单的使用案例，但前述伪-关键词还是看不懂。查看 <a href="https://zh.cppreference.com/w/cpp/language/attributes/fallthrough">fallthrough </a></p>
 <p>成员<strong>全部交给</strong> <code>std::shared_ptr</code> 托管，因为函数对象需要频繁的拷贝：一方面拷贝开销不能太大；另一方面，回调重入时成员必须有效且正确。虽然 <code>fork server(*this)()</code> 浅拷贝，但实际上 <del>所有</del> 智能指针陆续通过 <code>ptr.reset(new xx)</code> 全部新申请了内存，而 <code>socket_</code> 的浅拷贝本就是最佳解决方案。每个主动 socket 封装都携有一份用不到 <code>acceptor_</code> 也只是个瑕不掩瑜的、无法避免的小问题。</p>
 <blockquote>
-<p>刚刚介绍的协程，不需要任何编译器/底层库的支持。只使用 C 语言本身就许可的 Duff’s Device 技术就能实现。唯一的缺点是局部变量无法跨 yield 。所以所有变量都要定义为函数对象的成员变量。 另外需要把协程定义为函数对象，需要额外编写不少代码。</p>
+<p>刚刚介绍的协程，不需要任何编译器/底层库的支持。只使用 C 语言本身就支持的 Duff’s Device 技术就能实现。唯一的缺点是局部变量无法跨 yield 。所以所有变量都要定义为函数对象的成员变量。 另外需要把协程定义为函数对象，需要额外编写不少代码。</p>
 </blockquote>
 <p>更多请参考：<a href="https://blog.csdn.net/guxch/article/details/82804067">Boost中的协程—Boost.Asio中的coroutine类</a></p>
-<h2 id="有栈协程-☆☆"><a href="#有栈协程-☆☆" class="headerlink" title="有栈协程 ☆☆"></a>有栈协程 ☆☆</h2><blockquote>
-<p>Boost.Context 提供的协程包括两类：非对称型协程 asymmetric_coroutine 的和对称型协程 symmetric_coroutine，前者de协程知道唤醒自己的协程，当需要暂停的时候控制流转换给那个特定的协程；对称协程中所有的协程都是相等的，协程可以把控制流给任何一个其它的协程。</p>
-</blockquote>
-<p><a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp03/spawn/echo_server.cpp">c++03 examples</a> 和 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp11/spawn/echo_server.cpp">c++11 examples</a> 中 spawn 实例演示涉及的 Boost.Coroutine 库已经 <a href="https://www.boost.org/doc/libs/1_70_0/libs/coroutine/doc/html/coroutine/overview.html">被标记为 Deprecated</a>，推荐使用 Boost.Coroutine2 —— 尴尬的地方在于 <code>asio::spawn()</code> 并未就新的 Boost.Coroutine2 封装新的实现，只能凑合着使用 deprecated 特性。</p>
+<h2 id="有栈协程-☆"><a href="#有栈协程-☆" class="headerlink" title="有栈协程 ☆"></a>有栈协程 ☆</h2><p><code>Boost.Context</code> 提供的协程包括两类：非对称型协程 asymmetric_coroutine 的和对称型协程 symmetric_coroutine，前者de协程知道唤醒自己的协程，当需要暂停的时候控制流转换给那个特定的协程；对称协程中所有的协程都是相等的，协程可以把控制流给任何一个其它的协程。</p>
+<p><a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp03/spawn/echo_server.cpp">c++03 examples</a> 和 <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/example/cpp11/spawn/echo_server.cpp">c++11 examples</a> 中 <code>spawn</code> 实例演示涉及的 <code>Boost.Coroutine</code> 库已经 <a href="https://www.boost.org/doc/libs/1_70_0/libs/coroutine/doc/html/coroutine/overview.html">被标记为 Deprecated</a>，推荐使用 <code>Boost.Coroutine2</code>。尴尬的地方在于 <code>asio::spawn()</code> 并未就新的 <code>Boost.Coroutine2</code> 封装新的实现，只能凑合着使用 deprecated 特性。</p>
 <ul>
 <li>如何使用 Boost.Coroutine2，请参考：<a href="https://blog.csdn.net/guxch/article/details/82803769">Boost中的协程—Boost.Coroutine2</a></li>
 <li>如何通过 <code>asio::spawn()</code> 使用 deprecated 的 Boost.Coroutine，请参考：<a href="http://senlinzhan.github.io/2017/10/03/boost-asio-coroutine/">在 Boost.Asio 中使用协程</a></li>
-<li></li>
 </ul>
-<h2 id="Coroutines-TS-Support-☆☆☆"><a href="#Coroutines-TS-Support-☆☆☆" class="headerlink" title="Coroutines TS Support ☆☆☆"></a>Coroutines TS Support ☆☆☆</h2><p>DEMO <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/examples/cpp17_examples.html">https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/examples/cpp17_examples.html</a></p>
-<p>即将进入 c++20 的协程。二百多行代码就能写个聊天室，佩服</p>
-<p>查看 <code>co_spawn </code>函数的正式描述，总是理解不了。我个人偏向于认为其用于将协程绑定到指定 <code>asio::io_context</code></p>
+<h1 id="Coroutines-TS-Support-☆☆☆"><a href="#Coroutines-TS-Support-☆☆☆" class="headerlink" title="Coroutines TS Support ☆☆☆"></a>Coroutines TS Support ☆☆☆</h1><p>DEMO <a href="https://www.boost.org/doc/libs/1_70_0/doc/html/boost_asio/examples/cpp17_examples.html">cpp17_examples</a></p>
+<p>即将进入 c++20 的协程。二百多行代码就能写个聊天室，佩服。</p>
+<p><a href="https://think-async.com/Asio/asio-1.18.1/doc/asio/overview/core/coroutines_ts.html">Coroutines TS Support</a>，这是唯一能找到的有效介绍，虽然内容不多，但说清楚了入参、出参的用法和意义。</p>
 <blockquote>
-<p>Spawn a new thread of execution. 生成一个新的执行 <del>线程</del> 协程</p>
+<p>Support for the Coroutines TS is provided via the <code>awaitable</code> class template, the <code>use_awaitable</code> completion token, and the <code>co_spawn()</code> function.</p>
 </blockquote>
+<h2 id="co-spawn"><a href="#co-spawn" class="headerlink" title="co_spawn"></a>co_spawn</h2><p>查看 <code>co_spawn</code> 函数的功能与签名：通过持有协程的返回值（第二个入参）以便 resume 协程。asio 库封装的协程，协程的调度对用户都是透明的（用户只提供了某些定制点，用户无需 resume 协程），完全由 <code>co_spawn</code> 底层实现。类比 thread，完全是 os 的定位。</p>
+<blockquote>
+<p>Spawn a new coroutined-based thread of execution. 生成一个新的<em>基于协程</em>的执行线程。</p>
+</blockquote>
+<p>对于用户，压下好奇心，不要执着于它是如何实现的，直接理解为“新启执行线程”是直观且无误的。专注业务而非库的功能。</p>
+<blockquote>
+<p>对称协程只是非对称协程的一个特例，我们可以通过添加一个中立的第三方调度中心的方式将非对称协程转换成对称协程（只需要在所有协程“暂停”时将控制权转交给调度中心统一调度即可）<a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">引用来源</a></p>
+</blockquote>
+<p>推测 <code>co_spawn</code> 内部就存在这么个“调度中心”。</p>
 <p>在 <a href="https://zh.cppreference.com/w/cpp/language/coroutines">coroutines_ts</a> 中给出了协程的定义等。在 asio 中协程的显著标识是函数返回值：<code>awaitable&lt;void&gt; foo()</code>，</p>
 <blockquote>
 <p>The return type of a coroutine or asynchronous operation.</p>
 </blockquote>
-<p>所以 <code>co_spawn()</code> 的第二个入参使用 lambda 时要显式地给定 <code>return xx</code> 语句。</p>
-<p><strong>总结</strong>：协程是特异的函数，特征就是返回签名；相应的，协程也不能像普通函数那样直接调用，而是通过 <code>co_spawn()</code> “调用”。</p>
-<p>在协程函数体的实现中，当需要 io_context 对象时，既可以（以下理解正确吗？特殊值 <code>this_coro::executor</code> 存在的唯一意义？）</p>
-<ul>
-<li><p>通过函数参数传进来</p>
-</li>
-<li><p>也可以通过 <code>asio::executor executor = co_await this_coro::executor</code> 获取。</p>
-<p>  无法理解这个“固定用法”里的 <code>co_await</code> 是怎么回事？仍然是“暂停执行，直至恢复”的意义吗？可能需要了解 <code>co_await</code> 实现才行</p>
-<p>  空类型 <code>this_coro::executor</code> 是如何移动构造 <code>asio::executor</code> 变量的？</p>
-</li>
-</ul>
-<p>另外两个特殊值，<code>co_spawn()</code> 的第三个参数 <code>asio::detached</code>，和 async_xx() 的末尾参数 <code>asio::use_awaitable</code>，都是固定用法。推测 <code>asio::use_awaitable</code> 是用于模板特例化，并作为当前异步操作的 id。</p>
+<p>所以 <code>co_spawn()</code> 的第二个入参使用 lambda expression 时要显式地指出返回类型：要么 <code>return xx</code> 语句；要么 <code>-&gt; ret</code>。因为缺省使用 <code>void</code>。</p>
 <blockquote>
-<p>上述三个特殊值的类型定义都是空的。类似 <code>std::exception</code> 或 <code>std::error_category</code></p>
+<p><code>-&gt; ret</code>, where ret specifiers the return type. If trailing-return-type is not present, the return type is implied by the function return statements (or <code>void</code> if it doesn’t return any value)</p>
 </blockquote>
-<p>顺序 <code>co_spawn() </code>创建 1-2-3-4 协程，在各协程中 <code>co_await</code> 之前的逻辑也是 1-2-3-4 顺序执行！</p>
-<h3 id="协程里外的异常"><a href="#协程里外的异常" class="headerlink" title="协程里外的异常"></a>协程里外的异常</h3><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;asio/redirect_error.hpp&gt;</span></span></span><br><span class="line"></span><br><span class="line">asio::error_code ec;</span><br><span class="line"><span class="function"><span class="keyword">co_await</span> <span class="title">async_write</span><span class="params">(socket, asio::buffer(msg), asio::redirect_error(use_awaitable, ec) )</span></span>;</span><br><span class="line"><span class="keyword">if</span> (ec)</span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>总结</strong>：协程是特异的函数，特征就是返回签名；协程也不能像普通函数那样直接调用，而是通过 <code>co_spawn()</code> 以便 suspend 后由调度中心 resume。</p>
+<h2 id="executor"><a href="#executor" class="headerlink" title="executor"></a>executor</h2><p>在协程函数体的实现中，当需要 <code>io_context</code> 对象时，既可以通过函数参数传进来，也可以在函数内使用以下语句获取：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// asio::any_io_executor</span></span><br><span class="line"><span class="keyword">auto</span> executor = <span class="keyword">co_await</span> this_coro::executor;		</span><br></pre></td></tr></table></figure>
+
+<p>一度非常困惑两者的关系，<a href="https://github.com/tnie/aclient/issues/11">context 和 executor 分别是什么概念</a></p>
+<blockquote>
+<p>在 asio 中，execution context 是一个重量级的对象，不允许拷贝。executor 是对一个轻量级的句柄(handle)对象指向对应的execution context。</p>
+</blockquote>
+<p>另外两个特殊值，<code>co_spawn()</code> 的第三个参数 <code>asio::detached</code>，和 <code>async_xx()</code> 的末尾参数 <code>asio::use_awaitable</code>，都是固定用法。</p>
+<p>上述三个特殊值的类型定义都是空的，模板依赖其类型进行特例化，类型的定义反而不重要。</p>
+<p><code>asio::use_awaitable</code> 用于模板特例化之外有更多的用途吗？</p>
+<p>顺序 <code>co_spawn() </code>创建 1-2-3-4 协程，在各协程中 <code>co_await</code> 之前的逻辑也是 1-2-3-4 顺序执行！——这是个浅显的现象，了解协程的定义和实现后，这也是理所当然的：在第一次 <code>co_await</code> 时函数才返回。</p>
+<h2 id="Special-Values"><a href="#Special-Values" class="headerlink" title="Special Values"></a>Special Values</h2><p>This completion token that can be passed as a handler to an asynchronous operation:</p>
+<ul>
+<li><code>asio::use_awaitable</code></li>
+<li><code>asio::detached</code></li>
+<li><code>asio::use_future</code></li>
+</ul>
+<p><strong>asio::use_awaitable</strong></p>
+<p>The <code>use_awaitable_t</code> class, with its value <code>use_awaitable</code>, is used to represent the currently executing coroutine. This completion token may be passed as a handler to an asynchronous operation. For example:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">awaitable&lt;<span class="keyword">void</span>&gt; <span class="title">my_coroutine</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="built_in">std</span>::<span class="keyword">size_t</span> n = <span class="keyword">co_await</span> my_socket.async_read_some(buffer, use_awaitable);</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When used with <code>co_await</code>, the initiating function (<code>async_read_some</code> in the above example) suspends the current coroutine. The coroutine is resumed when the asynchronous operation completes, and the result of the operation is returned.</p>
+<p><strong>asio::detached</strong></p>
+<p>The <code>detached_t</code> class is used to indicate that an asynchronous operation is detached. That is, there is no completion handler waiting for the operation’s result. A <code>detached_t</code> object may be passed as a handler to an asynchronous operation, typically using the special value <code>asio::detached</code>. For example:</p>
+<p><code>my_socket.async_send(my_buffer, asio::detached);</code></p>
+<p><strong>asio::use_future</strong></p>
+<p>The <code>use_future_t</code> class is used to indicate that an asynchronous operation should return a <code>std::future</code> object. A <code>use_future_t</code> object may be passed as a handler to an asynchronous operation, typically using the special value <code>asio::use_future</code>. For example:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::<span class="built_in">future</span>&lt;<span class="built_in">std</span>::<span class="keyword">size_t</span>&gt; my_future</span><br><span class="line">  = my_socket.async_read_some(my_buffer, asio::use_future);</span><br></pre></td></tr></table></figure>
+<p>The initiating function (<code>async_read_some</code> in the above example) returns a future that will receive the result of the operation. If the operation completes with an <code>error_code</code> indicating failure, it is converted into a <code>system_error</code> and passed back to the caller via the future.</p>
+<p><strong>this_coro::executor</strong></p>
+<p>Awaitable object that returns the executor of the current coroutine.</p>
+<p><code>constexpr executor_t executor;</code></p>
+<h2 id="协程里外的异常"><a href="#协程里外的异常" class="headerlink" title="协程里外的异常"></a>协程里外的异常</h2><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;asio/redirect_error.hpp&gt;</span></span></span><br><span class="line"></span><br><span class="line">asio::error_code ec;</span><br><span class="line"><span class="function"><span class="keyword">co_await</span> <span class="title">async_write</span><span class="params">(socket, asio::buffer(msg), asio::redirect_error(use_awaitable, ec) )</span></span>;</span><br><span class="line"><span class="keyword">if</span> (ec)</span><br><span class="line">&#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>redirect_error_t</strong></p>
+<p>Completion token type used to specify that an error produced by an asynchronous operation is captured to an <code>error_code</code> variable.</p>
 <p><code>asio::redirect_err()</code> 的 <a href="https://www.boost.org/doc/libs/1_71_0/libs/outcome/doc/html/recipes/asio-integration-1-70.html">缺点</a> 无伤大雅</p>
 <blockquote>
-<p>The redirect_error token transformation recovers the option to use the error_code interface, but it suffers from the same drawbacks that <strong>make pure error codes unappealing</strong> in the synchronous case.</p>
+<p>The <code>redirect_error</code> token transformation recovers the option to use the error_code interface, but it suffers from the same drawbacks that <strong>make pure error codes unappealing</strong> in the synchronous case.</p>
 </blockquote>
-<h3 id="co-await-和线程锁"><a href="#co-await-和线程锁" class="headerlink" title="co_await 和线程锁"></a>co_await 和线程锁</h3><p>协程中禁用线程锁！</p>
-<h3 id="不和谐的-疑惑"><a href="#不和谐的-疑惑" class="headerlink" title="不和谐的 / 疑惑"></a>不和谐的 / 疑惑</h3><p><code>asio::async_read()</code> <del>似乎</del> 没有 <code>asio::use_awaitable</code> 版本的重载 (•_•)? 本就是组合函数，很容易实现</p>
+<h2 id="co-await-和线程锁"><a href="#co-await-和线程锁" class="headerlink" title="co_await 和线程锁"></a>co_await 和线程锁</h2><p>协程中禁用线程锁！</p>
+<h2 id="不和谐的-疑惑"><a href="#不和谐的-疑惑" class="headerlink" title="不和谐的 / 疑惑"></a>不和谐的 / 疑惑</h2><p><code>asio::async_read()</code>  没有 <code>asio::use_awaitable</code> 版本的重载 (•_•)?  <a href="https://www.boost.org/doc/libs/1_67_0/libs/beast/doc/html/beast/ref/boost__beast__http__async_read.html">boost beast 提供了</a></p>
+<blockquote>
+<p>The secret of stackless coroutines is that they can suspend themselves only from the <strong>top-level</strong> function.</p>
+</blockquote>
 <p><code>socket::async_read_some()</code> 无法以 <code>asio::streambuf</code> 作为入参</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">auto</span> size = response_.m_response_buf.size();</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">auto</span> remain = content_length - size;</span><br><span class="line"><span class="comment">//auto len = co_await asio::async_read(*ssocket_, response_.m_response_buf, asio::transfer_at_least(content_length - size),</span></span><br><span class="line"><span class="comment">//    asio::redirect_error(asio::use_awaitable, ec));</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">size_t</span> len = <span class="number">0</span>; !ec &amp;&amp; len &lt; remain; )</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">auto</span> buf = response_.m_response_buf.prepare(<span class="built_in">std</span>::min(remain, <span class="number">1024ul</span>));</span><br><span class="line">    <span class="keyword">auto</span> bytes = <span class="keyword">co_await</span> ssocket_-&gt;async_read_some(asio::buffer(buf),</span><br><span class="line">        asio::redirect_error(asio::use_awaitable, ec));</span><br><span class="line">    response_.m_response_buf.commit(bytes);</span><br><span class="line">    len += bytes;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在 msvc2015 中断点调试无法监视变量 (ÒωÓױ)！</p>
-<h3 id="如何编写协程类型"><a href="#如何编写协程类型" class="headerlink" title="如何编写协程类型"></a>如何编写协程类型</h3><p>如果想看懂 asio 如何支持 <code>co_await</code> 的，想更细致地用好协程，就需要了解更基础（同时也是更复杂的）内容。</p>
-<ul>
-<li><p><a href="https://blog.panicsoftware.com/coroutines-introduction/">COROUTINES INTRODUCTION</a>，需要科学上网，PAC 全局</p>
-<p>  文章写得很棒，这个系列作者暂时写了三篇（似乎后续还会继续写），由浅入深，对 C++ 标准中的协程入门只推荐这位作者。</p>
-</li>
-<li><p><a href="https://lewissbaker.github.io/">C++ Coroutines: Understanding operator co_await</a>，特别推荐的几篇文章</p>
-</li>
-<li><p><a href="https://owent.net/2019/1904.html">C++20 Coroutine</a></p>
-<p>  作者应该也是小白用户，几个关键点都提到了，但展开得不够，轻重也没区分。罗列概念、罗列代码</p>
-</li>
-<li><p><a href="https://zh4ui.net/tags/coroutine/">TAG : COROUTINE</a></p>
-<p>  貌似高屋建瓴，但真的就是“乱拳打死老师傅”。有价值，但对小白入门非常不友好，得自行筛选。</p>
-</li>
-</ul>
-<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><p>其他网络通信库或工具，以及和网络通信相关的加密、压缩等。</p>
-<h2 id="curl"><a href="#curl" class="headerlink" title="curl"></a>curl</h2><p>curl 是很活跃的网络通信工具，由 C 语言编写。</p>
-<blockquote>
-<p>cURL 是一个利用 URL 语法在命令行下工作的文件传输工具，1997 年首次发行。它支持文件上传和下载，所以是综合传输工具，但按传统，习惯称 cURL 为下载工具。cURL 还包含了用于程序开发的 libcurl。</p>
-</blockquote>
-<h2 id="RPC"><a href="#RPC" class="headerlink" title="RPC"></a>RPC</h2><ul>
-<li>grpc</li>
-<li><a href="https://thrift.apache.org/">Apache Thrift</a></li>
-</ul>
-<h2 id="openssl"><a href="#openssl" class="headerlink" title="openssl"></a>openssl</h2><p>在 windows 平台使用 openssl 有两种方式：</p>
-<ol>
-<li><p>下载源码，根据其中的手册通过 nmake 生成动态库 or 静态库。需要 activeperl 和 nasm 环境。</p>
-<p> 静态库或导入库名称 libeay32.lib，ssleay32.lib；动态库名称 libeay32.dll，ssleay32.dll。给一篇 <a href="https://blog.devzeng.com/blog/openssl-windows-compile.html">博客</a> 参考。</p>
-</li>
-<li><p>从网上下载 <a href="https://wiki.openssl.org/index.php/Binaries">第三方编译的结果</a></p>
-<p> 其中 grpc 同时也在用的 <a href="https://slproweb.com/products/Win32OpenSSL.html">https://slproweb.com/products/Win32OpenSSL.html</a> 此地址下载内容 VC 目录中文件以 <code>libcrypto32M[TD](d).lib</code> <code>libssl32M[TD](d).lib</code> 命名。</p>
-</li>
-</ol>
-<p><a href="https://github.com/tnie/StockDataLayer/issues/9">OpenSSL 1.1.0+ have changed library names in windows</a></p>
+<h2 id="如何编写协程类型"><a href="#如何编写协程类型" class="headerlink" title="如何编写协程类型"></a>如何编写协程类型</h2><p>请移步 coroutine 学习总结</p>
 ]]></content>
       <categories>
         <category>cpp</category>
@@ -1775,9 +1757,14 @@
 <p>Visual Studio 中的模块接口文件需要 ixx 扩展名</p>
 </blockquote>
 <p>编译器在处理头文件和模块的关系时，引入了 global module fragment （全局模块片段）的概念</p>
-<p>单独使用 module 关键字：用于文件开头，标识内容归属<br>使用 export module 关键字：用于模块接口文件 .ixx<br>单独使用 export 关键字：导出什么<br>import 关键词：先包含头文件，再导入模块</p>
+<ul>
+<li>单独使用 <code>module</code> 关键字：用于文件开头，标识内容归属</li>
+<li>使用 <code>export module</code> 关键字：用于模块接口文件 .ixx</li>
+<li>单独使用 <code>export</code> 关键字：导出什么</li>
+<li><code>import</code> 关键词：先包含头文件，再导入模块</li>
+</ul>
 <blockquote>
-<p>The import declaration must appear after the module declaration and after any #include directives, but before any declarations in the file.</p>
+<p>The <code>import</code> declaration must appear after the <code>module</code> declaration and after any <code>#include</code> directives, but before any declarations in the file.</p>
 </blockquote>
 <p>模块声明和头文件？</p>
 <p>c++20 的三大块：concepts, modules, coroutines</p>
@@ -1788,17 +1775,14 @@
 <blockquote>
 <p>Coroutines are <strong>stackless</strong>: they suspend execution by returning to the caller and the data that is required to resume execution is stored <strong>separately from the stack</strong>.</p>
 </blockquote>
-<ol>
-<li>协程暂停执行，控制权返回给调用者</li>
-<li>为了恢复执行保存的状态和数据，不在栈上。</li>
-</ol>
+<p>协程暂停执行，控制权返回给调用者。为了恢复执行保存的状态和数据，不在栈上。</p>
 <p>c++20 中什么样子的函数才是协程呢？</p>
 <ol>
-<li>函数定义使用了 co_await co_yield co_return</li>
+<li>函数定义使用了 <code>co_await</code> <code>co_yield</code> <code>co_return</code></li>
 <li>函数返回值满足以下要求：??????? 定义了某些特定方法的类型。</li>
 </ol>
 <blockquote>
-<p>协程的返回值并不是普通的值而是一个可以和另外一个协程相互协作的对象</p>
+<p>协程的返回值并不是普通的值而是一个可以和外界（或另外一个协程）相互协作的对象</p>
 </blockquote>
 <p>每个协程关联了 promise object , coroutine handle, coroutine state. 这里的 promise object 和 <code>std::promise</code> 无关</p>
 <ul>
@@ -1807,7 +1791,7 @@
 <li>the coroutine state, which is an internal, <strong>heap-allocated object</strong> that contains the promise object, …</li>
 </ul>
 <blockquote>
-<p>The Promise type is determined by the compiler from <strong>the return type of the coroutine</strong> using std::coroutine_traits.</p>
+<p>The Promise type is determined by the compiler from <strong>the return type of the coroutine</strong> using <code>std::coroutine_traits</code>.</p>
 </blockquote>
 <p>作为一名普通的程序员，我大概率是只是用别人写好的协程库，不会自己写的。</p>
 <blockquote>
@@ -2317,6 +2301,291 @@
       <categories>
         <category>linux</category>
       </categories>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/31/coroutine-a/</url>
+    <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2017/09/25/coroutine-theory">https://lewissbaker.github.io/2017/09/25/coroutine-theory</a></p>
+<h1 id="Coroutines"><a href="#Coroutines" class="headerlink" title="Coroutines"></a>Coroutines</h1><p>Coroutines generalise the operations of a function by separating out some of the steps performed in the <strong>Call</strong> and <strong>Return</strong> operations into three <strong>extra</strong> operations: <strong>Suspend</strong>, <strong>Resume</strong> and <strong>Destroy</strong>.</p>
+<p>比其他文章多描述了一个 Destroy 步骤，更准确。</p>
+<p>Note that, like the Return operation of a function, a coroutine can only be suspended from within the coroutine itself at well-defined suspend-points.</p>
+<p>请注意，就像函数的 Return 操作一样，协程只能在定义好的暂停点处从协程自身内部暂停。</p>
+<h2 id="Coroutine-activation-frames"><a href="#Coroutine-activation-frames" class="headerlink" title="Coroutine activation frames"></a>Coroutine activation frames</h2><p>With coroutines there are some parts of the activation frame that need to be preserved across coroutine suspension and there are some parts that only need to be kept around while the coroutine is executing. For example, the lifetime of a variable with a scope that does not span any coroutine suspend-points can potentially be stored on the stack.</p>
+<p>对于协程，activation frame 的某些部分在协程暂停时需要保留，而 activation frame 的某些部分只有在协程执行时才需要保留。例如，不跨越任何协程暂停点的变量可以潜在地存储在堆栈中。</p>
+<p>You can logically think of the activation frame of a coroutine as being comprised of two parts: the ‘coroutine frame’ and the ‘stack frame’.</p>
+<p>您可以从逻辑上将协程的 activation frame 想象为由两部分组成：“coroutine frame”和“stack frame”。</p>
+<p>The ‘coroutine frame’ holds part of the coroutine’s activation frame that persists while the coroutine is suspended and the ‘stack frame’ part only exists while the coroutine is executing and is freed when the coroutine suspends and transfers execution back to the caller/resumer.</p>
+<p>“coroutine frame”保留了协程 activation frame 的一部分，该部分在协程被挂起时仍然存在，而“stack frame”部分仅在协程执行时存在，而在协程挂起并将执行转移回调用者/恢复者时则被释放。</p>
+<h2 id="The-‘Suspend’-operation"><a href="#The-‘Suspend’-operation" class="headerlink" title="The ‘Suspend’ operation"></a>The ‘Suspend’ operation</h2><p>Once the coroutine has been prepared for resumption, the coroutine is considered ‘suspended’.</p>
+<p>The coroutine then has the opportunity to execute some additional logic before execution is transferred back to the caller/resumer. This additional logic is given access to a handle to the coroutine-frame that can be used to later resume or destroy it.</p>
+<p>协程进入暂停状态之后，执行逻辑返还调用者之前，是有机会做些额外操作的：有个句柄可用，以便恢复或销毁协程。</p>
+<p>是不是指 awaiter 的 <code>await_suspend()</code> 接口呢？</p>
+<h2 id="The-‘Resume’-operation"><a href="#The-‘Resume’-operation" class="headerlink" title="The ‘Resume’ operation"></a>The ‘Resume’ operation</h2><p>When a function wants to resume a coroutine it needs to effectively ‘call’ into the middle of a particular invocation of the function. The way the caller/resumer identifies the particular invocation to resume is by calling the <code>void resume()</code> method on the coroutine-frame handle provided to the corresponding Suspend operation.</p>
+<p>恢复协程的方式，是调用 <code>handle.resume()</code>，handle 对象由与之对应的 暂停操作提供。</p>
+<h2 id="The-‘Destroy’-operation"><a href="#The-‘Destroy’-operation" class="headerlink" title="The ‘Destroy’ operation"></a>The ‘Destroy’ operation</h2><p>The Destroy operation destroys the coroutine frame without resuming execution of the coroutine.</p>
+<p>This operation can only be performed on a suspended coroutine.</p>
+<p>Similar to the Resume operation, the Destroy operation identifies the particular activation-frame to destroy by calling the <code>void destroy()</code> method on the coroutine-frame handle provided during the corresponding Suspend operation.</p>
+<h2 id="The-‘Call’-operation-of-a-coroutine"><a href="#The-‘Call’-operation-of-a-coroutine" class="headerlink" title="The ‘Call’ operation of a coroutine"></a>The ‘Call’ operation of a coroutine</h2><p>However, rather than execution only returning to the caller when the function has run to completion, with a coroutine the call operation will instead resume execution of the caller when the coroutine reaches its first suspend-point.</p>
+<p>但是，不是执行仅在函数运行完成后才返回到调用方，使用协程时，在协程到达其第一个挂起点时，调用操作将恢复调用方的执行。</p>
+<p>此时会返给调用方一个变量哦，这个变量一般都会持有协程的句柄</p>
+<h2 id="The-‘Return’-operation-of-a-coroutine"><a href="#The-‘Return’-operation-of-a-coroutine" class="headerlink" title="The ‘Return’ operation of a coroutine"></a>The ‘Return’ operation of a coroutine</h2><p>When a coroutine executes a return-statement (<code>co_return</code> according to the TS) operation it stores the return-value somewhere (exactly where this is stored can be customised by the coroutine) and then destructs any in-scope local variables (but not parameters).</p>
+<p>The coroutine then has the opportunity to execute some additional logic before transferring execution back to the caller/resumer.</p>
+<p>是不是指 <code>promise.return_value()</code> 接口呢？</p>
+<p>It is important to note that the return-value passed to the Return operation is not the same as the return-value returned from a Call operation as the return operation may be executed long after the caller resumed from the initial Call operation.</p>
+<p>不单单是返回值不同吧？返回类型大概率都不一样啊？</p>
+<h1 id="An-illustration"><a href="#An-illustration" class="headerlink" title="An illustration"></a>An illustration</h1><p>Note that the compiler will typically hold the address of the coroutine frame in a separate register to the stack pointer (eg. MSVC stores this in the rbp register).</p>
+<p>如何理解“coroutine frame 被存在另一个专用寄存器中”呢？ 这个操作意味着什么？</p>
+<p>When the coroutine suspends for the first time, a return-value is returned to the caller. This return value often holds a handle to the coroutine-frame that suspended that can be used to later resume it.</p>
+<p>调用者之后就能够使用这个返回值来恢复协程的执行。</p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/31/coroutine-b/</url>
+    <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await">https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await</a></p>
+<h1 id="What-does-the-Coroutines-TS-give-us"><a href="#What-does-the-Coroutines-TS-give-us" class="headerlink" title="What does the Coroutines TS give us?"></a>What does the Coroutines TS give us?</h1><p>The facilities the C++ Coroutines TS provides in the language can be thought of as a low-level assembly-language for coroutines. These facilities can be difficult to use directly in a safe way and are mainly intended to be used by library-writers to build higher-level abstractions that application developers can work with safely.</p>
+<p>C ++ Coroutines TS 提供的功能可以被认为是协程的一种低级汇编语言。这些功能可能很难以安全的方式直接使用，并且主要旨在供库编写人员用来构建更高级的抽象，以便应用程序开发人员可以安全地使用它们。</p>
+<h1 id="Compiler-lt-gt-Library-interaction"><a href="#Compiler-lt-gt-Library-interaction" class="headerlink" title="Compiler &lt;-&gt; Library interaction"></a>Compiler &lt;-&gt; Library interaction</h1><p>Instead, it specifies a general mechanism for library code to customise the behaviour of the coroutine by implementing types that conform to a specific interface. The compiler then generates code that calls methods on instances of types provided by the library.</p>
+<p>它为库代码指定了一种通用机制，可通过 <em>实现符合特定接口的类型</em> 来自定义协程的行为。然后编译器调用 这些类型的方法 = <em>库提供的类型的实例的方法</em>。</p>
+<p>There are two kinds of interfaces that are defined by the coroutines TS: The <strong>Promise</strong> interface and the <strong>Awaitable</strong> interface.</p>
+<p>The <strong>Promise</strong> interface specifies methods for customising the behaviour of the coroutine itself. The library-writer is able to customise what happens when the coroutine is called, what happens when the coroutine returns (either by normal means or via an unhandled exception) and customise the behaviour of any <code>co_await</code> or <code>co_yield</code> expression within the coroutine.</p>
+<p>用于定义协程的行为。</p>
+<p>The <strong>Awaitable</strong> interface specifies methods that control the semantics of a <code>co_await</code> expression. When a value is <code>co_await</code>ed, the code is translated into a series of calls to methods on the awaitable object that allow it to specify: whether to suspend the current coroutine, execute some logic after it has suspended to schedule the coroutine for later resumption, and execute some logic after the coroutine resumes to produce the result of the <code>co_await</code> expression.</p>
+<p>控制 <code>co_await</code> 表达式的语义。</p>
+<h1 id="Awaiters-and-Awaitables-Explaining-operator-co-await"><a href="#Awaiters-and-Awaitables-Explaining-operator-co-await" class="headerlink" title="Awaiters and Awaitables: Explaining operator co_await"></a>Awaiters and Awaitables: Explaining operator co_await</h1><p>Awaitable has 2 kinds:</p>
+<ul>
+<li>Normal Awatable : 原生支持 <code>operator co_await()</code></li>
+<li>Contextually Awaitable : 原生不支持 <code>operator co_await()</code> , 但在特定的 Promise 上下文中，通过 <code>Promise::await_transform()</code> 转化后，返回值支持 <code>operator co_await()</code></li>
+</ul>
+<p>An Awaiter type is a type that implements the 3 special methods that are called as part of a <code>co_await</code> expression: </p>
+<ul>
+<li><code>await_ready()</code></li>
+<li><code>await_suspend()</code></li>
+<li><code>await_resume()</code></li>
+</ul>
+<p>Note that a type can be both an Awaitable type and an Awaiter type.</p>
+<p>具体到某个类型，是可以同时满足 Awaitable 的 Awaiter 要求的。</p>
+<h2 id="Obtaining-the-Awaiter"><a href="#Obtaining-the-Awaiter" class="headerlink" title="Obtaining the Awaiter"></a>Obtaining the Awaiter</h2><p>-&gt; Awaitable -&gt; Awaiter</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 没有转换就直接用</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> P, <span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="function"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) <span class="title">get_awaitable</span><span class="params">(P&amp; promise, T&amp;&amp; expr)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span> <span class="params">(has_any_await_transform_member_v&lt;P&gt;)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">return</span> promise.<span class="title">await_transform</span><span class="params">(<span class="keyword">static_cast</span>&lt;T&amp;&amp;&gt;(expr))</span></span>;</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;T&amp;&amp;&gt;(expr);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//没有操作符方法（成员或全局）就直接用</span></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> Awaitable&gt;</span><br><span class="line"><span class="function"><span class="keyword">decltype</span>(<span class="keyword">auto</span>) <span class="title">get_awaiter</span><span class="params">(Awaitable&amp;&amp; awaitable)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span> <span class="params">(has_member_operator_co_await_v&lt;Awaitable&gt;)</span></span></span><br><span class="line"><span class="function">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;Awaitable&amp;&amp;&gt;<span class="params">(awaitable)</span>.<span class="keyword">operator</span> <span class="title">co_await</span><span class="params">()</span></span>;</span><br><span class="line">  <span class="keyword">else</span> <span class="keyword">if</span> <span class="keyword">constexpr</span> (has_non_member_operator_co_await_v&lt;Awaitable&amp;&amp;&gt;)</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">operator</span> <span class="keyword">co_await</span>(<span class="keyword">static_cast</span>&lt;Awaitable&amp;&amp;&gt;(awaitable));</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">static_cast</span>&lt;Awaitable&amp;&amp;&gt;(awaitable);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Awaiting-the-Awaiter"><a href="#Awaiting-the-Awaiter" class="headerlink" title="Awaiting the Awaiter"></a>Awaiting the Awaiter</h2><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; value = &lt;expr&gt;;</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; awaitable = get_awaitable(promise, <span class="keyword">static_cast</span>&lt;<span class="keyword">decltype</span>(value)&gt;(value));</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; awaiter = get_awaiter(<span class="keyword">static_cast</span>&lt;<span class="keyword">decltype</span>(awaitable)&gt;(awaitable));</span><br><span class="line">  <span class="keyword">if</span> (!awaiter.await_ready())</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="keyword">using</span> <span class="keyword">handle_t</span> = <span class="built_in">std</span>::experimental::coroutine_handle&lt;P&gt;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">using</span> <span class="keyword">await_suspend_result_t</span> =</span><br><span class="line">      <span class="keyword">decltype</span>(awaiter.await_suspend(<span class="keyword">handle_t</span>::from_promise(p)));</span><br><span class="line"></span><br><span class="line">    &lt;suspend-coroutine&gt;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">if</span> <span class="title">constexpr</span> <span class="params">(<span class="built_in">std</span>::is_void_v&lt;<span class="keyword">await_suspend_result_t</span>&gt;)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">      awaiter.await_suspend(<span class="keyword">handle_t</span>::from_promise(p));</span><br><span class="line">      &lt;<span class="keyword">return</span>-to-caller-<span class="keyword">or</span>-resumer&gt;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    &#123;</span><br><span class="line">      <span class="keyword">static_assert</span>(</span><br><span class="line">         <span class="built_in">std</span>::is_same_v&lt;<span class="keyword">await_suspend_result_t</span>, <span class="keyword">bool</span>&gt;,</span><br><span class="line">         <span class="string">&quot;await_suspend() must return &#x27;void&#x27; or &#x27;bool&#x27;.&quot;</span>);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (awaiter.await_suspend(<span class="keyword">handle_t</span>::from_promise(p)))</span><br><span class="line">      &#123;</span><br><span class="line">        &lt;<span class="keyword">return</span>-to-caller-<span class="keyword">or</span>-resumer&gt;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    &lt;resume-point&gt;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> awaiter.await_resume();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>It is the responsibility of the <code>await_suspend()</code> method to schedule the coroutine for resumption (or destruction) at some point in the future once the operation has completed. Note that returning <code>false</code> from <code>await_suspend()</code> counts as scheduling the coroutine for immediate resumption on the current thread.</p>
+<p>The return-value of the <code>await_resume()</code> method call becomes the result of the <code>co_await</code> expression.</p>
+<h2 id="Coroutine-Handles"><a href="#Coroutine-Handles" class="headerlink" title="Coroutine Handles"></a>Coroutine Handles</h2><p>其实现可以在 <code>&lt;experimental\resumable&gt;</code> 头文件中找到。</p>
+<p>此类型提供的接口中：</p>
+<ul>
+<li><code>resume()</code> 最常用</li>
+<li>避免使用 <code>destroy()</code> 和 <code>.promise()</code>，库作者除外</li>
+</ul>
+<p>You should generally not need to (and indeed should really avoid) calling <code>.destroy()</code> unless you are a library writer implementing the coroutine promise type. Normally, coroutine frames will be owned by some kind of RAII type returned from the call to the coroutine. So calling <code>.destroy()</code> without cooperation with the RAII object could lead to a double-destruction bug.</p>
+<p>The <code>.promise()</code> method returns a reference to the coroutine’s promise object. However, like <code>.destroy()</code>, it is generally only useful if you are authoring coroutine promise types. You should consider the coroutine’s promise object as an internal implementation detail of the coroutine. For most Normally Awaitable types you should use <code>coroutine_handle&lt;void&gt;</code> as the parameter type to the <code>await_suspend()</code> method instead of <code>coroutine_handle&lt;Promise&gt;</code>.</p>
+<p>此章节有很多针对库开发者、使用者的建议。</p>
+<h1 id="Synchronisation-free-async-code"><a href="#Synchronisation-free-async-code" class="headerlink" title="Synchronisation-free async code"></a>Synchronisation-free async code</h1><p>免同步的异步代码</p>
+<h1 id="An-example-Implementing-a-simple-thread-synchronisation-primitive"><a href="#An-example-Implementing-a-simple-thread-synchronisation-primitive" class="headerlink" title="An example: Implementing a simple thread-synchronisation primitive"></a>An example: Implementing a simple thread-synchronisation primitive</h1><p>TODO</p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/04/02/coroutine/</url>
+    <content><![CDATA[<p>参考 <a href="https://github.com/tnie/learn_chrono">tnie/learn_xxx</a> 中 coro 项目。</p>
+<p>如果想看懂 asio 如何支持 <code>co_await</code> 的，想更细致地用好协程，就需要了解更基础（同时也是更复杂的）内容。</p>
+<ul>
+<li><p><a href="https://blog.panicsoftware.com/coroutines-introduction/">COROUTINES INTRODUCTION</a>，需要科学上网，PAC 全局</p>
+<p>  关键的 <code>__builtin_coro_save()</code> 和 <code>return_to_the_caller()</code> 组合是如何实现功能的呢？作者并没有介绍，系列的三篇文章只是详细地讲解了各个代码定制点以及编译器如何展开并生成样本的代码，却对关键的“如何保存与跳转”只字未提。</p>
+<p>  对协程介绍时，先介绍 <code>promise</code> 后 <code>awaitable/awaiter</code>。学习笔记/摘抄，见 coroutine1~4.md</p>
+</li>
+<li><p><a href="https://lewissbaker.github.io/">C++ Coroutines: Understanding operator co_await</a>，特别推荐的几篇文章，作者写了  cppcoro 库，牛人 </p>
+<p>  首推，此系列的文章作为入门。 对协程介绍时，先介绍 <code>awaitable/awaiter</code> 后 <code>promise</code>。学习笔记/摘抄，见 coroutine-a~c.md</p>
+</li>
+<li><p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">从HelloWold开始，深入浅出C++ 20 Coroutine TS</a></p>
+<p>  作者分析了 IDE 生成的汇编语言，介绍了协程“如何保存状态，如何跳转”。可惜我看不懂</p>
+</li>
+<li><p><a href="https://netcan.github.io/2020/09/05/C-20%E5%8D%8F%E7%A8%8B/">C++20 协程初探</a></p>
+<p>  抽空，学习一下他的例子。</p>
+</li>
+<li><p><a href="https://owent.net/2019/1904.html">C++20 Coroutine</a></p>
+<p>  作者应该也是小白用户，几个关键点都提到了，但展开得不够，轻重也没区分。罗列概念、罗列代码</p>
+</li>
+<li><p><a href="https://zh4ui.net/tags/coroutine/">TAG : COROUTINE</a></p>
+<p>  貌似高屋建瓴，但真的就是“乱拳打死老师傅”。有价值，但对小白入门非常不友好，得自行筛选。</p>
+</li>
+</ul>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/31/coroutine-c/</url>
+    <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type">https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type</a></p>
+<h1 id="Coroutine-Concepts"><a href="#Coroutine-Concepts" class="headerlink" title="Coroutine Concepts"></a>Coroutine Concepts</h1><p>The compiler applies some fairly mechanical transformations to the code that you write to turn it into a state-machine that allows it to suspend execution at particular points within the function and then later resume execution.</p>
+<p>编译器会对您编写的代码进行一些相当机械的转换，以将其转换为状态机，使状态机可以在函数内的特定点挂起执行，然后再恢复执行。</p>
+<h1 id="Promise-objects"><a href="#Promise-objects" class="headerlink" title="Promise objects"></a>Promise objects</h1><p>The Promise object defines and controls the behaviour of the coroutine itself by implementing methods that are called at specific points during execution of the coroutine.</p>
+<blockquote>
+<p>Before we go on, I want you to try and rid yourself of any preconceived notions of what a “promise” is. While, in some use-cases, the coroutine promise object does indeed act in a similar role to the <code>std::promise</code> part of a <code>std::future</code> pair, for other use-cases the analogy is somewhat stretched. It may be easier to think about the coroutine’s promise object as being a “coroutine state controller” object that controls the behaviour of the coroutine and can be used to track its state.</p>
+<p>在继续之前，我希望您尝试摆脱对“promise”的任何先入为主的观念。虽承然在某些用例中，协程的 promise 对象确实起到了与<code>std :: future</code> 的 <code>std :: promise</code> 部分相似的作用，但在其他用例中，类推却有些捉襟见肘。将协程的 promise 对象视为控制协程行为并可以用来跟踪其状态的“协程状态控制器”对象可能更容易些。</p>
+</blockquote>
+<p>When you write a coroutine function that has a body, <code>&lt;body-statements&gt;</code>, which contains one of the coroutine keywords (<code>co_return</code>, <code>co_await</code>, <code>co_yield</code>) then the body of the coroutine is transformed to something (roughly) like the following:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="keyword">co_await</span> promise.initial_suspend();</span><br><span class="line">  <span class="keyword">try</span></span><br><span class="line">  &#123;</span><br><span class="line">    &lt;body-statements&gt;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (...)</span><br><span class="line">  &#123;</span><br><span class="line">    promise.unhandled_exception();</span><br><span class="line">  &#125;</span><br><span class="line">FinalSuspend:</span><br><span class="line">  <span class="keyword">co_await</span> promise.final_suspend();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When a coroutine function is called there are a number of steps that are performed prior to executing the code in the source of the coroutine body that are a little different to regular functions.</p>
+<p>Here is a summary of the steps (I’ll go into more detail on each of the steps below).</p>
+<ol>
+<li>Allocate a coroutine frame using <code>operator new</code> (optional).</li>
+<li>Copy any function parameters to the coroutine frame.</li>
+<li>Call the constructor for the promise object of type, <code>P</code>.</li>
+<li>Call the <code>promise.get_return_object()</code> method to obtain the result to return to the caller when the coroutine first suspends. Save the result as a local variable.</li>
+<li>Call the <code>promise.initial_suspend()</code> method and <code>co_await</code> the result.</li>
+<li>When the <code>co_await promise.initial_suspend()</code> expression resumes (either immediately or asynchronously), then the coroutine starts executing the coroutine body statements that you wrote.</li>
+</ol>
+<p>Some additional steps are executed when execution reaches a <code>co_return</code> statement:</p>
+<ol>
+<li>Call <code>promise.return_void()</code> or <code>promise.return_value(&lt;expr&gt;)</code></li>
+<li>Destroy all variables with automatic storage duration in reverse order they were created.</li>
+<li>Call <code>promise.final_suspend()</code> and <code>co_await</code> the result.</li>
+</ol>
+<p>If instead, execution leaves <code>&lt;body-statements&gt;</code> due to an unhandled exception then:</p>
+<ol>
+<li>Catch the exception and call <code>promise.unhandled_exception()</code> from within the catch-block.</li>
+<li>Call <code>promise.final_suspend()</code> and <code>co_await</code> the result.</li>
+</ol>
+<p>Once execution propagates outside of the coroutine body then the coroutine frame is destroyed. Destroying the coroutine frame involves a number of steps:</p>
+<ol>
+<li>Call the destructor of the promise object.</li>
+<li>Call the destructors of the function parameter copies.</li>
+<li>Call <code>operator delete</code> to free the memory used by the coroutine frame (optional)</li>
+<li>Transfer execution back to the caller/resumer.</li>
+</ol>
+<p>When execution first reaches a <code>&lt;return-to-caller-or-resumer&gt;</code> point inside a <code>co_await</code> expression, or if the coroutine runs to completion without hitting a <code>&lt;return-to-caller-or-resumer&gt;</code> point, then the coroutine is either suspended or destroyed and the return-object previously returned from the call to <code>promise.get_return_object()</code> is then returned to the caller of the coroutine.</p>
+<p>之后，作者就上述步骤进行了详细的介绍。</p>
+<h2 id="How-the-compiler-chooses-the-promise-type"><a href="#How-the-compiler-chooses-the-promise-type" class="headerlink" title="How the compiler chooses the promise type"></a>How the compiler chooses the promise type</h2><p>The type of the promise object is determined from the signature of the coroutine by using the <code>std::experimental::coroutine_traits</code> class.</p>
+<p>模板类的参数，就是协程函数签名中的返回类型+入参类型。</p>
+<p>模板类 <code>coroutine_traits</code> 的默认实现，是使用返回类型的嵌套类型或类型别名：</p>
+<p><code>using promise_type = typename RET::promise_type;</code></p>
+<p>如果有权限，则在返回值类型中定义嵌套类即可；否则新增 <code>coroutine_traits</code> 特例化。</p>
+<h2 id="Identifying-a-specific-coroutine-activation-frame"><a href="#Identifying-a-specific-coroutine-activation-frame" class="headerlink" title="Identifying a specific coroutine activation frame"></a>Identifying a specific coroutine activation frame</h2><p>When you call a coroutine function, a coroutine frame is created. In order to resume the associated coroutine or destroy the coroutine frame you need some way to identify or refer to that particular coroutine frame.</p>
+<p>The mechanism the Coroutines TS provides for this is the <code>coroutine_handle</code> type.</p>
+<p>You can obtain a coroutine_handle for a coroutine in two ways:</p>
+<ol>
+<li>It is passed to the <code>await_suspend()</code> method during a <code>co_await</code> expression.</li>
+<li>If you have a reference to the coroutine’s promise object, you can reconstruct its coroutine_handle using <code>coroutine_handle&lt;Promise&gt;::from_promise()</code>.</li>
+</ol>
+<p>Note that the coroutine_handle is <strong>NOT</strong> and RAII object. You must manually call <code>.destroy()</code> to destroy the coroutine frame and free its resources.</p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/26/coroutine1/</url>
+    <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/coroutines-introduction/">https://blog.panicsoftware.com/coroutines-introduction/</a></p>
+<p>虽然协程作为重要特性，即将进入 C++ 20，但仍然有很多人吐槽。</p>
+<blockquote>
+<p> Main complaints were regarding the hardness to understand, lots of customisation points, and possibly not optimal performance due to possibly unoptimised dynamic memory allocations</p>
+</blockquote>
+<p>主要的抱怨是关于理解起来很难，大量的定制点以及，未优化的动态内存分配可能造成性能的损失。</p>
+<p>谷歌的提案存在一些问题，最终被接受的协程方案来自微软。</p>
+<h1 id="什么是协程"><a href="#什么是协程" class="headerlink" title="什么是协程"></a>什么是协程</h1><p>The coroutines already exist in many programming languages, may it be Python or C#. Coroutines provide one more way to create asynchronous code. How this way differs from threads and why do we need a dedicated language feature for coroutines and finally how we can benefit will be explained in this section.</p>
+<p>协程和线程有什么不同？为什么我们需要协程的专用语言功能？我们从协程中能获得哪些好处？在这一节会给出答案。</p>
+<p>Depending on the environment in which they are used they might be called:</p>
+<ul>
+<li>stackless coroutines</li>
+<li>stackful coroutines</li>
+<li>green threads</li>
+<li>fibers</li>
+<li>goroutines</li>
+</ul>
+<p>Good news is that stackful coroutines, green threads, fibres, goroutines are the same thing (sometimes used differently).</p>
+<h1 id="协程库-vs-语言特性"><a href="#协程库-vs-语言特性" class="headerlink" title="协程库 vs 语言特性"></a>协程库 vs 语言特性</h1><p>实现协程功能的库，都是有栈协程吗？</p>
+<p>此章节作者介绍了 Stackful coroutines 的特性和实现。针对 Stackful coroutines 和 Stackless coroutines 做了比较（前者是库，后者是语言特性）。</p>
+<h2 id="Stackful-coroutines"><a href="#Stackful-coroutines" class="headerlink" title="Stackful coroutines"></a>Stackful coroutines</h2><p>Fibers or stackful coroutines are, a separate stack, that can be used to process function calls.</p>
+<p>First of all, threads and fibers have their own separate stacks.</p>
+<p>首先，线程和纤维有自己独立的栈。</p>
+<p>每次 suspend 时 frame(on fiber stack) 保留，切回 fram on the thread stack，resume 时再次回到原 frame。—— 理解正确吗？</p>
+<h2 id="Stackless-coroutines"><a href="#Stackless-coroutines" class="headerlink" title="Stackless coroutines"></a>Stackless coroutines</h2><p>So first of all, if they do not allocate the memory for the stack, then how do they work? Where goes all the data meant to be stored on the stack in case of the stackful coroutines? The answer is: on the caller’s stack.</p>
+<p>无栈协程不是不使用栈：区分于有栈协程单独分配栈存储，无栈协程并不额外分配栈，而是使用调用方的栈。</p>
+<p>The secret of stackless coroutines is that they can suspend themselves only from the top-level function.</p>
+<p>无栈协程只能在顶层函数暂停执行。</p>
+<p>每次 suspend 时 frame 释放掉(pop)，resume 的时候由 coroutine object (as local variable on the caller’s frame) 再次建立 frame。—— 参考 <a href="https://lewissbaker.github.io/2017/09/25/coroutine-theory">coroutine-theory</a> 的 The ‘Resume’ operation 章节。</p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/26/coroutine2/</url>
+    <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/your-first-coroutine/">https://blog.panicsoftware.com/your-first-coroutine/</a></p>
+<p><code>std::future&lt;int&gt; foo();</code></p>
+<p>这是个普通函数，还是协程？这是由其具体实现决定的。</p>
+<p>If any of those keywords occur in the function, then it becomes a coroutine.</p>
+<ul>
+<li><code>co_await</code></li>
+<li><code>co_return</code></li>
+<li><code>co_yield</code></li>
+</ul>
+<p>So the operator <code>co_await</code> is a unary operator, which takes the <code>Awaitable</code> object as its argument.</p>
+<h1 id="Why-do-we-need-to-define-additional-types"><a href="#Why-do-we-need-to-define-additional-types" class="headerlink" title="Why do we need to define additional types?"></a>Why do we need to define additional types?</h1><p>So the object used to communicate with the coroutine is the object of the coroutine’s return type.</p>
+<p>我们使用协程的返回值，和协程进行沟通。</p>
+<p>If our coroutine is able to suspend, we need to be able to somehow resume it, so our return type needs to have some <code>resume()</code> method.</p>
+<p>协程可以暂停，所以协程的返回类型需要有 <code>resume()</code> 等接口。 </p>
+<p>How will the resumable object be created (there is no return statement)? Basically, the compiler generates some additional code for the coroutines. Every coroutine function is transformed by the compiler to the form similar to this:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">Promise promise;</span><br><span class="line"><span class="keyword">co_await</span> promise.initial_suspend();</span><br><span class="line"><span class="keyword">try</span> &#123;</span><br><span class="line">  <span class="comment">// co-routine body</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">catch</span>(...) &#123;</span><br><span class="line">  promise.unhandled_exception(); </span><br><span class="line">&#125;</span><br><span class="line">final_suspend:</span><br><span class="line">  <span class="keyword">co_await</span> promise.final_suspend();</span><br></pre></td></tr></table></figure>
+<p>What is more, the resumable object will be created before the <code>initial_suspend</code> through a call to the:</p>
+<p><code>promise.get_return_object();</code></p>
+<p>So what we need to do is to create the <code>Promise</code> type.</p>
+<p>如何创建这个返回对象呢？由编译器生成的样板代码约束我们得实现 <code>Promise</code> 类型，它得包含以下接口：</p>
+<ul>
+<li><code>resumable get_return_object()</code>    // 创建返回对象</li>
+<li><code>auto initial_suspend()</code></li>
+<li><code>auto final_suspend()</code></li>
+<li><code>void return_void()</code></li>
+<li><code>void unhandled_exception()</code></li>
+</ul>
+<p>Unfortunately, we are not yet ready to define functions of our first promise type. To operate on the coroutine, we need to have some sort of handle to the coroutine, which we will manage. There already is a built-in object for this exact purpose.</p>
+<p>如何实现上述接口呢？我们需要某种句柄来管理协程。</p>
+<h1 id="The-coroutine-handle"><a href="#The-coroutine-handle" class="headerlink" title="The coroutine_handle"></a>The coroutine_handle</h1><p>The <code>coroutine_handle</code> is an object, that refers to the coroutine’s dynamically allocated state.</p>
+<p>很关键的类型，TODO 稍后整理</p>
+<h1 id="Deeper-into-promise-type"><a href="#Deeper-into-promise-type" class="headerlink" title="Deeper into promise type."></a>Deeper into promise type.</h1><h2 id="Handling-co-return"><a href="#Handling-co-return" class="headerlink" title="Handling co_return"></a>Handling co_return</h2><p>First of all, if you use <code>co_return</code> keyword without any expression on its right side (or void expression), the compiler generates:</p>
+<p><code>promise.return_void(); goto final_suspend;</code></p>
+<p>But if there is some non-void expression, the compiler generates a slightly different code:</p>
+<p><code>promise.return_value(expression); goto final_suspend;</code></p>
+<h2 id="Making-the-use-of-co-yield-operator"><a href="#Making-the-use-of-co-yield-operator" class="headerlink" title="Making the use of co_yield operator"></a>Making the use of co_yield operator</h2><p>Now to implement our promise_type correctly, we need to know what kind of code compiler generates when it encounters the co_yield keyword. And the following snippet shows precisely this.</p>
+<p><code>co_await promise.yield_value(expression);</code></p>
+<p>So what is missing is the <code>yield_value</code> member function. Also worth to note is, that no <code>co_await</code> keyword appears, but we will be talking about the <code>co_await</code> keyword later on. For now, the knowledge, that <code>co_await</code> + <code>suspend_always</code> suspends the coroutine is enough.</p>
+<h1 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h1><p>So as you can see, the coroutines are hard to learn, after all, it’s still not everything about the coroutines since we only touched Awaitables and Awaiter objects. Fortunately because of the level of difficulty the coroutines the coroutines are very flexible.</p>
+<p>幸运的是，由于协程的难度，协程非常灵活。</p>
+<p>The good thing is that the whole complicated part of this feature is not to be known by the regular C++ developer. In fact, the regular C++ developer should know how to write the body of the coroutine, but not coroutine objects themselves.</p>
+<p>好消息是常规C ++开发人员不知道此功能的整个复杂部分。实际上，常规的C ++开发人员应该知道如何编写协程的主体，而不是协程对象本身。</p>
+<p>Developers definitely should use already defined coroutines objects from the standard library (which later will come into the standard) or third-party libraries (like cppcoro).</p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/26/coroutine3/</url>
+    <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/co_awaiting-coroutines/">https://blog.panicsoftware.com/co_awaiting-coroutines/</a></p>
+<h1 id="Awaitable"><a href="#Awaitable" class="headerlink" title="Awaitable"></a>Awaitable</h1><p>As I have mentioned in the previous posts, the <code>suspend_always</code> and <code>suspend_never</code> are types, that fulfill the <code>Awaitable</code> concept. </p>
+<p>We can get the Awaitable object in two ways:</p>
+<ul>
+<li>Direct creation of Awaitable,</li>
+<li>Transformation of the object into Awaitable because of <code>await_transform</code> function.</li>
+</ul>
+<h1 id="co-await-operator-and-Awaiter"><a href="#co-await-operator-and-Awaiter" class="headerlink" title="co_await operator and Awaiter"></a>co_await operator and Awaiter</h1><p>The <code>co_await</code> operator is actually responsible for two things:</p>
+<ul>
+<li>Forcing compiler to generate some coroutine boilerplate code</li>
+<li>Creating the Awaiter object.</li>
+</ul>
+<p>So first let’s have a look at how is the awaiter object is created. The <code>co_await</code> operator is responsible for the creation of the awaiter object. The <code>co_await</code> operator declaration is looked upon in the awaitable object and if it’s found this <code>co_await</code> operator is executed to obtain awaiter object. Otherwise, if the appropriate function is not found, then awaitable becomes the awaiter. </p>
+<p>Whenever compiler encounters occurrence of the <code>co_await</code> operator it generates the more or less following code:</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::exception_ptr exception = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">not</span> a.await_ready()) &#123;</span><br><span class="line">  __builtin_coro_save(); <span class="comment">//suspend_coroutine();</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns void</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    a.await_suspend(coroutine_handle);</span><br><span class="line">    return_to_the_caller();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns bool</span></span><br><span class="line">  <span class="keyword">bool</span> await_suspend_result;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    await_suspend_result = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">not</span> await_suspend_result)</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns another coroutine_handle</span></span><br><span class="line">  <span class="keyword">decltype</span>(a.await_suspend(<span class="built_in">std</span>::declval&lt;<span class="keyword">coro_handle_t</span>&gt;())) another_coro_handle;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    another_coro_handle = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  another_coro_handle.resume();</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resume_point:</span><br><span class="line"><span class="keyword">if</span>(exception)</span><br><span class="line">  <span class="built_in">std</span>::rethrow_exception(exception);</span><br><span class="line"><span class="string">&quot;return&quot;</span> a.await_resume();</span><br></pre></td></tr></table></figure>
+<h1 id="Coroutine-suspension"><a href="#Coroutine-suspension" class="headerlink" title="Coroutine suspension"></a>Coroutine suspension</h1><p>Immediately after evaluating <code>await_ready</code> expression the coroutine is suspended (on condition, that <code>await_ready</code> evaluated to <code>false</code>). It doesn’t mean, that control flow returns to the caller. It means that the needed local data is saved (possibly on the heap) to be restored when coroutine is suspended. </p>
+<p>作者的此番解释，源于他在上述样本代码中误用 suspend 表达了 save 的概念。 suspend = (save something of coroutine) + (return to the caller)</p>
+<p>我在上述样本代码中使用 <code>__builtin_coro_save()</code> 替换了 <code>suspend_coroutine()</code>，前者来源于 <a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">从HelloWold开始，深入浅出C++ 20 Coroutine TS</a>，这篇帖子里的后续的 <code>__builtin_coro_suspend() // jmp </code> 反而不如此处的 <code>return_to_the_caller()</code> 表意明确。</p>
+<h1 id="Summary"><a href="#Summary" class="headerlink" title="Summary"></a>Summary</h1><p>When looking into the coroutines you will definitely feel (or should feel) that this is not something you want to write as your daily work and you are right! In the future standard library will come with predefined sets of implemented Awaitables, and coroutine types. Once C++20 comes out, make yourself and your friend the pleasure and use cppcoro instead writing your own implementations.</p>
+<p>当查看协程时，您肯定会感觉（或应该感觉到）这不是您日常工作中想要写的东西，而且您是对的！将来，标准库将附带已实现的预定义集合以及已实现的协程类型。一旦C ++ 20发布，让您自己和您的朋友感到高兴，并使用cppcoro代替编写您自己的实现。</p>
+<p>那么关键的 <code>__builtin_coro_save()</code> 和 <code>return_to_the_caller()</code> 组合是如何实现功能的呢？作者并没有介绍，系列的三篇文章只是详细地讲解了各个代码定制点以及编译器如何展开并生成样本的代码，却对关键的“如何保存与跳转”只字未提。 </p>
+]]></content>
+  </entry>
+  <entry>
+    <title></title>
+    <url>/2021/03/26/coroutine4/</url>
+    <content><![CDATA[<p>对称协程只是非对称协程的一个特例，我们可以通过添加一个中立的第三方调度中心的方式将非对称协程转换成对称协程（只需要在所有协程“暂停”时将控制权转交给调度中心统一调度即可）。</p>
+<p>猜测 asio 得 <code>awaitable&lt;&gt;</code> 和 <code>co_spawn</code> 也是干了这件事</p>
+<p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/</a></p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_always</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_never</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>co_await 表达式展开后是这样的：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// co_await std::experimental::suspend_always&#123;&#125;;</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; tmp = <span class="built_in">std</span>::experimental::suspend_always&#123;&#125;;</span><br><span class="line">  <span class="keyword">if</span> (!tmp.await_ready()) &#123;</span><br><span class="line">    __builtin_coro_save() <span class="comment">// frame-&gt;suspend_index = m;</span></span><br><span class="line">    <span class="keyword">if</span> (tmp.await_suspend(&lt;coroutine_handle&gt;)) &#123;</span><br><span class="line">      __builtin_coro_suspend() <span class="comment">// jmp </span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">resume_label_m:</span><br><span class="line">  tmp.await_resume();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
   </entry>
   <entry>
     <title>C++11 的重大改变</title>
@@ -4702,6 +4971,26 @@
 </ul>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSARecv</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to an array of WSABUF structures.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// The number of WSABUF structures in the lpBuffers array.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results.</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesRecvd,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// A pointer to a WSAOVERLAPPED structure</span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> WSAAPI <span class="title">WSASend</span><span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">  SOCKET                             s,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSABUF                           lpBuffers,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwBufferCount,</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="comment">// Use NULL for this parameter if the lpOverlapped parameter is not NULL to avoid potentially erroneous results. </span></span></span></span><br><span class="line"><span class="function"><span class="params">  LPDWORD                            lpNumberOfBytesSent,</span></span></span><br><span class="line"><span class="function"><span class="params">  DWORD                              dwFlags,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED                    lpOverlapped,</span></span></span><br><span class="line"><span class="function"><span class="params">  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine</span></span></span><br><span class="line"><span class="function"><span class="params">)</span></span>;</span><br></pre></td></tr></table></figure>
 
+<h1 id="Overlapped-IO-重叠输入输出"><a href="#Overlapped-IO-重叠输入输出" class="headerlink" title="Overlapped IO 重叠输入输出"></a>Overlapped IO 重叠输入输出</h1><p><a href="https://docs.microsoft.com/en-us/windows/win32/fileio/createiocompletionport">异步 I/O 技术(Overlapped I/O)，避免使用多线程</a></p>
+<ol>
+<li><p>激发的文件 handles / 设备内核对象</p>
+</li>
+<li><p>激发的 event 对象 / 事件内核对象</p>
+<blockquote>
+<p>IOEvent 用的是 Overlapped IO 模型。使用起来也比较简单，仅需要将 fd buf overlapped(event) 这4者绑在一起，由内核完成数据的收发，并通过 event 通知应用层，应用层再进行数据操作已经完成后的操作，不需要多余的内存拷贝，数据已经在指定的 buf 上了。<a href="https://docs.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-getqueuedcompletionstatus">C++ SOCKET通信模型（二）IOEvent</a></p>
+</blockquote>
+</li>
+<li><p>异步过程调用 APCs（Asynchronous Procedure Calls）</p>
+</li>
+<li><p>I/O completion ports（重要）适用于高负载服务器</p>
+</li>
+</ol>
+<!--more-->
+
+<h1 id="IOCP-输入输出完成端口"><a href="#IOCP-输入输出完成端口" class="headerlink" title="IOCP 输入输出完成端口"></a>IOCP 输入输出完成端口</h1><p><a href="https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped">完成端口(Completion Port)详解</a></p>
+<blockquote>
+<p>最后，我的建议是，想要使用 <em>基于事件通知的</em> 重叠 I/O 和<em>基于完成例程的</em> 重叠 I/O 的朋友，如果不是特别必要，就不要去使用了，因为这两种方式不仅使用和理解起来也不算简单，而且还有性能上的明显瓶颈</p>
+</blockquote>
 ]]></content>
       <categories>
         <category>cpp</category>
@@ -5059,7 +5348,7 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#x69;&#101;&#108;&#111;&#110;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;">&#x6e;&#x69;&#101;&#108;&#111;&#110;&#x67;&#x32;&#48;&#x31;&#x34;&#x40;&#x31;&#x36;&#x33;&#46;&#x63;&#111;&#x6d;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#105;&#101;&#108;&#111;&#x6e;&#x67;&#x32;&#48;&#49;&#52;&#x40;&#49;&#54;&#x33;&#x2e;&#x63;&#111;&#109;">&#x6e;&#105;&#101;&#108;&#111;&#x6e;&#x67;&#x32;&#48;&#49;&#52;&#x40;&#49;&#54;&#x33;&#x2e;&#x63;&#111;&#109;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
@@ -6867,7 +7156,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#x69;&#x65;&#108;&#111;&#110;&#103;&#x32;&#x30;&#49;&#x34;&#64;&#x31;&#x36;&#x33;&#x2e;&#x63;&#x6f;&#109;">&#x6e;&#x69;&#x65;&#108;&#111;&#110;&#103;&#x32;&#x30;&#49;&#x34;&#64;&#x31;&#x36;&#x33;&#x2e;&#x63;&#x6f;&#109;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#105;&#x65;&#108;&#x6f;&#x6e;&#x67;&#x32;&#48;&#x31;&#52;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#111;&#x6d;">&#x6e;&#105;&#x65;&#108;&#x6f;&#x6e;&#x67;&#x32;&#48;&#x31;&#52;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -7098,7 +7387,15 @@ const double *const pip = &amp;pi;</code></pre>
   <entry>
     <title>vcpkg 包管理器</title>
     <url>/2018/12/10/vcpkg/</url>
-    <content><![CDATA[<p><strong>强调</strong>：安装 IDE 时不要变更默认路径！否则，使用 vcpkg 磨难重重，<a href="https://github.com/microsoft/vcpkg/issues/12488">vcpkg issue#12488</a>。我安装 Language English 就失败了，后面也就没尝试。</p>
+    <content><![CDATA[<p><strong>强调</strong>：安装 IDE 时不要变更默认路径！否则，使用 vcpkg 磨难重重，<a href="https://github.com/microsoft/vcpkg/issues/12488">vcpkg issue#12488</a>。<del>我安装 Language English 就失败了，后面也就没尝试</del>。</p>
+<p>从 visual studio 2015 的“选项”跳转到的中文网站，选择英文语言包下载到的其实是中文语言包，需要更换到对应的英文网站下载才是正确的。仍旧需要使用默认安装路径！</p>
+<p>网速要好，偶尔也需要翻墙。如果使用系统自带的 powershell 碰到下载失败、下载慢，且版本陈旧。建议下载 powershell core 试一试，可能会有惊喜。 <a href="https://www.yixuju.cn/other/talking-about-proxy/">在 Windows 终端中设置代理</a> 解决问题：<code>$Env:https_proxy=&quot;http://127.0.0.1:10809&quot;</code></p>
+<p>使用 vcpkg 安装库后，如果较长时间未更新，再次更新时可能报错：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">PS F:\vcpkg&gt; .\vcpkg.exe update</span><br><span class="line">Using local portfile versions. To update the local portfiles, use &#96;git pull&#96;.</span><br><span class="line">Error: while loading boost-signals:</span><br><span class="line">The port directory (F:\vcpkg\ports\boost-signals) does not exist</span><br><span class="line">Error: failed to load port from F:\vcpkg\ports\boost-signals</span><br><span class="line">Note: Updating vcpkg by rerunning bootstrap-vcpkg may resolve this failure.</span><br></pre></td></tr></table></figure>
+<p>此时按照提示重新执行多次 <code>bootstrap-vcpkg</code> 也是无效的，我们需要清理掉过时的库：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">PS F:\vcpkg&gt; .\vcpkg.exe list boost-signals</span><br><span class="line">boost-signals2:x86-windows-static-md               1.71.0           Boost signals2 module</span><br><span class="line">boost-signals:x86-windows                          1.68.0           Boost signals module</span><br><span class="line">PS F:\vcpkg&gt; .\vcpkg.exe remove boost-signals:x86-windows</span><br><span class="line">The following packages will be removed:</span><br><span class="line">    boost-signals:x86-windows</span><br><span class="line">Removing package boost-signals:x86-windows...</span><br><span class="line">Removing package boost-signals:x86-windows... done</span><br></pre></td></tr></table></figure>
+<p>之后就使用正常了：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">PS F:\vcpkg&gt; .\vcpkg.exe update</span><br><span class="line">Using local portfile versions. To update the local portfiles, use &#96;git pull&#96;.</span><br><span class="line">The following packages differ from their port versions:</span><br><span class="line">    abseil:x86-windows               2020-03-03-4 -&gt; 2020-09-23#3</span><br><span class="line">    abseil:x86-windows-static-md     2020-03-03-4 -&gt; 2020-09-23#3</span><br><span class="line">    asio:x86-windows                 1.12.2 -&gt; 1.18.0</span><br><span class="line">    asio:x86-windows-static-md       1.12.2-2 -&gt; 1.18.0</span><br><span class="line">    boost-accumulators:x86-windows-static-md 1.71.0 -&gt; 1.75.0</span><br></pre></td></tr></table></figure>
 <p>除特别备注，全部摘自 <a href="https://docs.microsoft.com/en-us/cpp/vcpkg?view=vs-2017">vcpkg: A C++ package manager for Windows, Linux and MacOS</a>。此章节类似读书（博客）笔记。</p>
 <a id="more"></a>
 
