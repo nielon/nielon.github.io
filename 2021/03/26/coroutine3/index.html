@@ -48,14 +48,15 @@
 
   <meta name="description" content="来源：https:&#x2F;&#x2F;blog.panicsoftware.com&#x2F;co_awaiting-coroutines&#x2F; AwaitableAs I have mentioned in the previous posts, the suspend_always and suspend_never are types, that fulfill the Awaitable concept.  We ca">
 <meta property="og:type" content="article">
-<meta property="og:title" content="不积小流，无以成江海">
+<meta property="og:title" content="CO_AWAITING COROUTINES">
 <meta property="og:url" content="https://tnie.github.io/2021/03/26/coroutine3/index.html">
 <meta property="og:site_name" content="不积小流，无以成江海">
 <meta property="og:description" content="来源：https:&#x2F;&#x2F;blog.panicsoftware.com&#x2F;co_awaiting-coroutines&#x2F; AwaitableAs I have mentioned in the previous posts, the suspend_always and suspend_never are types, that fulfill the Awaitable concept.  We ca">
 <meta property="og:locale" content="zh_CN">
-<meta property="article:published_time" content="2021-03-26T08:38:22.977Z">
-<meta property="article:modified_time" content="2021-03-30T09:50:56.194Z">
+<meta property="article:published_time" content="2021-03-26T08:38:00.000Z">
+<meta property="article:modified_time" content="2021-05-13T06:37:56.346Z">
 <meta property="article:author" content="tnie &amp; ilyw">
+<meta property="article:tag" content="coroutine">
 <meta name="twitter:card" content="summary">
 
 <link rel="canonical" href="https://tnie.github.io/2021/03/26/coroutine3/">
@@ -72,7 +73,7 @@
   };
 </script>
 
-  <title> | 不积小流，无以成江海</title>
+  <title>CO_AWAITING COROUTINES | 不积小流，无以成江海</title>
   
 
 
@@ -230,7 +231,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          
+          CO_AWAITING COROUTINES
         </h1>
 
         <div class="post-meta">
@@ -240,15 +241,26 @@
               </span>
               <span class="post-meta-item-text">发表于</span>
 
-              <time title="创建时间：2021-03-26 16:38:22" itemprop="dateCreated datePublished" datetime="2021-03-26T16:38:22+08:00">2021-03-26</time>
+              <time title="创建时间：2021-03-26 16:38:00" itemprop="dateCreated datePublished" datetime="2021-03-26T16:38:00+08:00">2021-03-26</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-03-30 17:50:56" itemprop="dateModified" datetime="2021-03-30T17:50:56+08:00">2021-03-30</time>
+                <time title="修改时间：2021-05-13 14:37:56" itemprop="dateModified" datetime="2021-05-13T14:37:56+08:00">2021-05-13</time>
               </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cpp/" itemprop="url" rel="index">
+                    <span itemprop="name">cpp</span>
+                  </a>
+                </span>
+            </span>
 
           
 
@@ -274,6 +286,8 @@
 <li>Creating the Awaiter object.</li>
 </ul>
 <p>So first let’s have a look at how is the awaiter object is created. The <code>co_await</code> operator is responsible for the creation of the awaiter object. The <code>co_await</code> operator declaration is looked upon in the awaitable object and if it’s found this <code>co_await</code> operator is executed to obtain awaiter object. Otherwise, if the appropriate function is not found, then awaitable becomes the awaiter. </p>
+<a id="more"></a>
+
 <p>Whenever compiler encounters occurrence of the <code>co_await</code> operator it generates the more or less following code:</p>
 <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::exception_ptr exception = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">not</span> a.await_ready()) &#123;</span><br><span class="line">  __builtin_coro_save(); <span class="comment">//suspend_coroutine();</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns void</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    a.await_suspend(coroutine_handle);</span><br><span class="line">    return_to_the_caller();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns bool</span></span><br><span class="line">  <span class="keyword">bool</span> await_suspend_result;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    await_suspend_result = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">not</span> await_suspend_result)</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns another coroutine_handle</span></span><br><span class="line">  <span class="keyword">decltype</span>(a.await_suspend(<span class="built_in">std</span>::declval&lt;<span class="keyword">coro_handle_t</span>&gt;())) another_coro_handle;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    another_coro_handle = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  another_coro_handle.resume();</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resume_point:</span><br><span class="line"><span class="keyword">if</span>(exception)</span><br><span class="line">  <span class="built_in">std</span>::rethrow_exception(exception);</span><br><span class="line"><span class="string">&quot;return&quot;</span> a.await_resume();</span><br></pre></td></tr></table></figure>
 <h1 id="Coroutine-suspension"><a href="#Coroutine-suspension" class="headerlink" title="Coroutine suspension"></a>Coroutine suspension</h1><p>Immediately after evaluating <code>await_ready</code> expression the coroutine is suspended (on condition, that <code>await_ready</code> evaluated to <code>false</code>). It doesn’t mean, that control flow returns to the caller. It means that the needed local data is saved (possibly on the heap) to be restored when coroutine is suspended. </p>
@@ -290,21 +304,24 @@
     
 
       <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/coroutine/" rel="tag"># coroutine</a>
+          </div>
 
         
 
           <div class="post-nav">
             <div class="post-nav-next post-nav-item">
-                <a href="/2021/03/26/coroutine4/" rel="next" title="">
-                  <i class="fa fa-chevron-left"></i> 
+                <a href="/2021/03/26/coroutine2/" rel="next" title="YOUR FIRST COROUTINE">
+                  <i class="fa fa-chevron-left"></i> YOUR FIRST COROUTINE
                 </a>
             </div>
 
             <span class="post-nav-divider"></span>
 
             <div class="post-nav-prev post-nav-item">
-                <a href="/2021/03/31/coroutine-a/" rel="prev" title="">
-                   <i class="fa fa-chevron-right"></i>
+                <a href="/2021/03/31/coroutine-a/" rel="prev" title="Coroutine Theory">
+                  Coroutine Theory <i class="fa fa-chevron-right"></i>
                 </a>
             </div>
           </div>
@@ -360,7 +377,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">128</span>
+          <span class="site-state-item-count">127</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -373,7 +390,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-count">17</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

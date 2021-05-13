@@ -215,90 +215,6 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2016/12/09/Makefile2nd/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
-      <meta itemprop="name" content="tnie & ilyw">
-      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="不积小流，无以成江海">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2016/12/09/Makefile2nd/" class="post-title-link" itemprop="url">不同场景下的 Makefile</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2016-12-09 16:40:29" itemprop="dateCreated datePublished" datetime="2016-12-09T16:40:29+08:00">2016-12-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 09:43:24" itemprop="dateModified" datetime="2017-04-14T09:43:24+08:00">2017-04-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/make/" itemprop="url" rel="index">
-                    <span itemprop="name">make</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>姊妹篇 <a href="https://tnie.github.io/2016/09/18/Makefile1st/">《Makefile 入门》</a> 中已经介绍过隐含规则、自动推导。要想在 make &amp; Makefile 上精进，必须了解其隐含规则。它可以让你省去很多繁琐、重复的细节，快速高效地完成项目的编译和链接。</p>
-<p>隐含规则依赖同名（同名源文件-同名目标文件-同名可执行文件），一般而言设置好编译器属性、给出必要的头文件目录，就可以使用隐含规则生成同名的目标文件（.o 文件）；但实际项目中很少出现可执行文件由单独一个源文件/目标文件生成的情况，所以生成可执行文件（包括链接库）时一般不能只使用隐含规则达到目的。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2016/12/09/Makefile2nd/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2016/12/05/pass-parameters/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1370,6 +1286,96 @@
   
   
 
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2016/11/03/int-string-int/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
+      <meta itemprop="name" content="tnie & ilyw">
+      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不积小流，无以成江海">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2016/11/03/int-string-int/" class="post-title-link" itemprop="url">C++中int型和std::string互相转换</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2016-11-03 16:22:07" itemprop="dateCreated datePublished" datetime="2016-11-03T16:22:07+08:00">2016-11-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2018-10-24 17:50:04" itemprop="dateModified" datetime="2018-10-24T17:50:04+08:00">2018-10-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cpp/" itemprop="url" rel="index">
+                    <span itemprop="name">cpp</span>
+                  </a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/cpp/cpp-code/" itemprop="url" rel="index">
+                    <span itemprop="name">cpp-code</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>每次用到时，都要到网上搜索一下的感觉很不好。尤其是经常用到，每次搜索时你完全能认识到你已经查过很多遍了。另外，和不自信（拿不准的心理）以及养成了这种坏习惯都有关系，查得多了自然知道调用 C 标准库 atoi（itoa 不是 C 标准库函数）以及使用 stringstream 流来解决问题，但每每觉得差那么一点意思，不够简洁。每次用到时都要搜索一下，可能是希望找到一种让内心舒坦的转换“手法”吧。</p>
+<p>参考 <a target="_blank" rel="noopener" href="https://www.ibm.com/developerworks/community/forums/html/topic?id=21b31ae2-0960-4068-a555-ce9e6c27da9b">C++11 中的 string - atoi/itoa</a>，岂止是参考，根本就是抄袭。可是好不喜欢原文的排版。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2016/11/03/int-string-int/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
   </div>
 
   
@@ -1420,7 +1426,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">128</span>
+          <span class="site-state-item-count">127</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1433,7 +1439,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">16</span>
+        <span class="site-state-item-count">17</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>

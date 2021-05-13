@@ -5,20 +5,22 @@
     <url>/2017/03/07/BooleanInCoding/</url>
     <content><![CDATA[<p>2016年1月12日 18:14:37</p>
 <p>本节转自 <a href="http://developer.51cto.com/art/201312/420153.htm">bool BOOL 和 _Bool辨析</a></p>
-<h1 id="布尔类型"><a href="#布尔类型" class="headerlink" title="布尔类型"></a>布尔类型</h1><p>BOOL 类型在头文件 &lt;windef.h&gt; 中定义为 <code>typedef int BOOL</code>；在头文件 &lt;wtypes.h&gt; 中定义为 <code>typedef long BOOL</code>。<br>BOOL 类型，即 int 类型的长度视实际环境来定，一般可认为是 4 个字节。<br>BOOL 是微软定义的表达布尔逻辑的类型。与 C++ 中的 bool 类型不同是，它是一个<strong>三值逻辑</strong>：TRUE、FALSE 和 ERROR。当返回值为大于 0 的整数时为 TRUE，返回值为 0 时为 FALSE，返回值为 -1 时为 ERROR。</p>
-<p>bool 类型在 C++ 中以关键字的形式被支持，表示布尔类型，其对应变量的值只有真（true）和假（false）两种值。bool 在 C++ 里占用 1 字节。</p>
-<p>_Bool 是 C99 标准中定义的一个新关键字，以提供布尔类型。C2008 草案中只规定了 _Bool 类型的大小至少应能够存放 0 和 1 这两个值。而并没有规定具体的大小。这交给编译器自由发挥了。</p>
+<h1 id="布尔类型"><a href="#布尔类型" class="headerlink" title="布尔类型"></a>布尔类型</h1><p><code>BOOL</code> 类型在头文件 &lt;windef.h&gt; 中定义为 <code>typedef int BOOL</code>；在头文件 &lt;wtypes.h&gt; 中定义为 <code>typedef long BOOL</code>。</p>
+<p><code>BOOL</code> 类型，即 int 类型的长度视实际环境来定，一般可认为是 4 个字节。 </p>
+<p><code>BOOL</code> 是微软定义的表达布尔逻辑的类型。与 C++ 中的 bool 类型不同是，它是一个<strong>三值逻辑</strong>：TRUE、FALSE 和 ERROR。当返回值为大于 0 的整数时为 TRUE，返回值为 0 时为 FALSE，返回值为 -1 时为 ERROR。</p>
+<p><code>bool</code> 类型在 C++ 中以关键字的形式被支持，表示布尔类型，其对应变量的值只有真（true）和假（false）两种值。<code>bool</code> 在 C++ 里占用 1 字节。</p>
+<p><code>_Bool</code> 是 C99 标准中定义的一个新关键字，以提供布尔类型。C2008 草案中只规定了 <code>_Bool</code> 类型的大小至少应能够存放 0 和 1 这两个值。而并没有规定具体的大小。这交给编译器自由发挥了。</p>
 <p><strong>以上，足够读者区别彼此的使用场景了。</strong></p>
 <a id="more"></a>
 
 <h1 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h1><p>在 C 代码中使用布尔类型的几种方式：（如果编译器不支持 C99，就只能使用第一种方法了）</p>
 <h2 id="自己定义的“仿布尔类型”"><a href="#自己定义的“仿布尔类型”" class="headerlink" title="自己定义的“仿布尔类型”"></a>自己定义的“仿布尔类型”</h2><p>在 C99 标准被支持之前，我们常常自己模仿定义布尔类型，方式有很多种，常见的有下面两种：</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/* 第一种方法 */</span></span><br><span class="line"> </span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">int</span> BOOL;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> TRUE 1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> FALSE 0</span></span><br><span class="line"><span class="comment">/* 第二种方法 */</span></span><br><span class="line"> </span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">bool</span>&#123;</span><span class="literal">false</span>, <span class="literal">true</span>&#125;; </span><br></pre></td></tr></table></figure>
-<h2 id="使用-C99-新增的关键字-Bool"><a href="#使用-C99-新增的关键字-Bool" class="headerlink" title="使用 C99 新增的关键字 _Bool"></a>使用 C99 新增的关键字 _Bool</h2><p>标准并未对 _Bool 规定具体的大小。我们使用 gcc（64位环境）做下面测试：</p>
+<h2 id="使用-C99-新增的关键字-Bool"><a href="#使用-C99-新增的关键字-Bool" class="headerlink" title="使用 C99 新增的关键字 _Bool"></a>使用 C99 新增的关键字 _Bool</h2><p>标准并未对 <code>_Bool</code> 规定具体的大小。我们使用 gcc（64位环境）做下面测试：</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/_Bool.png" alt="测试结果"></p>
 <p>看来，gcc 编译器规定 _Bool 类型的长度为 1，只能取值为 0 或 1 。将任意非零值赋值给 _Bool 类型变量，都会先转换为 1，表示为真；将零值赋值给 _Bool 类型，结果为 0，表示为假。</p>
-<h2 id="使用-C99-新增头文件-stdbool-h"><a href="#使用-C99-新增头文件-stdbool-h" class="headerlink" title="使用 C99 新增头文件 stdbool.h"></a>使用 C99 新增头文件 stdbool.h</h2><p>在 C++ 中，通过 bool 来定义布尔变量，通过 true 和 false 对布尔变量进行赋值。C99 为了让我们能够写出与 C++ 兼容的代码（在 c 代码中使用 bool、true、false，而非在C++ 代码中使用 _Bool），添加了头文件 &lt;stdbool.h&gt; 。所以我们只要包含了该头文件，就可以像 C++ 中使用布尔变量的方式进行操作。</p>
-<p>在我自己的 linux 系统中查找 stdbool.h 头文件，找到两处：</p>
+<h2 id="使用-C99-新增头文件-stdbool-h"><a href="#使用-C99-新增头文件-stdbool-h" class="headerlink" title="使用 C99 新增头文件 stdbool.h"></a>使用 C99 新增头文件 stdbool.h</h2><p>在 C++ 中，通过 <code>bool</code> 来定义布尔变量，通过 true 和 false 对布尔变量进行赋值。C99 为了让我们能够写出与 C++ 兼容的代码（在 c 代码中使用 bool、true、false，而非在C++ 代码中使用 <code>_Bool</code>），添加了头文件 <code>&lt;stdbool.h&gt;</code> 。所以我们只要包含了该头文件，就可以像 C++ 中使用布尔变量的方式进行操作。</p>
+<p>在我自己的 linux 系统中查找 <code>stdbool.h</code> 头文件，找到两处：</p>
 <p>系统定义 </p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">[root@Betty ~]# vi /usr/lib/syslinux/com32/include/stdbool.h</span><br></pre></td></tr></table></figure>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">* $Id: stdbool.h,v 1.1 2003/04/16 06:32:31 hpa Exp $</span></span><br><span class="line"><span class="comment">*</span></span><br><span class="line"><span class="comment">* stdbool.h</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> _STDBOOL_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> _STDBOOL_H</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> __cplusplus</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> !defined(__STDC_VERSION__) || (__STDC_VERSION__ &lt; 199901L)</span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">if</span> !defined(__GNUC__) ||(__GNUC__ &lt; 3)</span></span><br><span class="line">  <span class="keyword">typedef</span> <span class="keyword">char</span> <span class="built_in">_Bool</span>;           <span class="comment">/* For C compilers without _Bool */</span></span><br><span class="line"><span class="meta"># <span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> bool  _Bool</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> true  1</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> false 0</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line"> </span><br><span class="line"><span class="comment">/* C++ */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> bool  bool</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> true  true</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> false false</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> __bool_true_false_are_defined 1</span></span><br><span class="line"> </span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">/* _STDBOOL_H */</span></span></span><br></pre></td></tr></table></figure>
@@ -901,41 +903,34 @@
   <entry>
     <title>UUID 入门</title>
     <url>/2017/07/04/UUID/</url>
-    <content><![CDATA[<p>维基百科中描述：通用唯一识别码（英语：Universally Unique Identifier，简称UUID）的目的，是让分布式系统中的所有元素，都能有唯一的辨识信息，而不需要通过中央控制端来做辨识信息的指定。</p>
-<blockquote>
-<p>目前最广泛应用的UUID，是微软公司的全局唯一标识符（GUID）</p>
-</blockquote>
-<p>UUID的标准型式包含32个16进制数字，以连字号分为五段，形式为8-4-4-4-12的32个字符。示例：</p>
+    <content><![CDATA[<p><a href="https://zh.wikipedia.org/wiki/%E9%80%9A%E7%94%A8%E5%94%AF%E4%B8%80%E8%AF%86%E5%88%AB%E7%A0%81">通用唯一识别码</a>（英语：Universally Unique Identifier，简称 UUID）的标准型式包含 32 个 16 进制数字，以连字号分为五段，形式为 8-4-4-4-12 的 32 个字符。示例：</p>
 <pre><code>550e8400-e29b-41d4-a716-446655440000</code></pre>
 <p>接下来重点描述在开发中的使用及应用。</p>
 <h1 id="在-C-中的使用"><a href="#在-C-中的使用" class="headerlink" title="在 C++ 中的使用"></a>在 C++ 中的使用</h1><p>C++ 原生（C++03、C++11/0x）并不支持 UUID。所以要想在 C++ 代码中生成 UUID，如果要求跨平台推荐使用第三方库 Boost UUID，要么结合各自的平台，使用系统 API。以下方法整理自互联网，除 Boost Uuid 和 libuuid 使用过之外，其他的未亲自试验。</p>
 <h2 id="UUID-generation-using-Boost-in-C"><a href="#UUID-generation-using-Boost-in-C" class="headerlink" title="UUID generation using Boost in C++"></a>UUID generation using Boost in C++</h2><p>在 StackOverflow 上的一个例子：<a href="http://stackoverflow.com/questions/3247861/example-of-uuid-generation-using-boost-in-c/3248017">跳转链接</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    boost::uuids::uuid uuid = boost::uuids::random_generator()();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>连续两个括号 <code>()()</code> 是什么鬼？是不是打错了？——首先，这么写是正确的。这种使用形式<strong>涉及到的语法意义</strong>要进一步地学习并掌握。</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid.hpp&gt;            // uuid class</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_generators.hpp&gt; // generators</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;boost/uuid/uuid_io.hpp&gt;         // streaming operators etc.</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    boost::uuids::random_generator generator;</span><br><span class="line"></span><br><span class="line">    boost::uuids::uuid uuid1 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid1 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    boost::uuids::uuid uuid2 = generator();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; uuid2 &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>如果以上两个简单的例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
+<p>如果以上例子满足不了你的需求，需要在更复杂的情景下使用，请移步 <a href="http://www.boost.org/doc/libs/1_60_0/libs/uuid/uuid.html">Boost Uuid 官方文档</a>。</p>
 <h2 id="Qt-QUuid"><a href="#Qt-QUuid" class="headerlink" title="Qt QUuid"></a>Qt QUuid</h2><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Qt是一个跨平台的C++编程框架，QUuid类实现了UUID的生成、比较、转换等功能。</p>
-<p>函数QUuid createUuid()，可用于生成一个随即UUID。示例如下：</p>
+<p>Qt 是一个跨平台的 C++ 编程框架，<code>QUuid</code> 类实现了 UUID 的生成、比较、转换等功能。</p>
+<p>函数 <code>QUuid createUuid()</code>，可用于生成 UUID。示例如下：</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QUuid&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;QString&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    QUuid uuid = QUuid::createUuid();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; qPrintable(uuid.toString()) &lt;&lt; <span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux环境中大都有一个名为uuidgen的小工具，运行即可生成一个UUID到标准输出。读取文件/proc/sys/kernel/random/uuid即得UUID，例如：</p>
+<h2 id="Linux-下生成-UUID"><a href="#Linux-下生成-UUID" class="headerlink" title="Linux 下生成 UUID"></a>Linux 下生成 UUID</h2><h3 id="Shell"><a href="#Shell" class="headerlink" title="Shell"></a>Shell</h3><p>Unix/Linux 环境中大都有一个名为 uuidgen 的小工具，运行即可生成一个 UUID 到标准输出。读取文件 <code>/proc/sys/kernel/random/uuid</code> 即得UUID，例如：</p>
 <pre><code>cat /proc/sys/kernel/random/uuid</code></pre>
 <h3 id="libuuid"><a href="#libuuid" class="headerlink" title="libuuid"></a>libuuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>libuuid是一个用于生成UUID的C库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
+<p>libuuid 是一个用于生成 UUID 的 C 库，具体用法参考 <a href="">http://linux.die.net/man/3/libuuid</a>，示例如下：</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;uuid/uuid.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">uuid_t</span> uuid;</span><br><span class="line">    <span class="keyword">char</span> str[<span class="number">36</span>];</span><br><span class="line"></span><br><span class="line">    uuid_generate(uuid);</span><br><span class="line">    uuid_unparse(uuid, str);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%s\n&quot;</span>, str);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>在Linux下编译时需要链接uuid库</p>
+<p>在 Linux 下编译时需要链接 uuid 库</p>
 <pre><code>gcc -o uuid uuid.c -luuid</code></pre>
 <p><strong>问题： 在什么系统下自带？在什么系统中需要另行安装？</strong></p>
-<p>在Ubuntu中，可以用下面的命令安装libuuid：</p>
+<p>在 Ubuntu 中，可以用下面的命令安装 libuuid：</p>
 <pre><code>sudo apt-get install uuid-dev</code></pre>
 <h2 id="Windows-下生成-UUID"><a href="#Windows-下生成-UUID" class="headerlink" title="Windows 下生成 UUID"></a>Windows 下生成 UUID</h2><h3 id="CoCreateGuid"><a href="#CoCreateGuid" class="headerlink" title="CoCreateGuid"></a>CoCreateGuid</h3><p><a href="http://blog.csdn.net/yasi_xi/article/details/9297565">参考来源</a></p>
-<p>Windows下提供了函数CoCreateGuid用于生成GUID。需要使用的头文件是”objbase.h”，需要链接的库是ole32.lib，函数原型为：</p>
-<p>HRESULT CoCreateGuid(GUID *pguid);<br>GUID的原型为</p>
+<p>Windows 下提供了函数 <code>CoCreateGuid</code> 用于生成 GUID。需要使用的头文件是 <code>#include &lt;objbase.h&gt;</code>，需要链接的库是 <code>ole32.lib</code>，函数原型为：<code>HRESULT CoCreateGuid(GUID *pguid);</code> ，GUID 的原型为</p>
 <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> _<span class="title">GUID</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD Data1;</span><br><span class="line">    WORD Data2;</span><br><span class="line">    WORD Data3;</span><br><span class="line">    BYTE Data4[<span class="number">8</span>];</span><br><span class="line">&#125; GUID;</span><br></pre></td></tr></table></figure>
 <h3 id="UuidCreate"><a href="#UuidCreate" class="headerlink" title="UuidCreate"></a>UuidCreate</h3><p><a href="http://stackoverflow.com/questions/24365331/how-can-i-generate-uuid-in-c-without-using-boost-library">参考来源</a></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">pragma</span> comment(lib, <span class="meta-string">&quot;rpcrt4.lib&quot;</span>)  <span class="comment">// UuidCreate - Minimum supported OS Win 2000</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;windows.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    UUID uuid;</span><br><span class="line">    UuidCreate(&amp;uuid);</span><br><span class="line">    <span class="keyword">char</span> *str;</span><br><span class="line">    UuidToStringA(&amp;uuid, (RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;str&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    RpcStringFreeA((RPC_CSTR*)&amp;str);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <h1 id="在-Java-中使用"><a href="#在-Java-中使用" class="headerlink" title="在 Java 中使用"></a>在 Java 中使用</h1><p>工作中偶尔会写一些 Java 的项目，所以也捎带整理一下。</p>
-<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 UUID() 函数生成 uuid。</p>
+<h1 id="在-MySQL-中"><a href="#在-MySQL-中" class="headerlink" title="在 MySQL 中"></a>在 MySQL 中</h1><p>MySQL 本身是带有生成 uuid 功能的。也就是我们惯用的整数递增作为主键，其实是可以用 uuid 替代的。可以在一条记录插入之前写触发器，调用 <code>UUID()</code> 函数生成 uuid。</p>
 ]]></content>
       <tags>
         <tag>cpp</tag>
@@ -2303,14 +2298,16 @@
       </categories>
   </entry>
   <entry>
-    <title></title>
+    <title>Coroutine Theory</title>
     <url>/2021/03/31/coroutine-a/</url>
     <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2017/09/25/coroutine-theory">https://lewissbaker.github.io/2017/09/25/coroutine-theory</a></p>
 <h1 id="Coroutines"><a href="#Coroutines" class="headerlink" title="Coroutines"></a>Coroutines</h1><p>Coroutines generalise the operations of a function by separating out some of the steps performed in the <strong>Call</strong> and <strong>Return</strong> operations into three <strong>extra</strong> operations: <strong>Suspend</strong>, <strong>Resume</strong> and <strong>Destroy</strong>.</p>
 <p>比其他文章多描述了一个 Destroy 步骤，更准确。</p>
-<p>Note that, like the Return operation of a function, a coroutine can only be suspended from within the coroutine itself at well-defined suspend-points.</p>
-<p>请注意，就像函数的 Return 操作一样，协程只能在定义好的暂停点处从协程自身内部暂停。</p>
+<p>Note that, like the <code>Return</code> operation of a function, a coroutine can only be suspended from within the coroutine itself at well-defined suspend-points.</p>
+<p>请注意，就像函数的 <code>Return</code> 操作一样，协程只能在定义好的暂停点处从协程自身内部暂停。</p>
 <h2 id="Coroutine-activation-frames"><a href="#Coroutine-activation-frames" class="headerlink" title="Coroutine activation frames"></a>Coroutine activation frames</h2><p>With coroutines there are some parts of the activation frame that need to be preserved across coroutine suspension and there are some parts that only need to be kept around while the coroutine is executing. For example, the lifetime of a variable with a scope that does not span any coroutine suspend-points can potentially be stored on the stack.</p>
+<a id="more"></a>
+
 <p>对于协程，activation frame 的某些部分在协程暂停时需要保留，而 activation frame 的某些部分只有在协程执行时才需要保留。例如，不跨越任何协程暂停点的变量可以潜在地存储在堆栈中。</p>
 <p>You can logically think of the activation frame of a coroutine as being comprised of two parts: the ‘coroutine frame’ and the ‘stack frame’.</p>
 <p>您可以从逻辑上将协程的 activation frame 想象为由两部分组成：“coroutine frame”和“stack frame”。</p>
@@ -2336,11 +2333,17 @@
 <h1 id="An-illustration"><a href="#An-illustration" class="headerlink" title="An illustration"></a>An illustration</h1><p>Note that the compiler will typically hold the address of the coroutine frame in a separate register to the stack pointer (eg. MSVC stores this in the rbp register).</p>
 <p>如何理解“coroutine frame 被存在另一个专用寄存器中”呢？ 这个操作意味着什么？</p>
 <p>When the coroutine suspends for the first time, a return-value is returned to the caller. This return value often holds a handle to the coroutine-frame that suspended that can be used to later resume it.</p>
-<p>调用者之后就能够使用这个返回值来恢复协程的执行。</p>
+<p>调用者之后就能够使用这个返回值（中的句柄）来恢复协程的执行。</p>
 ]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
-    <title></title>
+    <title>C++ Coroutines Understanding operator co_await</title>
     <url>/2021/03/31/coroutine-b/</url>
     <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await">https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await</a></p>
 <h1 id="What-does-the-Coroutines-TS-give-us"><a href="#What-does-the-Coroutines-TS-give-us" class="headerlink" title="What does the Coroutines TS give us?"></a>What does the Coroutines TS give us?</h1><p>The facilities the C++ Coroutines TS provides in the language can be thought of as a low-level assembly-language for coroutines. These facilities can be difficult to use directly in a safe way and are mainly intended to be used by library-writers to build higher-level abstractions that application developers can work with safely.</p>
@@ -2348,6 +2351,8 @@
 <h1 id="Compiler-lt-gt-Library-interaction"><a href="#Compiler-lt-gt-Library-interaction" class="headerlink" title="Compiler &lt;-&gt; Library interaction"></a>Compiler &lt;-&gt; Library interaction</h1><p>Instead, it specifies a general mechanism for library code to customise the behaviour of the coroutine by implementing types that conform to a specific interface. The compiler then generates code that calls methods on instances of types provided by the library.</p>
 <p>它为库代码指定了一种通用机制，可通过 <em>实现符合特定接口的类型</em> 来自定义协程的行为。然后编译器调用 这些类型的方法 = <em>库提供的类型的实例的方法</em>。</p>
 <p>There are two kinds of interfaces that are defined by the coroutines TS: The <strong>Promise</strong> interface and the <strong>Awaitable</strong> interface.</p>
+<a id="more"></a>
+
 <p>The <strong>Promise</strong> interface specifies methods for customising the behaviour of the coroutine itself. The library-writer is able to customise what happens when the coroutine is called, what happens when the coroutine returns (either by normal means or via an unhandled exception) and customise the behaviour of any <code>co_await</code> or <code>co_yield</code> expression within the coroutine.</p>
 <p>用于定义协程的行为。</p>
 <p>The <strong>Awaitable</strong> interface specifies methods that control the semantics of a <code>co_await</code> expression. When a value is <code>co_await</code>ed, the code is translated into a series of calls to methods on the awaitable object that allow it to specify: whether to suspend the current coroutine, execute some logic after it has suspended to schedule the coroutine for later resumption, and execute some logic after the coroutine resumes to produce the result of the <code>co_await</code> expression.</p>
@@ -2382,45 +2387,25 @@
 <h1 id="Synchronisation-free-async-code"><a href="#Synchronisation-free-async-code" class="headerlink" title="Synchronisation-free async code"></a>Synchronisation-free async code</h1><p>免同步的异步代码</p>
 <h1 id="An-example-Implementing-a-simple-thread-synchronisation-primitive"><a href="#An-example-Implementing-a-simple-thread-synchronisation-primitive" class="headerlink" title="An example: Implementing a simple thread-synchronisation primitive"></a>An example: Implementing a simple thread-synchronisation primitive</h1><p>TODO</p>
 ]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
-    <title></title>
-    <url>/2021/04/02/coroutine/</url>
-    <content><![CDATA[<p>参考 <a href="https://github.com/tnie/learn_chrono">tnie/learn_xxx</a> 中 coro 项目。</p>
-<p>如果想看懂 asio 如何支持 <code>co_await</code> 的，想更细致地用好协程，就需要了解更基础（同时也是更复杂的）内容。</p>
-<ul>
-<li><p><a href="https://blog.panicsoftware.com/coroutines-introduction/">COROUTINES INTRODUCTION</a>，需要科学上网，PAC 全局</p>
-<p>  关键的 <code>__builtin_coro_save()</code> 和 <code>return_to_the_caller()</code> 组合是如何实现功能的呢？作者并没有介绍，系列的三篇文章只是详细地讲解了各个代码定制点以及编译器如何展开并生成样本的代码，却对关键的“如何保存与跳转”只字未提。</p>
-<p>  对协程介绍时，先介绍 <code>promise</code> 后 <code>awaitable/awaiter</code>。学习笔记/摘抄，见 coroutine1~4.md</p>
-</li>
-<li><p><a href="https://lewissbaker.github.io/">C++ Coroutines: Understanding operator co_await</a>，特别推荐的几篇文章，作者写了  cppcoro 库，牛人 </p>
-<p>  首推，此系列的文章作为入门。 对协程介绍时，先介绍 <code>awaitable/awaiter</code> 后 <code>promise</code>。学习笔记/摘抄，见 coroutine-a~c.md</p>
-</li>
-<li><p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">从HelloWold开始，深入浅出C++ 20 Coroutine TS</a></p>
-<p>  作者分析了 IDE 生成的汇编语言，介绍了协程“如何保存状态，如何跳转”。可惜我看不懂</p>
-</li>
-<li><p><a href="https://netcan.github.io/2020/09/05/C-20%E5%8D%8F%E7%A8%8B/">C++20 协程初探</a></p>
-<p>  抽空，学习一下他的例子。</p>
-</li>
-<li><p><a href="https://owent.net/2019/1904.html">C++20 Coroutine</a></p>
-<p>  作者应该也是小白用户，几个关键点都提到了，但展开得不够，轻重也没区分。罗列概念、罗列代码</p>
-</li>
-<li><p><a href="https://zh4ui.net/tags/coroutine/">TAG : COROUTINE</a></p>
-<p>  貌似高屋建瓴，但真的就是“乱拳打死老师傅”。有价值，但对小白入门非常不友好，得自行筛选。</p>
-</li>
-</ul>
-]]></content>
-  </entry>
-  <entry>
-    <title></title>
+    <title>C++ Coroutines Understanding the promise type</title>
     <url>/2021/03/31/coroutine-c/</url>
     <content><![CDATA[<p>来源：<a href="https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type">https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type</a></p>
 <h1 id="Coroutine-Concepts"><a href="#Coroutine-Concepts" class="headerlink" title="Coroutine Concepts"></a>Coroutine Concepts</h1><p>The compiler applies some fairly mechanical transformations to the code that you write to turn it into a state-machine that allows it to suspend execution at particular points within the function and then later resume execution.</p>
 <p>编译器会对您编写的代码进行一些相当机械的转换，以将其转换为状态机，使状态机可以在函数内的特定点挂起执行，然后再恢复执行。</p>
 <h1 id="Promise-objects"><a href="#Promise-objects" class="headerlink" title="Promise objects"></a>Promise objects</h1><p>The Promise object defines and controls the behaviour of the coroutine itself by implementing methods that are called at specific points during execution of the coroutine.</p>
+<a id="more"></a>
+
 <blockquote>
 <p>Before we go on, I want you to try and rid yourself of any preconceived notions of what a “promise” is. While, in some use-cases, the coroutine promise object does indeed act in a similar role to the <code>std::promise</code> part of a <code>std::future</code> pair, for other use-cases the analogy is somewhat stretched. It may be easier to think about the coroutine’s promise object as being a “coroutine state controller” object that controls the behaviour of the coroutine and can be used to track its state.</p>
-<p>在继续之前，我希望您尝试摆脱对“promise”的任何先入为主的观念。虽承然在某些用例中，协程的 promise 对象确实起到了与<code>std :: future</code> 的 <code>std :: promise</code> 部分相似的作用，但在其他用例中，类推却有些捉襟见肘。将协程的 promise 对象视为控制协程行为并可以用来跟踪其状态的“协程状态控制器”对象可能更容易些。</p>
+<p>在继续之前，我希望您尝试摆脱对“promise”的任何先入为主的观念。虽然在某些用例中，协程的 promise 对象确实起到了与 <code>std::future</code> 的 <code>std::promise</code> 部分相似的作用，但在其他用例中，类推却有些捉襟见肘。将协程的 promise 对象视为控制协程行为并可以用来跟踪其状态的“<strong>协程状态控制器</strong>”对象可能更容易些。</p>
 </blockquote>
 <p>When you write a coroutine function that has a body, <code>&lt;body-statements&gt;</code>, which contains one of the coroutine keywords (<code>co_return</code>, <code>co_await</code>, <code>co_yield</code>) then the body of the coroutine is transformed to something (roughly) like the following:</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="keyword">co_await</span> promise.initial_suspend();</span><br><span class="line">  <span class="keyword">try</span></span><br><span class="line">  &#123;</span><br><span class="line">    &lt;body-statements&gt;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">catch</span> (...)</span><br><span class="line">  &#123;</span><br><span class="line">    promise.unhandled_exception();</span><br><span class="line">  &#125;</span><br><span class="line">FinalSuspend:</span><br><span class="line">  <span class="keyword">co_await</span> promise.final_suspend();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -2468,9 +2453,63 @@
 </ol>
 <p>Note that the coroutine_handle is <strong>NOT</strong> and RAII object. You must manually call <code>.destroy()</code> to destroy the coroutine frame and free its resources.</p>
 ]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
-    <title></title>
+    <title>Coroutine 学习总结</title>
+    <url>/2021/04/02/coroutine/</url>
+    <content><![CDATA[<p>参考 <a href="https://github.com/tnie/learn_chrono">tnie/learn_xxx</a> 中 coro 项目。</p>
+<p>如果想看懂 asio 如何支持 <code>co_await</code> 的，想更细致地用好协程，就需要了解更基础（同时也是更复杂的）内容。</p>
+<h1 id="第一章"><a href="#第一章" class="headerlink" title="第一章"></a>第一章</h1><p>微软专家 <a href="https://devblogs.microsoft.com/oldnewthing/20191209-00/?p=103195">C++ coroutines: Getting started with awaitable objects</a> 开篇的陈述，比我的倾向更具说服力：</p>
+<p>Coroutines were added to C++20, and <a href="https://lewissbaker.github.io/">Lewis Baker</a> has a nice introduction to them.</p>
+<ul>
+<li><a href="https://lewissbaker.github.io/2017/09/25/coroutine-theory">Coroutine theory.</a></li>
+<li><a href="https://lewissbaker.github.io/2017/11/17/understanding-operator-co-await">Understanding operator <code>co_await</code>.</a></li>
+<li><a href="https://lewissbaker.github.io/2018/09/05/understanding-the-promise-type">Understanding the promise type.</a></li>
+</ul>
+<p>特别推荐这几篇文章，作者写了 cppcoro 库，牛人！</p>
+<p>首推，此系列的文章作为入门。 </p>
+<p>对协程介绍时，先介绍 <code>awaitable/awaiter</code> 后 <code>promise</code>。学习笔记/摘抄，见 coroutine-a~c.md</p>
+<a id="more"></a>
+
+<h1 id="第二章"><a href="#第二章" class="headerlink" title="第二章"></a>第二章</h1><p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">从HelloWold开始，深入浅出C++ 20 Coroutine TS</a>，作者分析了 IDE 生成的汇编语言，介绍了协程“如何保存状态，如何跳转”。可惜我看不懂。</p>
+<blockquote>
+<p>对称协程只是非对称协程的一个特例，我们可以通过添加一个中立的第三方调度中心的方式将非对称协程转换成对称协程（只需要在所有协程“暂停”时将控制权转交给调度中心统一调度即可）。</p>
+</blockquote>
+<p>猜测 asio 的 <code>awaitable&lt;&gt;</code> 和 <code>co_spawn</code> 也是干了这件事</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_always</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_never</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>co_await</code> 表达式展开后是这样的：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// co_await std::experimental::suspend_always&#123;&#125;;</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; tmp = <span class="built_in">std</span>::experimental::suspend_always&#123;&#125;;</span><br><span class="line">  <span class="keyword">if</span> (!tmp.await_ready()) &#123;</span><br><span class="line">    __builtin_coro_save() <span class="comment">// frame-&gt;suspend_index = m;</span></span><br><span class="line">    <span class="keyword">if</span> (tmp.await_suspend(&lt;coroutine_handle&gt;)) &#123;</span><br><span class="line">      __builtin_coro_suspend() <span class="comment">// jmp </span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">resume_label_m:</span><br><span class="line">  tmp.await_resume();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h1 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h1><ul>
+<li><p><a href="https://blog.panicsoftware.com/coroutines-introduction/">COROUTINES INTRODUCTION</a>，需要科学上网，PAC 全局</p>
+<p>  关键的 <code>__builtin_coro_save()</code> 和 <code>return_to_the_caller()</code> 组合是如何实现功能的呢？作者并没有介绍，系列的三篇文章只是详细地讲解了各个代码定制点以及编译器如何展开并生成样本的代码，却对关键的“如何保存与跳转”只字未提。</p>
+<p>  对协程介绍时，先介绍 <code>promise</code> 后 <code>awaitable/awaiter</code>。学习笔记/摘抄，见 coroutine1~3.md</p>
+</li>
+<li><p><a href="https://netcan.github.io/2020/09/05/C-20%E5%8D%8F%E7%A8%8B/">C++20 协程初探</a></p>
+<p>  抽空，学习一下他的例子。</p>
+</li>
+<li><p><a href="https://owent.net/2019/1904.html">C++20 Coroutine</a></p>
+<p>  作者应该也是小白用户，几个关键点都提到了，但展开得不够，轻重也没区分。罗列概念、罗列代码</p>
+</li>
+<li><p><a href="https://zh4ui.net/tags/coroutine/">TAG : COROUTINE</a></p>
+<p>  貌似高屋建瓴，但真的就是“乱拳打死老师傅”。有价值，但对小白入门非常不友好，得自行筛选。</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>COROUTINES INTRODUCTION</title>
     <url>/2021/03/26/coroutine1/</url>
     <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/coroutines-introduction/">https://blog.panicsoftware.com/coroutines-introduction/</a></p>
 <p>虽然协程作为重要特性，即将进入 C++ 20，但仍然有很多人吐槽。</p>
@@ -2480,6 +2519,8 @@
 <p>主要的抱怨是关于理解起来很难，大量的定制点以及，未优化的动态内存分配可能造成性能的损失。</p>
 <p>谷歌的提案存在一些问题，最终被接受的协程方案来自微软。</p>
 <h1 id="什么是协程"><a href="#什么是协程" class="headerlink" title="什么是协程"></a>什么是协程</h1><p>The coroutines already exist in many programming languages, may it be Python or C#. Coroutines provide one more way to create asynchronous code. How this way differs from threads and why do we need a dedicated language feature for coroutines and finally how we can benefit will be explained in this section.</p>
+<a id="more"></a>
+
 <p>协程和线程有什么不同？为什么我们需要协程的专用语言功能？我们从协程中能获得哪些好处？在这一节会给出答案。</p>
 <p>Depending on the environment in which they are used they might be called:</p>
 <ul>
@@ -2502,9 +2543,15 @@
 <p>无栈协程只能在顶层函数暂停执行。</p>
 <p>每次 suspend 时 frame 释放掉(pop)，resume 的时候由 coroutine object (as local variable on the caller’s frame) 再次建立 frame。—— 参考 <a href="https://lewissbaker.github.io/2017/09/25/coroutine-theory">coroutine-theory</a> 的 The ‘Resume’ operation 章节。</p>
 ]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
-    <title></title>
+    <title>YOUR FIRST COROUTINE</title>
     <url>/2021/03/26/coroutine2/</url>
     <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/your-first-coroutine/">https://blog.panicsoftware.com/your-first-coroutine/</a></p>
 <p><code>std::future&lt;int&gt; foo();</code></p>
@@ -2518,6 +2565,8 @@
 <p>So the operator <code>co_await</code> is a unary operator, which takes the <code>Awaitable</code> object as its argument.</p>
 <h1 id="Why-do-we-need-to-define-additional-types"><a href="#Why-do-we-need-to-define-additional-types" class="headerlink" title="Why do we need to define additional types?"></a>Why do we need to define additional types?</h1><p>So the object used to communicate with the coroutine is the object of the coroutine’s return type.</p>
 <p>我们使用协程的返回值，和协程进行沟通。</p>
+<a id="more"></a>
+
 <p>If our coroutine is able to suspend, we need to be able to somehow resume it, so our return type needs to have some <code>resume()</code> method.</p>
 <p>协程可以暂停，所以协程的返回类型需要有 <code>resume()</code> 等接口。 </p>
 <p>How will the resumable object be created (there is no return statement)? Basically, the compiler generates some additional code for the coroutines. Every coroutine function is transformed by the compiler to the form similar to this:</p>
@@ -2550,9 +2599,15 @@
 <p>好消息是常规C ++开发人员不知道此功能的整个复杂部分。实际上，常规的C ++开发人员应该知道如何编写协程的主体，而不是协程对象本身。</p>
 <p>Developers definitely should use already defined coroutines objects from the standard library (which later will come into the standard) or third-party libraries (like cppcoro).</p>
 ]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
-    <title></title>
+    <title>CO_AWAITING COROUTINES</title>
     <url>/2021/03/26/coroutine3/</url>
     <content><![CDATA[<p>来源：<a href="https://blog.panicsoftware.com/co_awaiting-coroutines/">https://blog.panicsoftware.com/co_awaiting-coroutines/</a></p>
 <h1 id="Awaitable"><a href="#Awaitable" class="headerlink" title="Awaitable"></a>Awaitable</h1><p>As I have mentioned in the previous posts, the <code>suspend_always</code> and <code>suspend_never</code> are types, that fulfill the <code>Awaitable</code> concept. </p>
@@ -2567,6 +2622,8 @@
 <li>Creating the Awaiter object.</li>
 </ul>
 <p>So first let’s have a look at how is the awaiter object is created. The <code>co_await</code> operator is responsible for the creation of the awaiter object. The <code>co_await</code> operator declaration is looked upon in the awaitable object and if it’s found this <code>co_await</code> operator is executed to obtain awaiter object. Otherwise, if the appropriate function is not found, then awaitable becomes the awaiter. </p>
+<a id="more"></a>
+
 <p>Whenever compiler encounters occurrence of the <code>co_await</code> operator it generates the more or less following code:</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::exception_ptr exception = <span class="literal">nullptr</span>;</span><br><span class="line"><span class="keyword">if</span> (<span class="keyword">not</span> a.await_ready()) &#123;</span><br><span class="line">  __builtin_coro_save(); <span class="comment">//suspend_coroutine();</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns void</span></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    a.await_suspend(coroutine_handle);</span><br><span class="line">    return_to_the_caller();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns bool</span></span><br><span class="line">  <span class="keyword">bool</span> await_suspend_result;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    await_suspend_result = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">not</span> await_suspend_result)</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">//if await_suspend returns another coroutine_handle</span></span><br><span class="line">  <span class="keyword">decltype</span>(a.await_suspend(<span class="built_in">std</span>::declval&lt;<span class="keyword">coro_handle_t</span>&gt;())) another_coro_handle;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    another_coro_handle = a.await_suspend(coroutine_handle);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (...) &#123;</span><br><span class="line">    exception = <span class="built_in">std</span>::current_exception();</span><br><span class="line">    <span class="keyword">goto</span> resume_point;</span><br><span class="line">  &#125;</span><br><span class="line">  another_coro_handle.resume();</span><br><span class="line">  return_to_the_caller();</span><br><span class="line">  <span class="comment">//endif</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">resume_point:</span><br><span class="line"><span class="keyword">if</span>(exception)</span><br><span class="line">  <span class="built_in">std</span>::rethrow_exception(exception);</span><br><span class="line"><span class="string">&quot;return&quot;</span> a.await_resume();</span><br></pre></td></tr></table></figure>
 <h1 id="Coroutine-suspension"><a href="#Coroutine-suspension" class="headerlink" title="Coroutine suspension"></a>Coroutine suspension</h1><p>Immediately after evaluating <code>await_ready</code> expression the coroutine is suspended (on condition, that <code>await_ready</code> evaluated to <code>false</code>). It doesn’t mean, that control flow returns to the caller. It means that the needed local data is saved (possibly on the heap) to be restored when coroutine is suspended. </p>
@@ -2576,16 +2633,12 @@
 <p>当查看协程时，您肯定会感觉（或应该感觉到）这不是您日常工作中想要写的东西，而且您是对的！将来，标准库将附带已实现的预定义集合以及已实现的协程类型。一旦C ++ 20发布，让您自己和您的朋友感到高兴，并使用cppcoro代替编写您自己的实现。</p>
 <p>那么关键的 <code>__builtin_coro_save()</code> 和 <code>return_to_the_caller()</code> 组合是如何实现功能的呢？作者并没有介绍，系列的三篇文章只是详细地讲解了各个代码定制点以及编译器如何展开并生成样本的代码，却对关键的“如何保存与跳转”只字未提。 </p>
 ]]></content>
-  </entry>
-  <entry>
-    <title></title>
-    <url>/2021/03/26/coroutine4/</url>
-    <content><![CDATA[<p>对称协程只是非对称协程的一个特例，我们可以通过添加一个中立的第三方调度中心的方式将非对称协程转换成对称协程（只需要在所有协程“暂停”时将控制权转交给调度中心统一调度即可）。</p>
-<p>猜测 asio 得 <code>awaitable&lt;&gt;</code> 和 <code>co_spawn</code> 也是干了这件事</p>
-<p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/</a></p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_always</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">suspend_never</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="function"><span class="keyword">bool</span> <span class="title">await_ready</span><span class="params">()</span> _NOEXCEPT </span>&#123;</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_suspend</span><span class="params">(coroutine_handle&lt;&gt;)</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">	<span class="function"><span class="keyword">void</span> <span class="title">await_resume</span><span class="params">()</span> _NOEXCEPT </span>&#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-<p>co_await 表达式展开后是这样的：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// co_await std::experimental::suspend_always&#123;&#125;;</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">auto</span>&amp;&amp; tmp = <span class="built_in">std</span>::experimental::suspend_always&#123;&#125;;</span><br><span class="line">  <span class="keyword">if</span> (!tmp.await_ready()) &#123;</span><br><span class="line">    __builtin_coro_save() <span class="comment">// frame-&gt;suspend_index = m;</span></span><br><span class="line">    <span class="keyword">if</span> (tmp.await_suspend(&lt;coroutine_handle&gt;)) &#123;</span><br><span class="line">      __builtin_coro_suspend() <span class="comment">// jmp </span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">resume_label_m:</span><br><span class="line">  tmp.await_resume();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+      <tags>
+        <tag>coroutine</tag>
+      </tags>
   </entry>
   <entry>
     <title>C++11 的重大改变</title>
@@ -5348,7 +5401,7 @@
 <li><a href="http://www.mindmanager.cc/zhucema-jihuoma-xuliehao.html">各版本MindManager注册码-激活码-序列号地址</a></li>
 <li><a href="http://www.weiyu.la/2013/2332.html">Mindjet MindManager 14.0.334 正式发布（最后更新：2013-11-11）</a></li>
 </ul>
-<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#x6e;&#105;&#101;&#108;&#111;&#x6e;&#x67;&#x32;&#48;&#49;&#52;&#x40;&#49;&#54;&#x33;&#x2e;&#x63;&#111;&#109;">&#x6e;&#105;&#101;&#108;&#111;&#x6e;&#x67;&#x32;&#48;&#49;&#52;&#x40;&#49;&#54;&#x33;&#x2e;&#x63;&#111;&#109;</a></p>
+<p>ps：目前在用的版本和中文汉化包，都在百度云盘中上传了备份。<a href="mailto:&#110;&#105;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#109;">&#110;&#105;&#101;&#x6c;&#111;&#110;&#x67;&#50;&#48;&#49;&#52;&#x40;&#49;&#54;&#51;&#46;&#x63;&#x6f;&#109;</a></p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/mindmanager/117c25cd-6171-4608-b210-336c5df6f9cc.jpg" alt="启动时弹出对话框"></p>
 ]]></content>
       <categories>
@@ -5415,6 +5468,101 @@
       <categories>
         <category>cpp</category>
         <category>cpp-code</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>试验虚拟机安装黑群晖</title>
+    <url>/2020/12/25/nas/</url>
+    <content><![CDATA[<p>安装 VMware workstation 15 player 时，提示：</p>
+<blockquote>
+<p>VMware workstation 15 player 和 Hyper-V 在此版本的 windows 上不兼容。</p>
+<p>请从系统中移除 hyper-v 角色或将 windows 更新到 windows 10 版本 20H1。</p>
+</blockquote>
+<p>我选择了在“启用或关闭 windows 功能”中关闭 Hyper-V，需要重启。后续启动虚拟机的时候还是报错：</p>
+<blockquote>
+<p>您的主机不满足在启用 Hyper-V 或 Device/Credential Guard 的情况下运行 VMware Workstation 的最低要求。</p>
+</blockquote>
+<p>参考帖子 ：<a href="https://blog.csdn.net/qq_36761831/article/details/81175736">在禁用 Device/Credential Guard 后，可以运行 VM 的方法</a> ， 重启生效。</p>
+<a id="more"></a>
+
+<p><strong>引导文件</strong></p>
+<p><a href="https://xpenology.club/downloads/">XPEnology is a bootloader as IMG image.</a> ， .img 格式</p>
+<p><strong>刷引导的工具</strong></p>
+<p>Roadkil’s Disk Image ，将 .img 格式刷入虚拟磁盘供 vm 使用。</p>
+<p>或者使用 StarWind V2V Image Converter 转换引导的.img文件到VM disk形式，直接被 vm 使用。</p>
+<p>物理磁盘方面分为两部分：引导；系统 + 数据。</p>
+<p>开机，引导程序起来之后，就可以通过浏览器手工安装 DSM 的系统。之后，在系统里面增删磁盘，存储个人数据等。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://post.smzdm.com/p/ar0v4orw/">群晖折腾二：初学者使用VMware 虚拟机安装群晖体验DSM6.2系统</a></p>
+<p>作者的“群晖折腾一” 没有必要看。虚拟磁盘类型一定要选 SATA</p>
+<p>引导用的磁盘是单个文件。为了简洁，系统磁盘也建议使用“将虚拟磁盘存储为单个文件”，毕竟也没有多大。</p>
+<p><a href="https://post.smzdm.com/p/av7zn43p/">群晖NAS相册的正确玩法</a></p>
+<h1 id="联网"><a href="#联网" class="headerlink" title="联网"></a>联网</h1><p>nothing</p>
+<p>如果局域网内搜索不到，请返回确认虚拟磁盘类型：一定要选 SATA。</p>
+<p>引导支持 DSM6.2，但不支持 DSM6.2.4（装完系统重启后局域网搜不到，至于 6.2.1/2/3 估计也不支持吧）</p>
+<p><a href="http://www.nasyun.com/thread-63360-1-18.html">新手求教，安装黑裙重启后找不到IP</a> </p>
+<blockquote>
+<p>1.03的引导不能装最新6.2.1，只能装6.2。因为6.2.1会改写引导盘导致重启后网卡驱动丢失。</p>
+</blockquote>
+<h2 id="网关是什么"><a href="#网关是什么" class="headerlink" title="网关是什么"></a>网关是什么</h2><blockquote>
+<p>A gateway is a piece of networking hardware used in telecommunications for telecommunications networks that allows data to flow from one discrete network to another.</p>
+<p>使数据在两个离散的网络之间通信的硬件设备：回顾历史，早期的电话网络肯定是离散的，且各自很可能使用了不同的协议，彼此间要完成通信，就需要某种转换的设备。<del>好像早期的局域网协议和互联网协议也是不同的，我忘记在哪里看到的</del></p>
+<p>Gateways are distinct from routers or switches in that they communicate using more than one protocol to connect a bunch of networks and can operate at any of the seven layers of the open systems interconnection model (OSI).</p>
+<p>到底不同在哪里呢？</p>
+<p>The term gateway can also loosely refer to a computer or computer program configured to perform the tasks of a gateway, such as a default gateway or router.</p>
+<p>默认网关或软路由</p>
+</blockquote>
+<ul>
+<li>gate 大门， gateway</li>
+<li>route 路线 -&gt; router</li>
+<li>switch 开关</li>
+</ul>
+<p>网关的概念早于路由的概念，路由是特化（限于现在的 OSI 框架内）的、扩展了功能（除了网络边界的大门，还有路线规划）的网关。 路由还集成了交换机、动态域名分配和防火墙等功能。</p>
+<h2 id="OSI-模型"><a href="#OSI-模型" class="headerlink" title="OSI 模型"></a>OSI 模型</h2><ul>
+<li>第七层，应用层。例如 HTTP SSH POP3 等</li>
+<li>第六层，表达层</li>
+<li>第五层，会话层</li>
+<li>第四层，传输层。例如 传输控制协议 TCP</li>
+<li>第三层，网络层。例如 互联网协议 IP ICMP(ping)</li>
+<li>第二层，数据链路层。例如 arp</li>
+<li>第一层，物理层</li>
+</ul>
+<p>OSI 模型只是一个定义良好的协议规范集，并没有提供实现的方法。不是一个标准，而是在制定标准时所使用的的概念性框架。</p>
+<p>TCP/IP 协议栈，是与 OSI 模型有类似结构的现行网络模型。它将软件通信抽象化为四个抽象层：</p>
+<ul>
+<li>应用层，HTTP 等</li>
+<li>传输层，TCP 等</li>
+<li>网络互连层，IP 协议</li>
+<li>网络访问（链接）层，例如以太网、WiFi 等</li>
+</ul>
+<p>ARP是通过网络地址来定位MAC地址。</p>
+<h3 id="IP-地址"><a href="#IP-地址" class="headerlink" title="IP 地址"></a>IP 地址</h3><p>IP 地址是以网络号和主机号来标示网络上的主机的，比如 <code>172.16.10.0/24</code> 所表示的一个子网前 24 个 bits 表示网络号，后 8bits 表示主机号，该子网的IP地址的范围是 172.16.10.0-172.16.10.255。网络号为相同子网，同子网的主机可以直接相互通信；不同子网须通过本地网关（Gateway）经由路由器来转发数据。</p>
+<p>子网掩码并不局限于整数个八位位组的情况。</p>
+<p>从 <a href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%B1%BB%E7%BD%91%E7%BB%9C">分类网络</a> 到 <a href="https://zh.wikipedia.org/wiki/%E6%97%A0%E7%B1%BB%E5%88%AB%E5%9F%9F%E9%97%B4%E8%B7%AF%E7%94%B1">无类别域间路由 CIDR</a>，前者三类地址的子网掩码分别是 <code>/8</code> <code>/16</code> <code>/24</code>，后者基于可变长子网掩码。</p>
+<blockquote>
+<p>可变长子网掩码（VLSM）和 CIDR 是相同的概念，不过一般只在历史上使用。</p>
+</blockquote>
+<h2 id="集线器、交换机和路由器"><a href="#集线器、交换机和路由器" class="headerlink" title="集线器、交换机和路由器"></a>集线器、交换机和路由器</h2><p>回顾历史，在时间轴上用发展的视角理解这些硬件。</p>
+<ul>
+<li>集线器，数据帧被广播到它的每个端口。数据帧不需要 mac 地址和 ip 地址。</li>
+<li>交换机，使用 mac 地址进行识别。数据帧需要包含 mac 地址（源和目标），不需要 ip 地址。交换机维护“端口：MAC地址”的映射表。</li>
+<li>路由器，依赖 ip 完成功能。数据帧需要包含 ip 地址（源和目标）</li>
+</ul>
+<ol>
+<li><p>保留的三个地址段分别位于 A、B、C 三类地址内，如何使用？</p>
+<ul>
+<li>A类地址：10.0.0.0–10.255.255.255</li>
+<li>B类地址：172.16.0.0–172.31.255.255</li>
+<li>C类地址：192.168.0.0–192.168.255.255 <a href="https://blog.csdn.net/superit401/article/details/78246298">来源</a></li>
+</ul>
+</li>
+<li><p>北分这里很明显是使用到了 B、C 两层的私有地址：172.18.3.x 和 192.168.1.x，如何配置能够上网呢</p>
+</li>
+<li><p>内外网联通，是通过什么技术手段？NAT 吗</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>tools</category>
       </categories>
   </entry>
   <entry>
@@ -7156,7 +7304,7 @@ const double *const pip = &amp;pi;</code></pre>
 
 <h1 id="tools-标签下第一篇"><a href="#tools-标签下第一篇" class="headerlink" title="tools 标签下第一篇"></a>tools 标签下第一篇</h1><p>2016年1月5日 14:34:16</p>
 <p>这个当然不是该目录下的第一篇笔记，嘻嘻</p>
-<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#105;&#x65;&#108;&#x6f;&#x6e;&#x67;&#x32;&#48;&#x31;&#52;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#111;&#x6d;">&#x6e;&#105;&#x65;&#108;&#x6f;&#x6e;&#x67;&#x32;&#48;&#x31;&#52;&#x40;&#49;&#x36;&#51;&#x2e;&#99;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
+<p>此目录主要是和工具有关的笔记，重点在于使用工具的经验、教训和心得，是自己实实在在尝试过、折腾过的（比如 <a href="/2017/03/27/VersionControl/">版本控制</a> 这篇单纯罗列的帖子就不应该在此目录下，而应该整理到思维导图中）。<br>另，百度网盘 <a href="mailto:&#x6e;&#105;&#101;&#x6c;&#111;&#x6e;&#x67;&#50;&#x30;&#x31;&#x34;&#x40;&#x31;&#x36;&#51;&#x2e;&#x63;&#111;&#x6d;">&#x6e;&#105;&#101;&#x6c;&#111;&#x6e;&#x67;&#50;&#x30;&#x31;&#x34;&#x40;&#x31;&#x36;&#51;&#x2e;&#x63;&#111;&#x6d;</a> 中，上传了部分软件工具。</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/f5cf1fe2-a2b3-45de-95f3-b741994ce323.png" alt="来源：工具（2016-01-05）.mmap"></p>
 <p>附件：<a href="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/tools/%E5%B7%A5%E5%85%B7%EF%BC%882016-01-05%EF%BC%89.mmap">工具（2016-01-05）.mmap</a></p>
 ]]></content>
@@ -7960,94 +8108,6 @@ const double *const pip = &amp;pi;</code></pre>
 </ul>
 <p>2016/3/23 9:25:04 补充</p>
 <p>这些工具目前的核心定位无外乎在线笔记、知识管理，或者兼而有之。所以掌握在线笔记是怎么回事，知识管理又是什么才是关键。</p>
-]]></content>
-      <categories>
-        <category>tools</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>试验虚拟机安装黑群晖</title>
-    <url>/2020/12/25/%E8%99%9A%E6%8B%9F%E6%9C%BA%E9%BB%91%E7%BE%A4%E6%99%96/</url>
-    <content><![CDATA[<p>安装 VMware workstation 15 player 时，提示</p>
-<blockquote>
-<p>VMware workstation 15 player 和 Hyper-V 在此版本的 windows 上不兼容。<br>请从系统中移除 hyper-v 角色或将 windows 更新到 windows 10 版本 20H1。</p>
-</blockquote>
-<p>我选择了在“启用或关闭 windows 功能”中关闭 Hyper-V，需要重启。后续启动虚拟机的时候还是报错：</p>
-<blockquote>
-<p>您的主机不满足在启用 Hyper-V 或 Device/Credential Guard 的情况下运行 VMware Workstation 的最低要求。</p>
-</blockquote>
-<a id="more"></a>
-
-<p>参考帖子 ：<a href="https://blog.csdn.net/qq_36761831/article/details/81175736%EF%BC%8C">https://blog.csdn.net/qq_36761831/article/details/81175736，</a> 重启生效。</p>
-<p><strong>引导文件</strong></p>
-<p><a href="https://xpenology.club/downloads/">https://xpenology.club/downloads/</a> ， .img 格式</p>
-<p><strong>刷引导的工具</strong></p>
-<p>Roadkil’s Disk Image ，将 .img 格式刷入虚拟磁盘供 vm 使用</p>
-<p>（未验证）或者使用 StarWind V2V Image Converter 转换引导的.img文件到VM disk形式，直接被 vm 使用</p>
-<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a href="https://post.smzdm.com/p/ar0v4orw/">群晖折腾二：初学者使用VMware 虚拟机安装群晖体验DSM6.2系统</a></p>
-<p>作者的“群晖折腾一” 没有必要看。虚拟磁盘类型一定要选 SATA</p>
-<p>引导用的磁盘是单个文件。为了简洁，系统磁盘也建议使用“将虚拟磁盘存储为单个文件”，毕竟也没有多大。</p>
-<p><a href="https://post.smzdm.com/p/av7zn43p/">群晖NAS相册的正确玩法</a></p>
-<h1 id="联网"><a href="#联网" class="headerlink" title="联网"></a>联网</h1><p>nothing</p>
-<p>如果局域网内搜索不到，请返回确认虚拟磁盘类型：一定要选 SATA。</p>
-<h2 id="网关是什么"><a href="#网关是什么" class="headerlink" title="网关是什么"></a>网关是什么</h2><blockquote>
-<p>A gateway is a piece of networking hardware used in telecommunications for telecommunications networks that allows data to flow from one discrete network to another.</p>
-<p>使数据在两个离散的网络之间通信的硬件设备：回顾历史，早期的电话网络肯定是离散的，且各自很可能使用了不同的协议，彼此间要完成通信，就需要某种转换的设备。<del>好像早期的局域网协议和互联网协议也是不同的，我忘记在哪里看到的</del></p>
-<p>Gateways are distinct from routers or switches in that they communicate using more than one protocol to connect a bunch of networks and can operate at any of the seven layers of the open systems interconnection model (OSI).</p>
-<p>到底不同在哪里呢？</p>
-<p>The term gateway can also loosely refer to a computer or computer program configured to perform the tasks of a gateway, such as a default gateway or router.</p>
-<p>默认网关或软路由</p>
-</blockquote>
-<ul>
-<li>gate 大门， gateway</li>
-<li>route 路线 -&gt; router</li>
-<li>switch 开关</li>
-</ul>
-<p>网关的概念早于路由的概念，路由是特化（限于现在的 OSI 框架内）的、扩展了功能（除了网络边界的大门，还有路线规划）的网关。 路由还集成了交换机、动态域名分配和防火墙等功能。</p>
-<h2 id="OSI-模型"><a href="#OSI-模型" class="headerlink" title="OSI 模型"></a>OSI 模型</h2><ul>
-<li>第七层，应用层。例如 HTTP SSH POP3 等</li>
-<li>第六层，表达层</li>
-<li>第五层，会话层</li>
-<li>第四层，传输层。例如 传输控制协议 TCP</li>
-<li>第三层，网络层。例如 互联网协议 IP ICMP(ping)</li>
-<li>第二层，数据链路层。例如 arp</li>
-<li>第一层，物理层</li>
-</ul>
-<p>OSI 模型只是一个定义良好的协议规范集，并没有提供实现的方法。不是一个标准，而是在制定标准时所使用的的概念性框架。</p>
-<p>TCP/IP 协议栈，是与 OSI 模型有类似结构的现行网络模型。它将软件通信抽象化为四个抽象层：</p>
-<ul>
-<li>应用层，HTTP 等</li>
-<li>传输层，TCP 等</li>
-<li>网络互连层，IP 协议</li>
-<li>网络访问（链接）层，例如以太网、WiFi 等</li>
-</ul>
-<p>ARP是通过网络地址来定位MAC地址。</p>
-<h3 id="IP-地址"><a href="#IP-地址" class="headerlink" title="IP 地址"></a>IP 地址</h3><p>IP 地址是以网络号和主机号来标示网络上的主机的，比如 <code>172.16.10.0/24</code> 所表示的一个子网前 24 个 bits 表示网络号，后 8bits 表示主机号，该子网的IP地址的范围是 172.16.10.0-172.16.10.255。网络号为相同子网，同子网的主机可以直接相互通信；不同子网须通过本地网关（Gateway）经由路由器来转发数据。</p>
-<p>子网掩码并不局限于整数个八位位组的情况。</p>
-<p>从 <a href="https://zh.wikipedia.org/wiki/%E5%88%86%E7%B1%BB%E7%BD%91%E7%BB%9C">分类网络</a> 到 <a href="https://zh.wikipedia.org/wiki/%E6%97%A0%E7%B1%BB%E5%88%AB%E5%9F%9F%E9%97%B4%E8%B7%AF%E7%94%B1">无类别域间路由 CIDR</a>，前者三类地址的子网掩码分别是 <code>/8</code> <code>/16</code> <code>/24</code>，后者基于可变长子网掩码。</p>
-<blockquote>
-<p>可变长子网掩码（VLSM）和 CIDR 是相同的概念，不过一般只在历史上使用。</p>
-</blockquote>
-<h2 id="集线器、交换机和路由器"><a href="#集线器、交换机和路由器" class="headerlink" title="集线器、交换机和路由器"></a>集线器、交换机和路由器</h2><p>回顾历史，在时间轴上用发展的视角理解这些硬件。</p>
-<ul>
-<li>集线器，数据帧被广播到它的每个端口。数据帧不需要 mac 地址和 ip 地址。</li>
-<li>交换机，使用 mac 地址进行识别。数据帧需要包含 mac 地址（源和目标），不需要 ip 地址。交换机维护“端口：MAC地址”的映射表。</li>
-<li>路由器，依赖 ip 完成功能。数据帧需要包含 ip 地址（源和目标）</li>
-</ul>
-<ol>
-<li><p>保留的三个地址段分别位于 A、B、C 三类地址内，如何使用？</p>
-<ul>
-<li>A类地址：10.0.0.0–10.255.255.255</li>
-<li>B类地址：172.16.0.0–172.31.255.255</li>
-<li>C类地址：192.168.0.0–192.168.255.255 <a href="https://blog.csdn.net/superit401/article/details/78246298">来源</a></li>
-</ul>
-</li>
-<li><p>北分这里很明显是使用到了 B、C 两层的私有地址：172.18.3.x 和 192.168.1.x，如何配置能够上网呢</p>
-</li>
-<li><p>内外网联通，是通过什么技术手段？NAT 吗</p>
-</li>
-<li></li>
-</ol>
 ]]></content>
       <categories>
         <category>tools</category>
