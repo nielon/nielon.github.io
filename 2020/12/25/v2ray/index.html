@@ -46,15 +46,15 @@
   };
 </script>
 
-  <meta name="description" content="最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。  动态端口 websocket + tls  为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 建立 vps 后的第一步">
+  <meta name="description" content="最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。 为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 建立 vps 后的第一步 关于 v2ray xray v2fly，可以看看 V2Ray、Trojan、XRay">
 <meta property="og:type" content="article">
 <meta property="og:title" content="科学上网">
 <meta property="og:url" content="https://tnie.github.io/2020/12/25/v2ray/index.html">
 <meta property="og:site_name" content="不积小流，无以成江海">
-<meta property="og:description" content="最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。  动态端口 websocket + tls  为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 建立 vps 后的第一步">
+<meta property="og:description" content="最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。 为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 建立 vps 后的第一步 关于 v2ray xray v2fly，可以看看 V2Ray、Trojan、XRay">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-12-25T08:18:36.000Z">
-<meta property="article:modified_time" content="2021-01-28T09:01:33.988Z">
+<meta property="article:modified_time" content="2021-05-21T05:11:28.658Z">
 <meta property="article:author" content="tnie &amp; ilyw">
 <meta name="twitter:card" content="summary">
 
@@ -247,7 +247,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-01-28 17:01:33" itemprop="dateModified" datetime="2021-01-28T17:01:33+08:00">2021-01-28</time>
+                <time title="修改时间：2021-05-21 13:11:28" itemprop="dateModified" datetime="2021-05-21T13:11:28+08:00">2021-05-21</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -273,13 +273,12 @@
 
       
         <p>最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。</p>
-<ul>
-<li>动态端口</li>
-<li>websocket + tls</li>
-</ul>
 <p>为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 <a href="https://tnie.github.io/2020/12/25/vps_first/">建立 vps 后的第一步</a></p>
+<p>关于 v2ray xray v2fly，可以看看 <a target="_blank" rel="noopener" href="https://www.chengxiaobai.com/essays/v2ray-trojan-xray">V2Ray、Trojan、XRay</a></p>
 <a id="more"></a>
 
+<h1 id="新手上路"><a href="#新手上路" class="headerlink" title="新手上路"></a>新手上路</h1><p>请移步到 <a target="_blank" rel="noopener" href="https://www.v2fly.org/guide/start.html">V2Fly 项目的新手上路</a></p>
+<p>相比 Project V 项目，上述说明要友好很多。</p>
 <h1 id="v2ray"><a href="#v2ray" class="headerlink" title="v2ray"></a>v2ray</h1><p>在 shell 中修改 config.json 是不够友好的，推荐通过在线或离线的 json 工具编辑之后整体拷贝。</p>
 <p>使用 v2ray 本质是学习如何配置其 config.json，配置的核心在于其路由模块分流和传输配置。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 检测配置文件合法性</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> /usr/bin/v2ray/v2ray -<span class="built_in">test</span> -config ./config.json</span></span><br></pre></td></tr></table></figure>
@@ -314,24 +313,28 @@
 <li>tcp 在改用 kcp/udp 后肯定不通</li>
 <li>通过代理访问某个 url 的方式，推荐（windows 平台 v2rayN 快捷键 <code>ctrl-r</code>）</li>
 </ul>
-<h2 id="websocket-tls-web"><a href="#websocket-tls-web" class="headerlink" title="websocket + tls + web"></a>websocket + tls + web</h2><p>为什么需要 websocket + tls + web?</p>
-<p>——我之前使用的基础配置，今天醒来所有客户端通信异常，能够 ping 成功，但端口被禁了。换了个端口使用正常，但也就说明已经被 GFW 盯上了。2020年5月21日</p>
-<p>通过 namesilo 购买域名后，<del>直接使用 <a target="_blank" rel="noopener" href="https://github.com/233boy/v2ray/wiki/V2Ray%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC]">一键安装脚本</a> 选项 4 部署即可。自行调整防火墙端口</del> 不再推荐此脚本源于：</p>
+<h2 id="websocket-tls-web"><a href="#websocket-tls-web" class="headerlink" title="websocket + tls + web"></a>websocket + tls + web</h2><p>为什么需要 websocket + tls + web? 我之前使用的基础配置，今天醒来所有客户端通信异常，能够 ping 成功，但端口被禁了。换了个端口使用正常，但也就说明已经被 GFW 盯上了。2020年5月21日</p>
+<p>通过 namesilo 购买域名，配置域名解析。</p>
+<p><del>使用 <a target="_blank" rel="noopener" href="https://github.com/233boy/v2ray/wiki/V2Ray%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC]">一键安装脚本</a> 选项 4 部署即可。自行调整防火墙端口</del> 不再推荐此脚本源于：</p>
 <ul>
-<li><p>并不能一步到位，比如，更安全的 <a target="_blank" rel="noopener" href="https://toutyrater.github.io/advanced/wss_and_web.html#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE">只监听本地</a>；</p>
-</li>
 <li><p>Caddy 启动失败，无法创建证书</p>
 <blockquote>
 <p>failed to obtain certificate: acme: Error -&gt; One or more domains had a problem</p>
 </blockquote>
 </li>
+<li><p>并不能一步到位，比如，更安全的 <a target="_blank" rel="noopener" href="https://toutyrater.github.io/advanced/wss_and_web.html#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE">只监听本地</a>；</p>
+</li>
 </ul>
+<p>TLS 证书生成和更新，<a target="_blank" rel="noopener" href="https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E">使用 acme.sh 指南</a>，安装后 acme.sh 会自动检测所有的证书, 如果快过期了, 需要更新, 则会自动更新证书（但依旧需要执行 <code>--install-cert</code> 命令手工拷贝证书）。</p>
 <p><a target="_blank" rel="noopener" href="https://github.com/acmesh-official/acme.sh/wiki/sudo">acme.sh</a> 的源站提到：</p>
 <blockquote>
 <p>Remember: Using <code>sudo</code> is not recommended.</p>
 </blockquote>
-<p>实际操作之后，发现全程使用 root 用户是最方便的，创建普通用户 v2ray 反而束手束脚（即便授权 sudo 也意义不大）</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> root 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> need write access to the web root folder</span></span><br><span class="line">chown -R v2ray /usr/share/nginx/html</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则安装证书时没有权限</span></span><br><span class="line">chown -R v2ray /etc/v2ray/</span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash">systemctl start nginx</span></span><br><span class="line">su - v2ray</span><br><span class="line"><span class="meta">#</span><span class="bash"> 普通用户生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -w /usr/share/nginx/html -k ec-256</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书（2021年1月18日，单独执行此命令拷贝）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 切回 root</span></span><br><span class="line">su - root</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则启动 v2ray 服务时没有权限</span></span><br><span class="line">chown -R root /etc/v2ray/</span><br></pre></td></tr></table></figure>
+<p>实际操作之后，发现全程使用 root 用户是最方便的，创建普通用户反而束手束脚（即便授权 sudo 也意义不大）</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> 生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -k ec-256 --nginx</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书（2021年1月18日，单独执行此命令拷贝）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc --reloadcmd <span class="string">&quot;service nginx force-reload&quot;</span></span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>默认生成的证书都放在安装目录下: <code>~/.acme.sh/</code>, 请不要直接使用此目录下的文件。正确的使用方法是使用 <code>--install-cert</code> 命令,并指定目标位置, 然后证书文件会被 copy 到相应的位置</p>
+</blockquote>
 
     </div>
 
@@ -394,7 +397,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#v2ray"><span class="nav-number">1.</span> <span class="nav-text">v2ray</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%AA%E8%A3%85%E5%92%8C%E6%B7%B7%E6%B7%86"><span class="nav-number">1.1.</span> <span class="nav-text">伪装和混淆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E7%AB%AF%E5%8F%A3"><span class="nav-number">1.1.1.</span> <span class="nav-text">动态端口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket-tls-web"><span class="nav-number">1.2.</span> <span class="nav-text">websocket + tls + web</span></a></li></ol></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B0%E6%89%8B%E4%B8%8A%E8%B7%AF"><span class="nav-number">1.</span> <span class="nav-text">新手上路</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#v2ray"><span class="nav-number">2.</span> <span class="nav-text">v2ray</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BC%AA%E8%A3%85%E5%92%8C%E6%B7%B7%E6%B7%86"><span class="nav-number">2.1.</span> <span class="nav-text">伪装和混淆</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E7%AB%AF%E5%8F%A3"><span class="nav-number">2.1.1.</span> <span class="nav-text">动态端口</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#websocket-tls-web"><span class="nav-number">2.2.</span> <span class="nav-text">websocket + tls + web</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

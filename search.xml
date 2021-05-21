@@ -2330,7 +2330,7 @@
 <p>是不是指 <code>promise.return_value()</code> 接口呢？</p>
 <p>It is important to note that the return-value passed to the Return operation is not the same as the return-value returned from a Call operation as the return operation may be executed long after the caller resumed from the initial Call operation.</p>
 <p>不单单是返回值不同吧？返回类型大概率都不一样啊？</p>
-<h1 id="An-illustration"><a href="#An-illustration" class="headerlink" title="An illustration"></a>An illustration</h1><p>Note that the compiler will typically hold the address of the coroutine frame in a separate register to the stack pointer (eg. MSVC stores this in the rbp register).</p>
+<h1 id="An-illustration-插图"><a href="#An-illustration-插图" class="headerlink" title="An illustration 插图"></a>An illustration 插图</h1><p>Note that the compiler will typically hold the address of the coroutine frame in a separate register to the stack pointer (eg. MSVC stores this in the rbp register).</p>
 <p>如何理解“coroutine frame 被存在另一个专用寄存器中”呢？ 这个操作意味着什么？</p>
 <p>When the coroutine suspends for the first time, a return-value is returned to the caller. This return value often holds a handle to the coroutine-frame that suspended that can be used to later resume it.</p>
 <p>调用者之后就能够使用这个返回值（中的句柄）来恢复协程的执行。</p>
@@ -2477,6 +2477,7 @@
 <p>对协程介绍时，先介绍 <code>awaitable/awaiter</code> 后 <code>promise</code>。学习笔记/摘抄，见 coroutine-a~c.md</p>
 <a id="more"></a>
 
+<p>微软的这篇博客很短，但内容很丰富。给出了一份 magic demo，很精彩。 </p>
 <h1 id="第二章"><a href="#第二章" class="headerlink" title="第二章"></a>第二章</h1><p><a href="https://gqw.github.io/blog/2020/10/01/%E4%BB%8Ehellowold%E5%BC%80%E5%A7%8B%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BAc-20-coroutine-ts/">从HelloWold开始，深入浅出C++ 20 Coroutine TS</a>，作者分析了 IDE 生成的汇编语言，介绍了协程“如何保存状态，如何跳转”。可惜我看不懂。</p>
 <blockquote>
 <p>对称协程只是非对称协程的一个特例，我们可以通过添加一个中立的第三方调度中心的方式将非对称协程转换成对称协程（只需要在所有协程“暂停”时将控制权转交给调度中心统一调度即可）。</p>
@@ -5065,15 +5066,16 @@
 <li>通信，socket 编程</li>
 </ol>
 <p>曾经完美主义，现在坚持实用主义。站在公司的角度考虑，现实中生产使用，强调实用性。如果新特性带不来生产力上的提升，是不会有公司买账的。就是说是否掌握 C++11 甚至更新的特性，对找工作没有最直接的影响，如果带不了更高的生产力，都是空谈。不应该只为了关注新特性，学究式地死板地投入时间精力，要明白花时间做一件事的初衷、目的、意义和价值。举例来说，做并发时是否使用 C++11 的原生支持，在投产使用时没有什么影响的，重要的是能否解决问题，解决问题的能力，关键是把并发做出来，用什么技术往往并不重要。</p>
-<p>那就好好学 C++11。工欲善其事，必先利其器。有兴趣可以看看<a href="http://www.csdn.net/article/2012-08-13/2808540">各编译器对 C++11 的支持情况</a>、<a href="http://en.cppreference.com/w/cpp/compiler_support">C++ compiler support</a>，但选择 g++ 总是省心的，前提是版本足够新，有条件就用最新的。编译器有了，<strong>编辑</strong>代码呢？主要关注代码提示，开发者体验。</p>
+<p>那就好好学 C++11。工欲善其事，必先利其器。看看 <a href="http://en.cppreference.com/w/cpp/compiler_support">C++ compiler support</a> ，编译器有了，<strong>编辑</strong>代码呢？主要关注代码提示，开发者体验。</p>
 <ul>
-<li>在 Windows 上考虑使用 VS2015，<a href="https://www.zhihu.com/question/23776769">轮子哥的观点 - 知乎</a>。个人观点，除了太大并不排斥 VS。</li>
+<li>在 Windows 上考虑使用 VS2015。个人观点，除了太大并不排斥 VS。</li>
 <li>Linux 上呢？很难找到完善支持 C++11 代码提示的 IDE…<a href="http://zuyunfei.com/2013/05/16/killer-plugin-of-vim-youcompleteme/">Vim代码补全</a></li>
 <li><a href="https://www.zhihu.com/question/22096642">Vim 和 IDE 之争 - 知乎</a>，个人观点，两者会越来越像，追求生产力。</li>
 </ul>
 <a id="more"></a>
 
-<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p>在此介绍基础知识，惯用函数，std::string常用方法，常用容器的使用等等，原则就是“作为日常编写代码时的参考”。</p>
+<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><p>在此介绍基础知识，惯用函数，<code>std::string</code> 常用方法，常用容器的使用等等，原则就是“作为日常编写代码时的参考”。</p>
+<p>线上参考手册，使用 <a href="https://en.cppreference.com/w/">cppreference.com</a> 网站就可以。</p>
 <h1 id="网站"><a href="#网站" class="headerlink" title="网站"></a>网站</h1><p>我把 C++ 学习过程中整理的帖子分为三类：</p>
 <ol>
 <li>code？这个名字待定，多是一些基本操作、函数的用法等等，标题可以用“如何XXXX”开篇的</li>
@@ -5925,50 +5927,42 @@
       </tags>
   </entry>
   <entry>
-    <title>复合类型（指针、引用）</title>
+    <title>复合类型（指针、引用、数组）</title>
     <url>/2016/05/31/pointer&amp;reference/</url>
     <content><![CDATA[<p>当一条声明语句中包含多个指针，或者混用数组的时候，每每傻傻分不清。</p>
-<h1 id="变量定义"><a href="#变量定义" class="headerlink" title="变量定义"></a>变量定义</h1><p>在《C++ Primer》P38页，2.2节中描述到</p>
+<h1 id="变量定义"><a href="#变量定义" class="headerlink" title="变量定义"></a>变量定义</h1><p>在《C++ Primer》P38 页，2.2 节中描述到</p>
 <blockquote>
 <p>变量定义的基本形式是：首先是<strong>类型说明符</strong>（type specifier），随后紧跟由一个或多个变量名组成的列表，其中变量名以逗号分隔，最后以分号结束。</p>
 <p>列表中每个变量名的类型都由类型说明符指定，定义时还可以为一个或多个变量赋初值：<code>int a=0, b, c=3;</code></p>
 </blockquote>
 <p>ps：稍后再对变量的定义和声明做区分，对于初始化和赋值做区分。</p>
-<h1 id="复合类型"><a href="#复合类型" class="headerlink" title="复合类型"></a>复合类型</h1><p>P45页，2.3节描述如下</p>
+<h1 id="复合类型"><a href="#复合类型" class="headerlink" title="复合类型"></a>复合类型</h1><p>P45 页，2.3 节描述如下</p>
 <blockquote>
 <p>一个简单的声明语句由……。更通用的描述是，一条声明语句由一个<strong>基本数据类型</strong>（base-type）和紧随其后的一个<strong>声明符</strong>（declarator）列表组成。每个声明符命名了一个变量并指定该变量为与基本数据类型有关的某种类型。</p>
 </blockquote>
-<p>P51页</p>
+<p>P51 页</p>
 <blockquote>
 <p>在同一条定义语句中个，虽然基本数据类型只有一个，但是声明符的形式却可以不同。也就是说，一条定义语句可能定义出不同类型的变量。</p>
-<pre><code>// i是一个int型的数，p是一个int型指针，r是一个int型引用。
-int i = 1024, *p = &amp;i, &amp;r =i;</code></pre>
 </blockquote>
-<p>P53页</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// i是一个int型的数，p是一个int型指针，r是一个int型引用。</span></span><br><span class="line"><span class="keyword">int</span> i = <span class="number">1024</span>, *p = &amp;i, &amp;r =i;</span><br></pre></td></tr></table></figure>
+<p>P53 页</p>
 <blockquote>
 <p>面对一条比较复杂的指针或引用的声明语句时，从右向左阅读有助于弄清楚它的真实含义。</p>
 </blockquote>
-<pre><code>int *p, *&amp;r = p;  // r是一个对指针p的引用</code></pre>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> *p, *&amp;r = p;  <span class="comment">// r是一个对指针p的引用</span></span><br></pre></td></tr></table></figure>
 <h2 id="数组是一种复合类型-（P101页）"><a href="#数组是一种复合类型-（P101页）" class="headerlink" title="数组是一种复合类型 （P101页）"></a>数组是一种复合类型 （P101页）</h2><p>数组中元素的个数也属于数组类型的一部分。</p>
-<p>P102页</p>
+<p>P102 页</p>
 <blockquote>
 <p>默认情况下，类型修饰符从右向左依次绑定。理解复杂的数组声明，由内向外，从右向左。</p>
 </blockquote>
-<pre><code>int *ptrs[10];  // ptrs是含有10个元素的数组，数组元素是int型指针
-int *(&amp;array)[10] = ptr;  // array是数组的引用，该数组含有10个指针
-//
-int (*Parray)[10];  // Parray是一个指针，指向一个含有10个整数的数组</code></pre>
-<h1 id="const限定符"><a href="#const限定符" class="headerlink" title="const限定符"></a>const限定符</h1><p>reference to const，对常量的引用；不存在const reference，以为引用不是对象。</p>
-<blockquote>
-<pre><code>const int ci = 1.24;
-const int &amp;r1 = ci;</code></pre>
-</blockquote>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> *ptrs[<span class="number">10</span>];  		<span class="comment">// ptrs是含有10个元素的数组，数组元素是int型指针</span></span><br><span class="line"><span class="keyword">int</span> *(&amp;<span class="built_in">array</span>)[<span class="number">10</span>] = ptr;  <span class="comment">// array是数组的引用，该数组含有10个指针</span></span><br><span class="line"><span class="keyword">int</span> (*Parray)[<span class="number">10</span>];  	<span class="comment">// Parray是一个指针，指向一个含有10个整数的数组</span></span><br></pre></td></tr></table></figure>
+<h1 id="const-限定符"><a href="#const-限定符" class="headerlink" title="const 限定符"></a>const 限定符</h1><p>reference to const，对常量的引用；不存在 const reference，因为引用不是对象。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> ci = <span class="number">1.24</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">int</span> &amp;r1 = ci;</span><br></pre></td></tr></table></figure>
 <p>pointer to const，指向常量的指针；const pointer，指针本身是常量。</p>
 <blockquote>
-<p>把<code>*</code>放在<code>const</code>关键字之前用以说明指针是一个常量。</p>
+<p>把 <code>*</code> 放在 <code>const</code> 关键字之前用以说明指针是一个常量。</p>
 </blockquote>
-<pre><code>const double pi = 3.1415;
-const double *const pip = &amp;pi;</code></pre>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">double</span> pi = <span class="number">3.1415</span>;</span><br><span class="line"><span class="keyword">const</span> <span class="keyword">double</span> *<span class="keyword">const</span> pip = &amp;pi;</span><br></pre></td></tr></table></figure>
 <blockquote>
 <p>要想弄清楚这些生命的含义最行之有效的方法是从右向左阅读。</p>
 </blockquote>
@@ -6202,7 +6196,7 @@ const double *const pip = &amp;pi;</code></pre>
     <url>/2016/05/31/regex/</url>
     <content><![CDATA[<p>这两天工作上用到了 grep、sed、awk 文本处理命令。有心在业余时间花心思多掌握一些，在此前提下，发现熟悉正则表达式是很重要的。</p>
 <h1 id="正则表达式"><a href="#正则表达式" class="headerlink" title="正则表达式"></a>正则表达式</h1><p>查阅维基百科，发现其中文词条 <a href="">正则表达式</a> 没有价值，个别的知识点即便有效也充斥在大量的垃圾信息里，此词条好似百度百科的众多词条，灌水横拉硬拽拼凑而成，或源于翻译英文词条时偷懒挑肥拣瘦，只翻译了一部分内容，却篡改章节目录造成“不成文”的感受。</p>
-<p>其英文词条 [Regular expression][] 相对“丰满”一些，看目录至少提到了不同标准、不同流派，比中文词条要好。</p>
+<p>其英文词条 <a href="https://en.wikipedia.org/wiki/Regular_expression">Regular expression</a> 相对“丰满”一些，看目录至少提到了不同标准、不同流派，比中文词条要好。</p>
 <p>参考 <a href="http://liujiacai.net/blog/2014/12/07/regexp-favors/">正则表达式“派别”简述</a>、<a href="http://blog.csdn.net/dreamerway/article/details/20700421">正则表达式 流派（flavor）及差异简介</a>，都明确指出了三种：</p>
 <ul>
 <li>BRE: Basic Regular Expression</li>
@@ -6211,48 +6205,54 @@ const double *const pip = &amp;pi;</code></pre>
 </ul>
 <p>其中，前两者都是 POSIX: Portable Operating System Interface 的规范。</p>
 <p>常见的编程语言中使用正则表达式的记法，其实都源于 Perl。</p>
-<pre><code>&gt; 现在的编程语言中的正则表达式，大部分都属于 PCRE 这个分支。
-
-&gt; 常见的正则表达式记法，其实都源于 Perl</code></pre>
+<blockquote>
+<p>现在的编程语言中的正则表达式，大部分都属于 PCRE 这个分支。</p>
+<p>常见的正则表达式记法，其实都源于 Perl</p>
+</blockquote>
 <p>但在 POSIX 的系统上，有关的工具使用正则表达式，其记法与上述不同，大都要落于 BRE、ERE 这两者之中：</p>
-<pre><code>&gt; － 使用BRE语法的命令有：grep、ed、sed、vim
-&gt; 
-&gt; － 使用ERE语法的命令有：egrep、awk、emacs</code></pre>
-<p>需要补充的一点是，在 linux 上其有关工具对 BRE、ERE 语法是进行过扩充的，好比对 C 语言标准、C++ 语言标准进行的诸多 GNU 扩展。在 <a href="http://www.infoq.com/cn/news/2011/07/regular-expressions-6-POSIX">Linux/Unix工具与正则表达式的POSIX规范</a> 中有提到 GNU 扩展的相关内容，在 <a href="http://liujiacai.net/blog/2014/12/07/regexp-favors/">正则表达式“派别”简述</a> 讲述 POSIX 标准时也提到了 GNU 扩展。</p>
-<pre><code>&gt; GNU 在实现了 POXIS 标准的同时，做了一定的扩展</code></pre>
-<h2 id="PCRE"><a href="#PCRE" class="headerlink" title="PCRE"></a>PCRE</h2><p>PCRE(Perl Compatible Regular Expression)：<del>可以说是正则表达式的老前辈</del>（niel 注：需考证），它是从Perl衍生出来的一个显赫流派，<code>\d</code> <code>\w</code> <code>\s</code> 等表示法就是它的特征；</p>
+<blockquote>
+<p>－ 使用BRE语法的命令有：grep、ed、sed、vim</p>
+<p>－ 使用ERE语法的命令有：egrep、awk、emacs</p>
+</blockquote>
+<p>需要补充的一点是，在 linux 上有关工具对 BRE、ERE 语法是进行过扩充的，好比对 C 语言标准、C++ 语言标准进行的诸多 GNU 扩展。在 <a href="http://www.infoq.com/cn/news/2011/07/regular-expressions-6-POSIX">Linux/Unix 工具与正则表达式的 POSIX 规范</a> 中有提到 GNU 扩展的相关内容，在 <a href="http://liujiacai.net/blog/2014/12/07/regexp-favors/">正则表达式“派别”简述</a> 讲述 POSIX 标准时也提到了 GNU 扩展。</p>
+<blockquote>
+<p>GNU 在实现了 POXIS 标准的同时，做了一定的扩展</p>
+</blockquote>
+<h2 id="PCRE"><a href="#PCRE" class="headerlink" title="PCRE"></a>PCRE</h2><p>PCRE(Perl Compatible Regular Expression)：<del>可以说是正则表达式的老前辈</del>（niel 注：需考证），它是从 Perl 衍生出来的一个显赫流派，<code>\d</code> <code>\w</code> <code>\s</code> 等表示法就是它的特征；</p>
 <h2 id="BRE"><a href="#BRE" class="headerlink" title="BRE"></a>BRE</h2><p>BRE(Basic Regular Expression)：POSIX 规范的正则表达式之一，grep、vi、sed 都属于这一派，它显著的特征就是 <code>(</code> <code>)</code> <code>&#123;</code> <code>&#125;</code> 这几个括号元字符必须经过转义才具有特殊含义，不支持 <code>+</code> <code>?</code> <code>|</code> 等元字符，随着时间发展，后来又出现了 GNU BRE，GNU BRE 支持上边这些字符，但是也必须都经过转义才能有特殊含义；</p>
 <h2 id="ERE"><a href="#ERE" class="headerlink" title="ERE"></a>ERE</h2><p>ERE(Extended Regular Express)：也是 POSIX 规范的正则表达式之一，egrep awk 都属于这一派，<code>(</code> <code>)</code> <code>&#123;</code> <code>&#125;</code> <code>+</code> <code>?</code> <code>|</code> 等元字符可以直接使用不需要转义，这个流派后来也出现了 GNU ERE，在之前的基础上添加了支持 <code>\1</code> <code>\2</code> 等。</p>
 <h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><p>不明觉厉的 <a href="http://www.greenend.org.uk/rjk/tech/regexp.html">各种语言或工具软件的不同风格的正则表达式文法规定</a>。</p>
 <p>如果更关注使用有关工具时的细节，可以参考 <a href="http://www.cnblogs.com/finallyliuyu/archive/2013/05/27/3101220.html">Linux 中常用文本工具与正则表达式的关系 </a>。更多的语法细节还是要在用到的时候仔细查阅。</p>
 <p>引擎 <a href="https://kb.cnblogs.com/page/86751/">正则表达式引擎及其分类</a></p>
-<h1 id="55分钟学会正则表达式学习笔记"><a href="#55分钟学会正则表达式学习笔记" class="headerlink" title="55分钟学会正则表达式学习笔记"></a><a href="http://blog.jobbole.com/63398/">55分钟学会正则表达式</a>学习笔记</h1><p>建议看<a href="http://qntm.org/files/re/re.html">原文（英文）</a>比较好，译者也给出了原文的链接。翻译时译者不够细心，和原文相比有好几处错误，有的是很明显的上下文冲突，所以觉得译者根本就不用心。</p>
+<h1 id="55分钟学会正则表达式-学习笔记"><a href="#55分钟学会正则表达式-学习笔记" class="headerlink" title="55分钟学会正则表达式 学习笔记"></a>55分钟学会正则表达式 学习笔记</h1><p>建议看<a href="http://qntm.org/files/re/re.html">原文（英文）</a>比较好，译者也给出了原文的链接。翻译时译者不够细心，和原文相比有好几处错误，有的是很明显的上下文冲突，所以觉得译者根本就不用心。</p>
 <p>前言部分，简单描述正则表达式是什么；之后讲解正则表达式的基础语法。</p>
 <ul>
-<li>正则表达式有可能出现语法错误——不是所有的字符串都是正则表达式<h2 id="字符"><a href="#字符" class="headerlink" title="字符"></a>字符</h2>理解“元字符”概念。</li>
+<li>正则表达式有可能出现语法错误——不是所有的字符串都是正则表达式</li>
 </ul>
-<p>普通字符只能匹配它们本身；元字符可以匹配一些特殊规则。使用反斜杠“\”可以忽略元字符，使得元字符的功能与普通字符一样。</p>
+<h2 id="字符"><a href="#字符" class="headerlink" title="字符"></a>字符</h2><p>理解“元字符”概念。</p>
+<p>普通字符只能匹配它们本身；元字符可以匹配一些特殊规则。使用反斜杠 <code>\</code> 可以忽略元字符，使得元字符的功能与普通字符一样。</p>
 <h2 id="点“-”"><a href="#点“-”" class="headerlink" title="点“.”"></a>点“.”</h2><p>匹配任意一个字符</p>
 <h2 id="字符类"><a href="#字符类" class="headerlink" title="字符类"></a>字符类</h2><p>字符类是一组在方括号内的字符，表示可以匹配其中的任何一个字符。</p>
 <blockquote>
 <p>重要提示：字符类中和字符类外的规则有时不同，一些字符在字符类中是元字符，在字符类外是普通字符。一些字符正好相反。还有一些字符在字符类中和字符类外都是元字符，这要视情况而定！</p>
 </blockquote>
 <h3 id="字符类的范围"><a href="#字符类的范围" class="headerlink" title="字符类的范围"></a>字符类的范围</h3><p>在字符类中，你可以通过使用短横线来表示匹配字母或数字的范围。</p>
-<h3 id="字符类的反义"><a href="#字符类的反义" class="headerlink" title="字符类的反义"></a>字符类的反义</h3><p>你可以在字符类的起始位放一个反义符^。</p>
-<h3 id="Freebie-character-classes"><a href="#Freebie-character-classes" class="headerlink" title="Freebie character classes"></a>Freebie character classes</h3><blockquote>
-<p>译者翻译为“转义字符类”，个人觉得不能够表达原作的味道。参考上下文及“freebie”单词原意，应该是要表达，和某些字符类表示相同意义的转义字符。</p>
+<h3 id="字符类的反义"><a href="#字符类的反义" class="headerlink" title="字符类的反义"></a>字符类的反义</h3><p>你可以在字符类的起始位放一个反义符 <code>^</code> 。</p>
+<h3 id="Freebie-character-classes"><a href="#Freebie-character-classes" class="headerlink" title="Freebie character classes"></a>Freebie character classes</h3><p>译者翻译为“转义字符类”，个人觉得不能够表达原作的味道。参考上下文及“freebie”单词原意，应该是要表达，和某些字符类表示相同意义的转义字符。</p>
 <p>下文中Freebie multipliers 译为“关于重复的转义字符”。类比，此处译为“关于字符类的转义字符”就会好很多。</p>
-</blockquote>
 <ul>
-<li>\d：[0-9]</li>
-<li>\w：[0-9A-Za-z_]</li>
-<li>\s：匹配一个空字符（空格，制表符，回车或者换行）</li>
-<li>\D：[^0-9]</li>
-<li>\W：[^0-9A-Za-z]</li>
-<li>\S：匹配一个非空字符<h2 id="重复"><a href="#重复" class="headerlink" title="重复"></a>重复</h2>在字符或字符集之后，你可以使用{ }大括号来表示重复<h3 id="指定重复次数范围"><a href="#指定重复次数范围" class="headerlink" title="指定重复次数范围"></a>指定重复次数范围</h3><h3 id="Freebie-multipliers"><a href="#Freebie-multipliers" class="headerlink" title="Freebie multipliers"></a>Freebie multipliers</h3></li>
-<li>?：{0，1}，重复0次或1次</li>
-<li>*：{0，}，重复任意次（0次、1次或多次）</li>
-<li>+：{1，}，重复1次以上（包括1次）</li>
+<li><code>\d</code>：[0-9]</li>
+<li><code>\w</code>：[0-9A-Za-z_]</li>
+<li><code>\s</code>：匹配一个空字符（空格，制表符，回车或者换行）</li>
+<li><code>\D</code>：[^0-9]</li>
+<li><code>\W</code>：[^0-9A-Za-z]</li>
+<li><code>\S</code>：匹配一个非空字符</li>
+</ul>
+<h2 id="重复"><a href="#重复" class="headerlink" title="重复"></a>重复</h2><p>在字符或字符集之后，你可以使用 <code>&#123; &#125;</code> 大括号来表示重复</p>
+<h3 id="指定重复次数范围"><a href="#指定重复次数范围" class="headerlink" title="指定重复次数范围"></a>指定重复次数范围</h3><h3 id="Freebie-multipliers"><a href="#Freebie-multipliers" class="headerlink" title="Freebie multipliers"></a>Freebie multipliers</h3><ul>
+<li><code>?</code>：{0，1}，重复0次或1次</li>
+<li><code>*</code>：{0，}，重复任意次（0次、1次或多次）</li>
+<li><code>+</code>：{1，}，重复1次以上（包括1次）</li>
 </ul>
 ]]></content>
       <tags>
@@ -7468,13 +7468,12 @@ const double *const pip = &amp;pi;</code></pre>
     <title>科学上网</title>
     <url>/2020/12/25/v2ray/</url>
     <content><![CDATA[<p>最近两会，科学上网又宕机了。打算专心学习一下 v2ray 的插件和配置，此笔记用于备忘操作过程中的细节。也涉及 linux 系统的基础操作。</p>
-<ul>
-<li>动态端口</li>
-<li>websocket + tls</li>
-</ul>
 <p>为了安全（和方便），提出以下要求或目标：禁用账号密码登录，全部改用密钥。 <a href="https://tnie.github.io/2020/12/25/vps_first/">建立 vps 后的第一步</a></p>
+<p>关于 v2ray xray v2fly，可以看看 <a href="https://www.chengxiaobai.com/essays/v2ray-trojan-xray">V2Ray、Trojan、XRay</a></p>
 <a id="more"></a>
 
+<h1 id="新手上路"><a href="#新手上路" class="headerlink" title="新手上路"></a>新手上路</h1><p>请移步到 <a href="https://www.v2fly.org/guide/start.html">V2Fly 项目的新手上路</a></p>
+<p>相比 Project V 项目，上述说明要友好很多。</p>
 <h1 id="v2ray"><a href="#v2ray" class="headerlink" title="v2ray"></a>v2ray</h1><p>在 shell 中修改 config.json 是不够友好的，推荐通过在线或离线的 json 工具编辑之后整体拷贝。</p>
 <p>使用 v2ray 本质是学习如何配置其 config.json，配置的核心在于其路由模块分流和传输配置。</p>
 <figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 检测配置文件合法性</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> /usr/bin/v2ray/v2ray -<span class="built_in">test</span> -config ./config.json</span></span><br></pre></td></tr></table></figure>
@@ -7509,24 +7508,28 @@ const double *const pip = &amp;pi;</code></pre>
 <li>tcp 在改用 kcp/udp 后肯定不通</li>
 <li>通过代理访问某个 url 的方式，推荐（windows 平台 v2rayN 快捷键 <code>ctrl-r</code>）</li>
 </ul>
-<h2 id="websocket-tls-web"><a href="#websocket-tls-web" class="headerlink" title="websocket + tls + web"></a>websocket + tls + web</h2><p>为什么需要 websocket + tls + web?</p>
-<p>——我之前使用的基础配置，今天醒来所有客户端通信异常，能够 ping 成功，但端口被禁了。换了个端口使用正常，但也就说明已经被 GFW 盯上了。2020年5月21日</p>
-<p>通过 namesilo 购买域名后，<del>直接使用 <a href="https://github.com/233boy/v2ray/wiki/V2Ray%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC]">一键安装脚本</a> 选项 4 部署即可。自行调整防火墙端口</del> 不再推荐此脚本源于：</p>
+<h2 id="websocket-tls-web"><a href="#websocket-tls-web" class="headerlink" title="websocket + tls + web"></a>websocket + tls + web</h2><p>为什么需要 websocket + tls + web? 我之前使用的基础配置，今天醒来所有客户端通信异常，能够 ping 成功，但端口被禁了。换了个端口使用正常，但也就说明已经被 GFW 盯上了。2020年5月21日</p>
+<p>通过 namesilo 购买域名，配置域名解析。</p>
+<p><del>使用 <a href="https://github.com/233boy/v2ray/wiki/V2Ray%E4%B8%80%E9%94%AE%E5%AE%89%E8%A3%85%E8%84%9A%E6%9C%AC]">一键安装脚本</a> 选项 4 部署即可。自行调整防火墙端口</del> 不再推荐此脚本源于：</p>
 <ul>
-<li><p>并不能一步到位，比如，更安全的 <a href="https://toutyrater.github.io/advanced/wss_and_web.html#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE">只监听本地</a>；</p>
-</li>
 <li><p>Caddy 启动失败，无法创建证书</p>
 <blockquote>
 <p>failed to obtain certificate: acme: Error -&gt; One or more domains had a problem</p>
 </blockquote>
 </li>
+<li><p>并不能一步到位，比如，更安全的 <a href="https://toutyrater.github.io/advanced/wss_and_web.html#%E6%9C%8D%E5%8A%A1%E5%99%A8%E9%85%8D%E7%BD%AE">只监听本地</a>；</p>
+</li>
 </ul>
+<p>TLS 证书生成和更新，<a href="https://github.com/acmesh-official/acme.sh/wiki/%E8%AF%B4%E6%98%8E">使用 acme.sh 指南</a>，安装后 acme.sh 会自动检测所有的证书, 如果快过期了, 需要更新, 则会自动更新证书（但依旧需要执行 <code>--install-cert</code> 命令手工拷贝证书）。</p>
 <p><a href="https://github.com/acmesh-official/acme.sh/wiki/sudo">acme.sh</a> 的源站提到：</p>
 <blockquote>
 <p>Remember: Using <code>sudo</code> is not recommended.</p>
 </blockquote>
-<p>实际操作之后，发现全程使用 root 用户是最方便的，创建普通用户 v2ray 反而束手束脚（即便授权 sudo 也意义不大）</p>
-<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> root 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> need write access to the web root folder</span></span><br><span class="line">chown -R v2ray /usr/share/nginx/html</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则安装证书时没有权限</span></span><br><span class="line">chown -R v2ray /etc/v2ray/</span><br><span class="line"><span class="meta">#</span></span><br><span class="line"><span class="bash">systemctl start nginx</span></span><br><span class="line">su - v2ray</span><br><span class="line"><span class="meta">#</span><span class="bash"> 普通用户生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -w /usr/share/nginx/html -k ec-256</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书（2021年1月18日，单独执行此命令拷贝）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 切回 root</span></span><br><span class="line">su - root</span><br><span class="line"><span class="meta">#</span><span class="bash"> 否则启动 v2ray 服务时没有权限</span></span><br><span class="line">chown -R root /etc/v2ray/</span><br></pre></td></tr></table></figure>
+<p>实际操作之后，发现全程使用 root 用户是最方便的，创建普通用户反而束手束脚（即便授权 sudo 也意义不大）</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 安装 nginx</span></span><br><span class="line">yum install nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> 启动服务</span></span><br><span class="line">systemctl start nginx</span><br><span class="line"><span class="meta">#</span><span class="bash"> 生成证书</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --issue -d ilyw.xyz -k ec-256 --nginx</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装证书（2021年1月18日，单独执行此命令拷贝）</span></span><br><span class="line"><span class="meta">$</span><span class="bash"> acme.sh --installcert -d ilyw.xyz --fullchainpath /etc/v2ray/v2ray.crt --keypath /etc/v2ray/v2ray.key --ecc --reloadcmd <span class="string">&quot;service nginx force-reload&quot;</span></span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>默认生成的证书都放在安装目录下: <code>~/.acme.sh/</code>, 请不要直接使用此目录下的文件。正确的使用方法是使用 <code>--install-cert</code> 命令,并指定目标位置, 然后证书文件会被 copy 到相应的位置</p>
+</blockquote>
 ]]></content>
       <categories>
         <category>tools</category>
@@ -7725,7 +7728,7 @@ const double *const pip = &amp;pi;</code></pre>
   <entry>
     <title>建立 vps 后的第一步</title>
     <url>/2020/12/25/vps_first/</url>
-    <content><![CDATA[<p>建立 vps 后首先要保证后续的使用安全。否则再多的功能都是空中楼阁。</p>
+    <content><![CDATA[<p>建立 vps 后（主要用于科学上网）首先要保证后续的使用安全。否则再多的功能都是空中楼阁。</p>
 <h1 id="SSH-登录"><a href="#SSH-登录" class="headerlink" title="SSH 登录"></a>SSH 登录</h1><p>非对称密钥算法的作用分为两种场景：</p>
 <ul>
 <li>加密数据：公钥加密，私钥解密。数据由前者发往后者，数据是安全的。</li>
