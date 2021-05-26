@@ -740,7 +740,18 @@
 </tr>
 </tbody></table>
 <p>我们以最简单的 POD 类型（使用内置类型 int）进行举例：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> i；    <span class="comment">// 分配内存，但不进行初始化，其内存块存储为“垃圾值”</span></span><br><span class="line">int i()；  // 如果这种形式存在/正确的话，其执行默认初始化，赋值 someone</span><br><span class="line">           <span class="comment">// 但事实上，语法上更倾向于将其解释成返回 int 的函数声明</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">int</span> i;    <span class="comment">// 分配内存，但不进行初始化，其内存块存储为“垃圾值”</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">i</span><span class="params">()</span></span>;  <span class="comment">// 如果这种形式存在/正确的话，其执行默认初始化，赋值 someone</span></span><br><span class="line">           <span class="comment">// 但事实上，语法上更倾向于将其解释成返回 int 的函数声明</span></span><br></pre></td></tr></table></figure>
+<p>如果我们看到某个类型符合 POD 要求，进而通过二进制拷贝的方式简洁地实现其拷贝构造函数——这是不可行，是矛盾的。因为 POD 的概念要求之一是：没有用户定义的复制构造函数。</p>
+<h2 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h2><p>数组不允许拷贝和赋值，这是常识。</p>
+<p>合成拷贝构造函数</p>
+<blockquote>
+<p>虽然我们不能直接拷贝一个数组，但合成拷贝构造函数会 <strong>逐元素地拷贝</strong> 一个数组类型的成员。如果数组元素是类类型，则使用元素的拷贝构造函数来进行拷贝。P441</p>
+</blockquote>
+<p>合成拷贝赋值运算符</p>
+<blockquote>
+<p>对于数组类型的成员，<strong>逐个赋值</strong> 数组元素。P444</p>
+</blockquote>
+<p><strong>结论</strong>：只使用了内置数值类型、<code>char[]</code> 的数据交换类，合成的拷贝构造函数、拷贝赋值运算符满足使用要求。无需显式定义拷贝控制函数。</p>
 <h1 id="C-11"><a href="#C-11" class="headerlink" title="C++11"></a>C++11</h1><p>关于 C++11 对 pod 的重新定义及相关函数，可以参考 <a href="http://blog.csdn.net/aqtata/article/details/35618709">C++11：POD数据类型 - csdn</a></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 是否满足平凡的定义</span></span><br><span class="line"><span class="built_in">std</span>::is_trivial&lt;A&gt;::value</span><br><span class="line"><span class="comment">// 是否是标准布局</span></span><br><span class="line"><span class="built_in">std</span>::is_standard_layout&lt;A&gt;::value</span><br><span class="line"><span class="comment">// 是否是 pod 类型</span></span><br><span class="line"><span class="built_in">std</span>::is_pod&lt;A&gt;::value</span><br></pre></td></tr></table></figure>
 <h1 id="用途"><a href="#用途" class="headerlink" title="用途"></a>用途</h1><p>从实用性的角度来说，我们更应该关注 pod 类型的用途，而非强调其概念。一方面区分其概念很耗费心力；另一方面，我们已经看到 C++11 提供了函数，我们只需要调用就可以得到结果。我们将繁复的工作交给机器，从而解放头脑和双手。</p>
@@ -2650,54 +2661,40 @@
 <p>事实上，核心 C++11 已经有了很大的改变。现在它支持 lambda 表达式，自动类型推断，统一的初始化语法，委托构造函数，已删除和默认函数声明，nullptr，以及最重要的，右值引用——一种预言将会改变创造和处理对象方法的技术。</p>
 </blockquote>
 <h2 id="Lambda-表达式"><a href="#Lambda-表达式" class="headerlink" title="Lambda 表达式"></a>Lambda 表达式</h2><ul>
-<li><p><a href="https://zh.wikipedia.org/wiki/%E5%8C%BF%E5%90%8D%E5%87%BD%E6%95%B0">匿名函数</a></p>
-</li>
-<li><p><a href="https://www.zhihu.com/question/20125256">Lambda 表达式有何用处？如何使用？ - KE meng 的回答</a></p>
-</li>
-<li><p><a href="https://msdn.microsoft.com/zh-cn/library/dd293608.aspx">C++ 中的 Lambda 表达式</a></p>
-</li>
-<li><p>查看 C++ Primer 有关章节，讲解的很详细的。</p>
-<ul>
-<li>lambda 的函数调用运算符为 const-by-value，但对 <code>mutable</code> 关键字的使用可将其取消</li>
+<li><a href="https://zh.wikipedia.org/wiki/%E5%8C%BF%E5%90%8D%E5%87%BD%E6%95%B0">匿名函数</a></li>
+<li><a href="https://www.zhihu.com/question/20125256">Lambda 表达式有何用处？如何使用？ - KE meng 的回答</a></li>
+<li><a href="https://msdn.microsoft.com/zh-cn/library/dd293608.aspx">C++ 中的 Lambda 表达式</a></li>
+<li>查看 C++ Primer 有关章节，讲解的很详细的。</li>
 </ul>
-</li>
-</ul>
+<p>lambda 的函数调用运算符为 const-by-value，但对 <code>mutable</code> 关键字的使用可将其取消。</p>
 <h2 id="自动类型推断和-decltype"><a href="#自动类型推断和-decltype" class="headerlink" title="自动类型推断和 decltype"></a>自动类型推断和 decltype</h2><p>赋予 <code>auto</code> 关键词新生： <a href="http://www.cppblog.com/amazon/archive/2009/12/09/102847.html">数据存储类型</a></p>
 <p><code>auto</code> 自动推导类型，轻度用户（不涉及模板）谨慎使用，在书写便利和代码易读两者之间寻求，滥用降低代码可读性。</p>
 <p>注意使用的限制</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">size_t</span> length = <span class="number">10</span>;</span><br><span class="line"><span class="keyword">int</span> diff = <span class="number">0</span> - length;</span><br><span class="line"><span class="keyword">auto</span> diff2 = <span class="number">0</span> - length;</span><br><span class="line"><span class="comment">// diff != diff2</span></span><br><span class="line"><span class="built_in">cout</span> &lt;&lt; (<span class="number">0</span> - length) &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line"><span class="comment">// NOTE 并未像我们预期的那这样子输出 -10</span></span><br></pre></td></tr></table></figure>
-<h2 id="统一初始化语法"><a href="#统一初始化语法" class="headerlink" title="统一初始化语法"></a>统一初始化语法</h2><ul>
-<li><p><a href="https://zh.wikipedia.org/wiki/POD_(%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1)">POD (程序设计) - wikipedia</a></p>
-<ul>
-<li><p><a href="https://zh.wikipedia.org/wiki/C%2B%2B%E7%B1%BB">C++类 - wikipedia</a>，其中提到了“聚合类”和“POD”结构。值得抽时间全部看看</p>
+<h2 id="统一初始化语法"><a href="#统一初始化语法" class="headerlink" title="统一初始化语法"></a>统一初始化语法</h2><p>列表初始化：初始化操作的多种变体是令人感觉困扰的重要原因之一。C++11 使用统一的大括号标记清除了这种混乱。</p>
+<h3 id="POD-程序设计-wikipedia"><a href="#POD-程序设计-wikipedia" class="headerlink" title="POD (程序设计) - wikipedia"></a><a href="https://zh.wikipedia.org/wiki/POD_(%E7%A8%8B%E5%BA%8F%E8%AE%BE%E8%AE%A1)">POD (程序设计) - wikipedia</a></h3><ul>
+<li><p><a href="https://zh.wikipedia.org/wiki/C%2B%2B%E7%B1%BB">C++ 类 - wikipedia</a>，其中提到了“聚合类”和“POD”结构。值得抽时间全部看看</p>
 </li>
-<li><p><a href="http://www.cnblogs.com/tingshuo/archive/2013/03/25/2981197.html">怎样理解 C++ 中的 Aggregate 和 POD 类型</a>，这是译文—<a href="http://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special">An answer from stackoverflow</a>，这是原文。强调理论。<del>建议查看原文，其中 “What changes for C++11?” 一节在 cnblog 中并未出现，而关于 POD 的定义，C++03 标准和 C++11 并不相同。</del> 这是后半部分,<a href="http://www.cnblogs.com/tingshuo/archive/2013/03/28/2986236.html">怎样理解C++ 11中的trivial和standard-layout</a></p>
+<li><p><a href="http://www.cnblogs.com/tingshuo/archive/2013/03/25/2981197.html">怎样理解 C++ 中的 Aggregate 和 POD 类型</a>，这是译文—<a href="http://stackoverflow.com/questions/4178175/what-are-aggregates-and-pods-and-how-why-are-they-special">An answer from stackoverflow</a>，这是原文。强调理论。<del>建议查看原文，其中 “What changes for C++11?” 一节在 cnblog 中并未出现，而关于 POD 的定义，C++03 标准和 C++11 并不相同。</del> 这是后半部分,<a href="http://www.cnblogs.com/tingshuo/archive/2013/03/28/2986236.html">怎样理解 C++ 11 中的 trivial 和 standard-layout</a></p>
 <blockquote>
-<p>新标准中已经很少使用POD这个术语了，而是更多的在使用更精确的概念：trival和stand-layout。</p>
+<p>新标准中已经很少使用 POD 这个术语了，而是更多的在使用更精确的概念：trival和stand-layout。</p>
 </blockquote>
 </li>
 <li><p><a href="http://blog.csdn.net/aqtata/article/details/35618709">【C++11】POD 数据类型</a>，只放定义和代码，看不懂。强调实用性。</p>
+</li>
+</ul>
 <p>看了以上几篇帖子之后，知道了几个名词：Aggregate 和 POD，trivial 和 standard-layout。但详细的概念很是混乱，其中一条条的“是与不是”、“有与没有”难道是让人用来背诵记忆的吗？实用主义不要求学究钻研，编码过程用到了再回来复习。目前，水过不学了。其实真要较真的话，应该直接去找 C++ 的新标准，网上的终究是个参考，会有出入。</p>
-</li>
-</ul>
-</li>
-<li><p>列表初始化，见 wiz 中另一篇笔记《初始化.md》</p>
-<blockquote>
-<p>初始化操作的多种变体是令人感觉困扰的重要原因之一。C++11 使用统一的大括号标记清除了这种混乱。</p>
-</blockquote>
-</li>
-</ul>
 <h2 id="删除和默认函数"><a href="#删除和默认函数" class="headerlink" title="删除和默认函数"></a>删除和默认函数</h2><ul>
 <li>多看书，多写代码</li>
 </ul>
 <h2 id="nullptr"><a href="#nullptr" class="headerlink" title="nullptr"></a>nullptr</h2><ul>
 <li><p>在此之前是什么样子？会有什么问题？深度探索一下。</p>
 </li>
-<li><p><a href="http://szjoshua.farbox.com/post/c-11nullptr">c++11中的nullptr详解</a></p>
+<li><p><a href="http://szjoshua.farbox.com/post/c-11nullptr">c++11 中的 nullptr 详解</a></p>
 </li>
 <li><p><a href="https://www.zhihu.com/question/22203461">NULL 和 0 - 蓝色的回答</a></p>
 <ul>
-<li>不推荐使用宏，甚至不承认宏。包括 <code>NULL</code>，C++标准是没有承认 <code>NULL</code> 是 null pointer constant的。</li>
+<li>不推荐使用宏，甚至不承认宏。包括 <code>NULL</code>，C++标准是没有承认 <code>NULL</code> 是 null pointer constant 的。</li>
 <li>赋予 null pointer，应该是使用 <code>0</code>，而非 <code>NULL</code></li>
 </ul>
 </li>
@@ -2722,9 +2719,9 @@
 </li>
 </ul>
 </li>
-<li><p><a href="http://jxq.me/2012/06/06/%E8%AF%91%E8%AF%A6%E8%A7%A3c%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/#section_05">【译】详解C++右值引用</a>，阅读笔记如下</p>
+<li><p><a href="http://jxq.me/2012/06/06/%E8%AF%91%E8%AF%A6%E8%A7%A3c%E5%8F%B3%E5%80%BC%E5%BC%95%E7%94%A8/#section_05">【译】详解 C++ 右值引用</a>，阅读笔记如下</p>
 <ol>
-<li><p>概述中# &amp;foobar() 是取 foobar() 函数执行结果的地址，而不是函数指针，&amp;foobar 才是函数指针。</p>
+<li><p>概述中 # &amp;foobar() 是取 foobar() 函数执行结果的地址，而不是函数指针，&amp;foobar 才是函数指针。</p>
 </li>
 <li><p>右值引用，总算渐渐明朗了。但前提是分清左值/右值。</p>
 <p> const 常量是左值，还是右值呢？——左值，因为 <code>const int max = 100;</code> 中 max 是可以使用 <code>&amp;</code> 取地址的。</p>
@@ -2761,18 +2758,21 @@
 </li>
 </ol>
 </li>
-<li><p><a href="http://www.ibm.com/developerworks/cn/aix/library/1307_lisl_c11/">C++11 标准新特性: 右值引用与转移语义</a></p>
-</li>
+</ul>
+<ul>
+<li><a href="http://www.ibm.com/developerworks/cn/aix/library/1307_lisl_c11/">C++11 标准新特性: 右值引用与转移语义</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/335994370">一文读懂 C++ 右值引用和 std::move</a></li>
+<li><a href="https://zh.cppreference.com/w/cpp/language/reference">左值引用、右值引用</a></li>
 </ul>
 <h1 id="Library"><a href="#Library" class="headerlink" title="Library"></a>Library</h1><blockquote>
-<p>2003年，C++ 以库技术报告 1（TR1）的形式经历了一次大型重构。TR1 包含了新的容器类（unordered_set，unordered_map，unordered_multiset和unordered_multimap）和许多新的库，例如正则表达式，元组，函数对象包装器。随着 C++11 的颁布，TR1 连同新的库一起正式集成到 C++ 标准中。下面是 C++11 标准库的特性：</p>
+<p>2003年，C++ 以库技术报告 1（TR1）的形式经历了一次大型重构。TR1 包含了新的容器类（<code>unordered_set</code>，<code>unordered_map</code>，<code>unordered_multiset</code> 和 <code>unordered_multimap</code>）和许多新的库，例如正则表达式，元组，函数对象包装器。随着 C++11 的颁布，TR1 连同新的库一起正式集成到 C++ 标准中。下面是 C++11 标准库的特性：</p>
 </blockquote>
 <h2 id="线程库"><a href="#线程库" class="headerlink" title="线程库"></a>线程库</h2><blockquote>
 <p>毫无疑问，从程序员角度看，C++11 最重要的改进就是并发。</p>
 </blockquote>
-<h2 id="新的智能指针类"><a href="#新的智能指针类" class="headerlink" title="新的智能指针类"></a>新的智能指针类</h2><blockquote>
-<p>C++98 只定义了一个智能指针类，auto_ptr，而这个类现在已经被废弃了。C++11 包含了新的智能指针类：shared_ptr 和最近新加的 unique_ptr。</p>
-</blockquote>
+<h2 id="新的智能指针类"><a href="#新的智能指针类" class="headerlink" title="新的智能指针类"></a>新的智能指针类</h2><p>C++98 只定义了一个智能指针类 <code>auto_ptr</code>，而这个类现在已经被废弃了。</p>
+<p>C++11 包含了新的智能指针类：<code>shared_ptr</code> 、<code>weak_ptr</code> 和最近新加的 <code>unique_ptr</code>。</p>
+<p><code>weak_ptr</code> 是多线程下，判断某一（在多个线程中共享的）对象是否 alive 的唯一方法。</p>
 <h2 id="新的算法"><a href="#新的算法" class="headerlink" title="新的算法"></a>新的算法</h2><p>THE END</p>
 <p>延伸阅读：</p>
 <ul>
@@ -2966,6 +2966,7 @@
 </blockquote>
 </li>
 </ul>
+<h2 id="编译警告"><a href="#编译警告" class="headerlink" title="编译警告"></a>编译警告</h2><p>msvc 哪些编译警告敏感（eg C4566），哪些警告可以忽略？</p>
 <h1 id="避免踩坑"><a href="#避免踩坑" class="headerlink" title="避免踩坑"></a>避免踩坑</h1><p>msvc 宇宙第一的 ide 都有哪些坑？</p>
 <h2 id="不同版本的-stl-不兼容"><a href="#不同版本的-stl-不兼容" class="headerlink" title="不同版本的 stl 不兼容"></a>不同版本的 stl 不兼容</h2><p>谷歌喷 msvc 的 dll</p>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/picgo/43124169-e83ae890-8f58-11e8-9c66-726a09766f7d.png" alt="谷歌喷 msvc 的 dll"></p>
@@ -3026,7 +3027,7 @@
 <td>/</td>
 </tr>
 </tbody></table>
-<p>END</p>
+<h2 id="powershell-脚本的文件编码必须为-UTF-8-BOM，带-BOM-啊"><a href="#powershell-脚本的文件编码必须为-UTF-8-BOM，带-BOM-啊" class="headerlink" title="powershell 脚本的文件编码必须为 UTF-8 BOM，带 BOM 啊"></a>powershell 脚本的文件编码必须为 UTF-8 BOM，带 BOM 啊</h2><p>END</p>
 ]]></content>
       <tags>
         <tag>cpp</tag>
@@ -3325,9 +3326,6 @@
 </blockquote>
 <p> 强调，C++ 和C 是不同的！</p>
 </li>
-<li><p><a href="http://www.caole.net/diary/lvalue.html">C/C++ 中的左值</a></p>
-<p> 左值、右值的概念真是反人类啊，其实一直不懂掌握这个知识点对于程序员有什么价值。只看到了 2.2节，因为 2.3节中出现了未掌握的类型转化，当然最主要的原因还是~我真的看不下去了。</p>
-</li>
 </ol>
 ]]></content>
       <categories>
@@ -3421,19 +3419,13 @@
   <entry>
     <title>函数模板</title>
     <url>/2021/02/02/function-template/</url>
-    <content><![CDATA[<p><code>std::function&lt;&gt;</code> 模板到底是什么？ <a href="https://github.com/tnie/YDData2/issues/163">YDData2/issue</a>，可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。</p>
-<p><a href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>?</a></p>
-<p>vc2015 IntelliSence 提示</p>
+    <content><![CDATA[<p><code>std::function&lt;&gt;</code> 模板到底是什么？ 可以简单理解为对应 C 语言中的函数指针。入参或绑定的参数如果是原始指针或引用时，需要特别注意其生存周期。</p>
+<p>关于函数类模板，学习《Effective.Modern.C++》P39</p>
 <blockquote>
-<p>使用 <code>auto</code> 类型说明符声明的变量不能出现在其自身的初始值设定项中</p>
+<p>And maybe now you’re thinking “What’s a <code>std::function</code> object?” So let’s clear that up</p>
 </blockquote>
-<a id="more"></a>
-
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    sum2 = ...</span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
-<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><h1 id="funcion-模板"><a href="#funcion-模板" class="headerlink" title="funcion 模板"></a>funcion 模板</h1><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ERR，末尾多余的 const 造成报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
-<p>Lambda expressions </p>
+<h1 id="boost-empty-value-的意义？"><a href="#boost-empty-value-的意义？" class="headerlink" title="boost::empty_value 的意义？"></a><code>boost::empty_value</code> 的意义？</h1><p>待补充</p>
+<h1 id="获得-std-function-对象"><a href="#获得-std-function-对象" class="headerlink" title="获得 std::function 对象"></a>获得 <code>std::function</code> 对象</h1><p>Lambda expressions </p>
 <blockquote>
 <p>Constructs a closure: an unnamed function object capable of capturing variables in scope. <a href="https://en.cppreference.com/w/cpp/language/lambda">摘自 lambda</a></p>
 </blockquote>
@@ -3447,6 +3439,57 @@
 </blockquote>
 <p>需要强调的是 C++ 标准未对 <code>std::bind</code> 表达式的返回类型做出定义，其返回值并不对应我们熟悉的任何类型，但可以直接赋值给 <code>std::function&lt;&gt;</code></p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; func = <span class="built_in">std</span>::<span class="built_in">tolower</span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; lamb = [](<span class="keyword">int</span> a) &#123; <span class="keyword">return</span> a; &#125;;</span><br><span class="line"><span class="function"><span class="built_in">std</span>::<span class="built_in">string</span> <span class="title">str</span><span class="params">(<span class="string">&quot;niel&quot;</span>)</span></span>;</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">void</span>)&gt; bind = <span class="built_in">std</span>::bind(&amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size, &amp;str);</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>, <span class="keyword">int</span>)&gt; object = <span class="built_in">std</span>::plus&lt;<span class="keyword">int</span>&gt;();</span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">size_t</span>(<span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">string</span>&amp;)&gt; p2mf = &amp;<span class="built_in">std</span>::<span class="built_in">string</span>::size;</span><br><span class="line"></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, std::ref(str));</span></span><br><span class="line"><span class="comment">//// 拷贝传参，请务必明白在做什么。also works, but str is copied</span></span><br><span class="line"><span class="comment">//std::function&lt;size_t(void)&gt; bind = std::bind(&amp;std::string::size, str);</span></span><br></pre></td></tr></table></figure>
+<h1 id="模板参数"><a href="#模板参数" class="headerlink" title="模板参数"></a>模板参数</h1><figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ERR，末尾多余的 const 造成报错内容在千里之外</span></span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="keyword">const</span>&gt;;</span><br><span class="line"><span class="keyword">using</span> SENDFUNC = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span>(CBD , <span class="keyword">void</span> <span class="keyword">const</span> * <span class="keyword">const</span> , <span class="keyword">size_t</span> ) <span class="comment">/*const*/</span>&gt;;</span><br></pre></td></tr></table></figure>
+<h1 id="递归调用"><a href="#递归调用" class="headerlink" title="递归调用"></a>递归调用</h1><p><a href="https://stackoverflow.com/questions/2067988/recursive-lambda-functions-in-c11">为什么 <code>function&lt;&gt;</code> 对象递归调用自身不能使用 <code>auto</code>?</a></p>
+<p>vc2015 IntelliSence 提示</p>
+<blockquote>
+<p>使用 <code>auto</code> 类型说明符声明的变量不能出现在其自身的初始值设定项中</p>
+</blockquote>
+<a id="more"></a>
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// auto sum2 = [sum2](int a) &#123;  // 编译错误 why?</span></span><br><span class="line"><span class="comment">// std::function&lt;int(int)&gt; sum2 = [sum2](int a) &#123;  // 执行错误 why? 参考拷贝构造函数的参数为什么要使用引用类型。</span></span><br><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2 = [&amp;sum2](<span class="keyword">int</span> a) &#123;</span><br><span class="line">    <span class="keyword">if</span> (a&gt;<span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> (a + sum2(a - <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<p>虽然 <code>&amp;sum2</code> 引用能够调用成功，但我们必须时刻关注 sum2 对象的生存周期。比如以下代码就会崩溃</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">std</span>::function&lt;<span class="keyword">int</span>(<span class="keyword">int</span>)&gt; sum2Copy;</span><br><span class="line">&#123;</span><br><span class="line">    sum2 = ...</span><br><span class="line">    sum2Copy = sum2;</span><br><span class="line">&#125;</span><br><span class="line">spdlog::info(<span class="string">&quot;T(&#123;&#125;)=&#123;&#125;&quot;</span>, <span class="number">30</span>, sum2Copy(<span class="number">30</span>));</span><br></pre></td></tr></table></figure>
+<h1 id="对比虚函数"><a href="#对比虚函数" class="headerlink" title="对比虚函数"></a>对比虚函数</h1><p>存在神话面向对象，过度使用继承的一个时代，一批人。他们使用基础类型指针，通过虚函数约定回调格式。</p>
+<p>上述做法的限制：</p>
+<ul>
+<li>局限于继承回调类，重写<strong>唯一</strong>的虚函数，当类中存在多种请求（大多情形如此）时，在同一回调函数中做分支处理（缺点），分支处理依赖 <code>CBD </code>枚举类型，以此判断应该使用哪种数据交换类解析 <code>void*</code> 指针</li>
+</ul>
+<p>改用 <code>std::function</code> 类模板带来的好处：</p>
+<ol>
+<li>将上述混在一起的分支抽离到不同函数中处理，取消通过 <code>CBD </code>类型选择解析类型的过程；</li>
+<li>丢弃 <code>void*</code> 指针，在「调用签名」中使用强类型 <del>指针</del> 可以避免 <code>void* </code>指针向具体数据交换类性指针的转换；</li>
+<li><del>强类型指针，通过使用智能指针避免手动管理内存，丢弃原生指针；</del>（<del>智能指针</del> 的常量引用，不要拷贝）实际业务分析，事实上应该使用顺序容器，<code>vector</code> 即可</li>
+<li>很大程度上减少 <code>CBD </code>枚举类型的存在感，甚至丢弃；</li>
+<li>数据交换类（<code>Dyna</code>/<code>Tick</code>/<code>stNews </code>等）取消 <del>强类型</del> 成员变量，对外只提供接口。进一步降低文件之间的依赖关系。</li>
+</ol>
+<p>上述优点的核心就是：编码的时候，展现层<strong>最低程度</strong>地依赖网络层，尤其是「约定」什么的最烂了。</p>
+<h1 id="无法判断相等"><a href="#无法判断相等" class="headerlink" title="无法判断相等"></a>无法判断相等</h1><p>两个 <code>std::function</code> 无法做比较：大于、小于和相等。</p>
+<p>只能判断某个 <code>std::function</code> 是否包含目标，和 <code>nullptr</code> 的相等比较已经在 C++20 中移除。</p>
+<h1 id="传值还是引用"><a href="#传值还是引用" class="headerlink" title="传值还是引用"></a>传值还是引用</h1><p>传引用潜在威胁严重：参考 <a href="url">https://github.com/tnie/YD-function/tree/check_ref </a>分支</p>
+<blockquote>
+<p>As with any other type, it’s safe to store a reference only if you have some other way to guarantee that the referred object is still valid whenever that reference is used. <a href="https://stackoverflow.com/questions/8711391/should-i-copy-an-stdfunction-or-can-i-always-take-a-reference-to-it">摘抄来源</a></p>
+</blockquote>
+<p>“重载了函数运算符的类”的对象，调用由此赋值产生的 <code>function&lt;&gt;</code> 对象时，操作的是前者的拷贝，而非本身。——此问题源于<strong>构造</strong> <code>function&lt;&gt;</code> 对象，而非 <code>function&lt;&gt;</code> 对象传参。正确做法是：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">auto</span> multt3 = Multt3();</span><br><span class="line"><span class="comment">//f_multiN f3 = multt3;   // 复制</span></span><br><span class="line"><span class="comment">//f_multiN&amp; f3 = multt3;   // err</span></span><br><span class="line">f_multiN f3 = <span class="built_in">std</span>::ref(multt3);   <span class="comment">// 还真的可以</span></span><br></pre></td></tr></table></figure>
+<p>结合 stackoverflow 网站多个提问，发现还是以传值为主，基本没有传引用的场景。但我还是用了引用，而且是常量引用！</p>
+<p>仔细查看 std::function 的手册，会发现 <a href="http://zh.cppreference.com/w/cpp/utility/functional/function/operator()"><code>std::function::operator()</code></a> 函数是带 <code>const</code> 修饰的，这也意味着使用 <code>const std::function&lt;int(int)&gt;&amp;</code> <strong>传常量引用是完全可以的，无需担心修改源对象非法</strong>（指通过 std::bind 绑定的对象或者重载了函数调用运算符的对象），置于 <a href="https://www.reddit.com/r/cpp/comments/742ol8/why_is_the_stdfunction_operator_const/">Why is the std::function () operator const?</a> 抽空了解一下，对此感到困惑还是源于一直未弄懂 <code>function </code>类模板 到底是对象呢，还是指针？</p>
+<h1 id="回调时的合法性"><a href="#回调时的合法性" class="headerlink" title="回调时的合法性"></a>回调时的合法性</h1><p>使用“重载了函数调用符号”的类、<code>std::bind(&amp;Class::Function, ObjectPointer, std::placeholder::_1)</code> 等涉及类的可调用类型时，因为跨内存模块（动态库）、跨线程，当对象析构后执行回调如何处理？</p>
+<p>通俗地讲，在调用类的普通成员函数时如何判断所属对象已经析构，不然当成员函数使用成员变量时直接造成程序崩溃。</p>
+<ol>
+<li>析构函数遇上多线程怎么办？<a href="https://blog.csdn.net/Solstice/article/details/5238671">好难，┭┮﹏┭┮</a>，请尽量阅读 <a href="http://files.cppblog.com/Solstice/dtor_meets_mt.pdf">本文 PDF 版</a></li>
+<li>由上述核心引起的 <code>std::function</code> 遇上多线程</li>
+</ol>
+<p>网络层是否<strong>不应该负责</strong>（<strong>主要是做不到</strong>）对展现层传入的类模板 <code>std::function&lt;&gt;</code> 对象做深度的有效性判断？毕竟展现层传入的 raw 究竟是函数指针、<code>lambda</code> 表达式还是 <code>std::bind() </code>返回值，数据层都一无所知</p>
+<p>网络层也就只能检查 <code>std::function&lt;&gt;</code> 对象</p>
+<blockquote>
+<p>是否存储可调用函数对象 <code>c</code> </p>
+</blockquote>
+<p>至于对象 <code>c</code> 的有效性——比如通过 <code>std::bind</code> 绑定对象 <code>t</code> 时，<code>t</code> 是否析构——网络层是无法检查的</p>
+<p>所以，展现层应该自检。可能的一种实现方式是：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*网络层接口*****************************/</span></span><br><span class="line"><span class="keyword">using</span> YDDATA2CALLBACK1 = <span class="built_in">std</span>::function&lt;<span class="keyword">void</span> (QID qid, CBD cbd, <span class="keyword">int</span> period, <span class="keyword">const</span> <span class="built_in">shared_ptr</span>&lt;Dyna&gt; data)&gt;;</span><br><span class="line"></span><br><span class="line"><span class="function">QID <span class="title">YDdata_subscribeDynaWithOrder</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *code, YDDATA2CALLBACK1 cb, <span class="keyword">const</span> <span class="keyword">char</span>* order <span class="comment">/*= nullptr*/</span>, <span class="keyword">bool</span> desc <span class="comment">/*= false*/</span>)</span> </span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*展现层可能的实现方式*************************************/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EXAMPLE</span> :</span> <span class="keyword">public</span> <span class="built_in">std</span>::enable_shared_from_this&lt;EXAMPLE&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;EXAMPLE&gt; <span class="title">getptr</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> shared_from_this();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">void</span> <span class="title">callback1</span><span class="params">(QID qid, CBD cbd, <span class="keyword">int</span> period, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Dyna&gt; data, <span class="built_in">std</span>::weak_ptr&lt;EXAMPLE&gt; ptr)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">if</span> (ptr.lock() == <span class="literal">nullptr</span>)</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        <span class="comment">// code</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">QID <span class="title">subscribeDyna</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="built_in">std</span>::weak_ptr&lt;EXAMPLE&gt; wptr = shared_from_this();</span><br><span class="line">        <span class="keyword">return</span> YDdata_subscribeDynaWithOrder(<span class="string">&quot;SH000001&quot;</span>, <span class="built_in">std</span>::bind(&amp;EXAMPLE::callback1, <span class="keyword">this</span>, _1, _2, _3, _4, wptr));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> Good = EXAMPLE;</span><br><span class="line"><span class="comment">// 只允许在先前已被std::shared_ptr 管理的对象上调用 shared_from_this 。否则调用行为未定义</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 正确的示例</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Good&gt; gp1 = <span class="built_in">std</span>::make_shared&lt;Good&gt;();</span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Good&gt; gp2 = gp1-&gt;getptr();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 错误的使用示例：调用 shared_from_this 但其没有被 std::shared_ptr 占有</span></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        Good not_so_good;</span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Good&gt; gp1 = not_so_good.getptr();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">catch</span> (<span class="built_in">std</span>::bad_weak_ptr&amp; e) &#123;</span><br><span class="line">        <span class="comment">// C++17 前为未定义行为； C++17 起抛出 std::bad_weak_ptr 异常</span></span><br><span class="line">        <span class="built_in">std</span>::<span class="built_in">cout</span> &lt;&lt; e.what() &lt;&lt; <span class="string">&#x27;\n&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>上述 <code>EXAMPLE </code>类，因为回调时对象可能已经析构，所以回调函数 <code>callback1()</code> 使用类的成员并不合适（虽然使用 <code>wptr </code>判断了），且 <code>bind()</code> 时 <code>this</code>, <code>wptr </code>也有重复（ <code>wptr </code>主要是为了判断对象是否还活着， <code>this </code>无现实意义）。改进 <code>EXAMPLE  </code>类：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">/*展现层可能的实现方式*************************************/</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">EXAMPLE</span> :</span> <span class="keyword">public</span> <span class="built_in">std</span>::enable_shared_from_this&lt;EXAMPLE&gt;</span><br><span class="line">&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">callback1</span><span class="params">(QID qid, CBD cbd, <span class="keyword">int</span> period, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Dyna&gt; data, <span class="built_in">std</span>::weak_ptr&lt;EXAMPLE&gt; wptr)</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="keyword">auto</span> ptr = wptr.lock();</span><br><span class="line">        <span class="keyword">if</span> (ptr == <span class="literal">nullptr</span>)</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        ptr-&gt;_callback1(qid, cbd, period, data);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function">QID <span class="title">subscribeDyna</span><span class="params">()</span></span></span><br><span class="line"><span class="function">    </span>&#123;</span><br><span class="line">        <span class="built_in">std</span>::weak_ptr&lt;EXAMPLE&gt; wptr = shared_from_this();</span><br><span class="line">        <span class="keyword">return</span> YDdata_subscribeDynaWithOrder(<span class="string">&quot;SH000001&quot;</span>, <span class="built_in">std</span>::bind(&amp;EXAMPLE::callback1, _1, _2, _3, _4, wptr));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="keyword">void</span> _callback1(QID qid, CBD cbd, <span class="keyword">int</span> period, <span class="keyword">const</span> <span class="built_in">std</span>::<span class="built_in">shared_ptr</span>&lt;Dyna&gt; data)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// code</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 ]]></content>
       <categories>
         <category>cpp</category>
@@ -4738,9 +4781,10 @@
  <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">S</span> <span class="title">ales_data</span> &#123;</span></span><br><span class="line">    <span class="built_in">std</span>::<span class="built_in">string</span> bookNo;</span><br><span class="line">    <span class="keyword">unsigned</span> units_sold = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">double</span> revenue = <span class="number">0.0</span>;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
 <li><p>如果提供的是初始元素值的列表，则只能把初始值都放在花括号里进行列表初始化，而不能放在圆括号里；</p>
  <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; v1&#123;<span class="string">&quot;a&quot;</span>, <span class="string">&quot;an&quot;</span>, <span class="string">&quot;the&quot;</span>&#125;;  <span class="comment">// 列表初始化</span></span><br><span class="line"><span class="function"><span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; <span class="title">v1</span><span class="params">(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;an&quot;</span>, <span class="string">&quot;the&quot;</span>)</span></span>;  <span class="comment">// 错误</span></span><br></pre></td></tr></table></figure>
-<h1 id="Value-initialization-值初始化"><a href="#Value-initialization-值初始化" class="headerlink" title="Value initialization 值初始化"></a>Value initialization 值初始化</h1></li>
+
+</li>
 </ol>
-<h2 id="初始化-vector-对象（P88）"><a href="#初始化-vector-对象（P88）" class="headerlink" title="初始化 vector 对象（P88）"></a>初始化 <code>vector</code> 对象（P88）</h2><p>我们可以只提供 <code>vector</code> 对象容纳的元素数量而略去初始值（原文：We can usually omit the value and supply only a size. ）。此时库会创建一个值初始化的元素初值（原文：a value-initialized element initializer），并把它赋给容器中的所有元素，这个初值由 <code>vector</code> 对象中元素的类型决定。 </p>
+<h1 id="Value-initialization-值初始化"><a href="#Value-initialization-值初始化" class="headerlink" title="Value initialization 值初始化"></a>Value initialization 值初始化</h1><h2 id="初始化-vector-对象（P88）"><a href="#初始化-vector-对象（P88）" class="headerlink" title="初始化 vector 对象（P88）"></a>初始化 <code>vector</code> 对象（P88）</h2><p>我们可以只提供 <code>vector</code> 对象容纳的元素数量而略去初始值（原文：We can usually omit the value and supply only a size. ）。此时库会创建一个值初始化的元素初值（原文：a value-initialized element initializer），并把它赋给容器中的所有元素，这个初值由 <code>vector</code> 对象中元素的类型决定。 </p>
 <p>如果 <code>vector</code> 对象的元素是内置类型，比如 <code>int</code>，则元素初始值自动设为<code>0</code>。如果元素是某种类类型，比如 <code>std::string</code>，则元素由类默认初始化。</p>
 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; <span class="title">ivec</span><span class="params">(<span class="number">10</span>)</span></span>;     <span class="comment">//10个元素，每个都初始化为0</span></span><br><span class="line"><span class="function"><span class="built_in">vector</span>&lt;<span class="built_in">string</span>&gt; <span class="title">svec</span><span class="params">(<span class="number">10</span>)</span></span>;  <span class="comment">//10个元素，每个都是空string对象</span></span><br></pre></td></tr></table></figure>
 <p>对这种初始化的方式有两个特殊限制：</p>
@@ -5151,37 +5195,6 @@
 ]]></content>
       <categories>
         <category>linux</category>
-      </categories>
-  </entry>
-  <entry>
-    <title>std::map遍历删除元素</title>
-    <url>/2016/11/03/map-erase/</url>
-    <content><![CDATA[<h1 id="std-map遍历删除元素"><a href="#std-map遍历删除元素" class="headerlink" title="std::map遍历删除元素"></a>std::map遍历删除元素</h1><p>对容器进行增、删元素操作，可能会使迭代器失效，甚至影响 <code>begin() end()</code> 返回值。——关于这一点，需要复习《C++ Primer》。</p>
-<ul>
-<li>如果一个元素已经被删除，那么其对应的迭代器就失效了，不应该再被使用。否则会导致程序无定义的行为。</li>
-</ul>
-<h2 id="平台间的区别"><a href="#平台间的区别" class="headerlink" title="平台间的区别"></a>平台间的区别</h2><p>顺序容器的 <code>erase()</code> 操作返回指向删除元素下一个元素的迭代器。</p>
-<p><code>map.erase()</code> 有 3 个重载：</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">erase</span> <span class="params">( iterator position )</span></span>;</span><br><span class="line"><span class="function">size_type <span class="title">erase</span> <span class="params">( <span class="keyword">const</span> key_type&amp; x )</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">erase</span> <span class="params">( iterator first, iterator last )</span></span>;</span><br></pre></td></tr></table></figure>
-<p>返回 <code>iterator</code> 的<code>erase()</code> 是不符合 STL 标准的。</p>
-<a id="more"></a>
-
-<p>见到过这样一句：</p>
-<blockquote>
-<p>The truth is that ‘erase’ in associative containers doesn’t invalidate any iterators except those that point to elements being erased (that’s also true for ’sid::list’). For this reason, you don’t really need ‘map::erase’ to return an iterator. Just do this</p>
-</blockquote>
-<p>但是 windows 平台下 map 就有</p>
-<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function">iterator <span class="title">erase</span><span class="params">( iterator _Where )</span></span></span><br></pre></td></tr></table></figure>
-<p>类似顺序容器的操作。</p>
-<h2 id="正确的写法"><a href="#正确的写法" class="headerlink" title="正确的写法"></a>正确的写法</h2><p>正确的写法：（只需要记住正确的写法，其他的即便不是错的也是不规范的）</p>
-<ol>
-<li>使用删除之前的迭代器定位下一个元素。<strong>STL建议的使用方式</strong> <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(ITER iter=mapTest.begin();iter!=mapTest.end();)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;iter-&gt;first&lt;&lt;<span class="string">&quot;:&quot;</span>&lt;&lt;iter-&gt;second&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    mapTest.erase(iter++);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><code>erase()</code> 成员函数返回下一个元素的迭代器 <figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span>(ITER iter=mapTest.begin();iter!=mapTest.end();)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">cout</span>&lt;&lt;iter-&gt;first&lt;&lt;<span class="string">&quot;:&quot;</span>&lt;&lt;iter-&gt;second&lt;&lt;<span class="built_in">endl</span>;</span><br><span class="line">    <span class="comment">// 在windows下可以，但是在linux下不行。</span></span><br><span class="line">    iter=mapTest.erase(iter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ol>
-]]></content>
-      <categories>
-        <category>cpp</category>
-        <category>cpp-code</category>
       </categories>
   </entry>
   <entry>
@@ -5988,6 +6001,10 @@
 <li>并且不会在字符串末尾添加 <code>&#39;\0&#39;</code> 符；</li>
 <li>并且，如果字符串（第三个参数）超过 count，函数返回 <code>-1</code> 以标志可能导致的错误；</li>
 </ol>
+<p>上述描述如有异议或描述不清，请参考 <a href="https://msdn.microsoft.com/en-us/library/2ts7cx93.aspx">微软文档</a>：</p>
+<blockquote>
+<p>Let <code>len </code>be the length of the formatted data string, <strong>not</strong> including the terminating null.<br>if <code>len</code> &lt; <code>count</code>, len characters are stored in buffer, a null-terminator is appended, and <code>len </code>is returned.<br>if <code>len</code> = <code>count</code>, len characters are stored in buffer, **no** null-terminator is appended, and <code>len </code>is returned.<br>If <code>len</code> &gt; <code>count</code>, count characters are stored in buffer, <strong>no</strong> null-terminator is appended, and a negative value is returned.</p>
+</blockquote>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/snprintf-in-vc.png" alt="windows-snprintf"></p>
 <h2 id="在linux下："><a href="#在linux下：" class="headerlink" title="在linux下："></a>在linux下：</h2><p>参考 <a href="http://blog.csdn.net/crfoxzl/article/details/2062139"><code>snprintf</code> 函数用法</a></p>
 <ol>
@@ -5995,6 +6012,11 @@
 <li>并且，若成功则返回欲写入的字符串长度，若出错则返回负值；</li>
 </ol>
 <p><img src="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/snprintf-in-gcc.png" alt="linux-snprintf"></p>
+<p>snprinf 在 C++11 中是不是规范化了？是的</p>
+<p>从 <a href="http://zh.cppreference.com/w/c/io/fprintf">C99</a>/<a href="http://zh.cppreference.com/w/cpp/io/c/fprintf">C++11</a> 起，标准规范了 <code>snprintf </code>函数的定义，msvc 对此特性的支持比较晚：</p>
+<blockquote>
+<p>Beginning with the UCRT in Visual Studio 2015 and Windows 10, <code>snprintf </code>is no longer identical to <code>_snprintf</code>. The <code>snprintf </code>function behavior is now C99 standard compliant.<a href="https://msdn.microsoft.com/en-us/library/2ts7cx93.aspx">摘自微软</a></p>
+</blockquote>
 <h1 id="access-函数，注意参数含义"><a href="#access-函数，注意参数含义" class="headerlink" title="access 函数，注意参数含义"></a><code>access</code> 函数，注意参数含义</h1><ul>
 <li>在windows下：<a href="http://blog.sina.com.cn/s/blog_69ebf25c0100m57t.html">Access函数判断文件是否存在</a></li>
 <li>在linxu下：<a href="http://blog.sina.com.cn/s/blog_6a1837e90100uh5d.html">linux C之access函数</a></li>
@@ -8935,20 +8957,20 @@
     <title>《嗨翻C语言》（上）</title>
     <url>/2016/11/03/headFirstC-note1/</url>
     <content><![CDATA[<p>2016/2/23 14:41:06 </p>
-<p>嗨翻C语言》，本书分为三个部分。</p>
+<p>《嗨翻C语言》，本书分为三个部分。</p>
 <blockquote>
-<p>本书分为三个部分：第1章到第4章是基础知识，包括基本语法、指针、字符串、小工具和源文件；第5章到第8章为进阶内容，有结构、联合、数据结构、<strong>堆、函数指针、动/静态链接；最后四章是高级主题，内容涵盖了系统调用、进程间通信、网络编程和多线程</strong>。（加粗部分的笔记在下篇）</p>
+<p>本书分为三个部分：第 1 章到第 4 章是基础知识，包括基本语法、指针、字符串、小工具和源文件；第 5 章到第 8 章为进阶内容，有结构、联合、数据结构、<strong>堆、函数指针、动/静态链接；最后四章是高级主题，内容涵盖了系统调用、进程间通信、网络编程和多线程</strong>。（加粗部分的笔记在下篇）</p>
 </blockquote>
 <p>以下笔记没有严格按照章节进行整理，因为书中在多个章节可能提到同一类知识点，比如（略）</p>
-<h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>在此笔记中，不记录不同C标准的差异，具体细节查看原书；不记录不同OS下编写C时的差异，具体细节查看原书或者google。笔记中只对不同标准、不同OS下共性的语言原理、语法细节做出整理。</p>
-<p>此上篇整理了1-190项标注和笔记。</p>
-<h1 id="课外"><a href="#课外" class="headerlink" title="课外"></a>课外</h1><h2 id="三种C标准"><a href="#三种C标准" class="headerlink" title="三种C标准"></a>三种C标准</h2><p><a href="https://zh.wikipedia.org/wiki/ANSI_C">ANSI C</a> 始于20世纪80年代后期，适用于最古老的代码；1999年开始的C99标准有了很大的改进；在2011年发布的最新标准C11中……想知道编译器支持哪种标准，可以查看编译器的文档。</p>
+<h1 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h1><p>在此笔记中，不记录不同 C 标准的差异，具体细节查看原书；不记录不同 OS 下编写 C 时的差异，具体细节查看原书或者 google。笔记中只对不同标准、不同 OS 下共性的语言原理、语法细节做出整理。</p>
+<p>此上篇整理了 1-190 项标注和笔记。</p>
+<h1 id="课外"><a href="#课外" class="headerlink" title="课外"></a>课外</h1><h2 id="三种C标准"><a href="#三种C标准" class="headerlink" title="三种C标准"></a>三种C标准</h2><p><a href="https://zh.wikipedia.org/wiki/ANSI_C">ANSI C</a> 始于 20 世纪 80 年代后期，适用于最古老的代码；1999 年开始的 C99 标准有了很大的改进；在 2011 年发布的最新标准 C11 中……想知道编译器支持哪种标准，可以查看编译器的文档。</p>
 <blockquote>
-<p>“指定初始化器”按名设置结构和联合字段，它属于C99标准;</p>
-<p>C99标准支持“指定初始化器”，C++不支持。</p>
-<p>在代码中间的位置声明新变量，只有C99和C11标准才允许这样做，在ANSI C（在此特指 C89）中，必须在函数的顶部声明局部变量；</p>
+<p>“指定初始化器”按名设置结构和联合字段，它属于 C99 标准;</p>
+<p>C99 标准支持“指定初始化器”，C++ 不支持。</p>
+<p>在代码中间的位置声明新变量，只有 C99 和 C11 标准才允许这样做，在 ANSI C（在此特指 C89）中，必须在函数的顶部声明局部变量；</p>
 </blockquote>
-<p>更多的区别：1. 在早期的ANSI C标准中，main()函数可以是void 类型。但是在C99中main函数的返回类型必须是int。2. ANSI C标准没有用来表示真和假的值，C语言把0这个值当做假处理，把非0的任何值当做真处理。C99标准则允许在程序中使用true和false关键字。但编译器还是会把他们当做1和0这两个值来处理。</p>
+<p>更多的区别：1. 在早期的 ANSI C 标准中，<code>main()</code> 函数可以是 <code>void</code> 类型。但是在 C99 中 <code>main</code> 函数的返回类型必须是 <code>int</code>。2. ANSI C标准没有用来表示真和假的值，C语言把0这个值当做假处理，把非0的任何值当做真处理。C99标准则允许在程序中使用true和false关键字。但编译器还是会把他们当做1和0这两个值来处理。</p>
 <p>扩展阅读：</p>
 <ul>
 <li><a href="http://stackoverflow.com/questions/18731707/why-does-c11-not-support-designated-initializer-list-as-c99">Why does C++11 not support designated initializer list as C99?</a></li>
@@ -8976,9 +8998,9 @@
 <p>  A1：在C中编译无法通过，类似<code>3=4</code>；在C++中正常编译，运行，类似<code>x=4</code>。</p>
 <p>  注意：以下这种再次赋值是成立的。因为无论 <code>y=4</code>（C语言） 还是 <code>y=x</code>（C++） 都是成立的。</p>
   <figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> x = <span class="number">9</span>;</span><br><span class="line">    <span class="keyword">int</span> y = <span class="number">8</span>;</span><br><span class="line">    <span class="comment">// 方式一</span></span><br><span class="line">    y = x = <span class="number">4</span>;</span><br><span class="line">    <span class="comment">// or 两者意义相同</span></span><br><span class="line">    <span class="comment">// y = (x = 4);</span></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;x is %d, y is %d\n&quot;</span>, x, y);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>；</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>  关键是理解 <a href="http://www.caole.net/diary/lvalue.html">C/C++中左值</a> 的概念，而且 C 和 C++ 中是不一样的。</p>
+<p>  关键是理解 C/C++ 中左值的概念，而且 C 和 C++ 中是不一样的。</p>
 </li>
-<li><p>使用switch语句的好处之一是，可以用<strong>下落逻辑</strong>在不同的分支之间复用代码。</p>
+<li><p>使用 <code>switch</code> 语句的好处之一是，可以用<strong>下落逻辑</strong>在不同的分支之间复用代码。</p>
 </li>
 </ul>
 <h2 id="存储器"><a href="#存储器" class="headerlink" title="存储器"></a>存储器</h2><p>如果真的想玩转C语言，就需要理解C语言如何操纵存储器。掌握指针和存储器寻址对成为一名地道的C程序员很重要。</p>
@@ -10052,5 +10074,339 @@
       <tags>
         <tag>git</tag>
       </tags>
+  </entry>
+  <entry>
+    <title>条件变量</title>
+    <url>/2021/05/26/conditionalvariable/</url>
+    <content><![CDATA[<p>这里不讲条件变量 <code>std::conditional_varibale</code> 的具体使用，自行上 cppreference 网站查阅手册。</p>
+<h1 id="条件变量-wait-参数锁住的到底是什么"><a href="#条件变量-wait-参数锁住的到底是什么" class="headerlink" title="条件变量 wait 参数锁住的到底是什么"></a>条件变量 wait 参数锁住的到底是什么</h1><p>以下文字摘抄自 <a href="https://zh.cppreference.com/w/cpp/thread/condition_variable">std::condition_variable</a>，其中语义不通或翻译欠妥的地方直接改换为英文原文了。</p>
+<p>有意修改变量（<strong>条件</strong>）的线程必须</p>
+<ol>
+<li>获得 <code>std::mutex </code>（典型地通过 <code>std::lock_guard </code> ）</li>
+<li>在保有锁时进行修改</li>
+<li>在 <code>std::condition_variable</code> 上执行 <code>notify_one </code>或 <code>notify_all </code>（<strong>不需要为通知保有锁</strong>）</li>
+</ol>
+<p>即使共享变量是原子的，也必须在互斥下修改它，以正确地发布修改到等待的线程。- <a href="https://stackoverflow.com/questions/41867228/why-do-i-need-to-acquire-a-lock-to-modify-a-shared-atomic-variable-before-noti">why</a></p>
+<p>任何有意在 <code>std::condition_variable</code> 上等待的线程必须</p>
+<ol>
+<li>获得 <code>std::unique_lock&lt;std::mutex&gt;</code> ，on the same mutex as used to protect the shared variable</li>
+<li>执行 <code>wait </code>、 <code>wait_for </code>或 <code>wait_until </code>，The wait operations 自动<strong>释放互斥</strong>，并<strong>悬挂线程的执行</strong>。</li>
+<li><code>condition_variable </code>被通知时，时限消失或虚假唤醒发生，线程被唤醒，且自动重获得互斥。之后线程应检查条件，若唤醒是虚假的，则继续等待。</li>
+</ol>
+<p>所以，<code>_lock </code>是针对共享变量（条件），<code>wait() </code>使用 <code>_lock </code>是为了悬挂线程执行时<strong>释放</strong>互斥的所有权以及跳出等待时线程再次<strong>获得</strong>互斥的所有权——如果由用户 unlock、lock 显然会造成竞争，无法保证原子性</p>
+<a id="more"></a>
+
+<h1 id="条件变量-notify-one-之前为什么要加锁？不加锁为什么卡死？"><a href="#条件变量-notify-one-之前为什么要加锁？不加锁为什么卡死？" class="headerlink" title="条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？"></a>条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？</h1><p>在 <a href="https://zh.cppreference.com/w/cpp/thread/condition_variable">std::condition_variable</a> 中提到：</p>
+<blockquote>
+<p>不需要为通知保有锁</p>
+</blockquote>
+<p>另外 <a href="https://zh.cppreference.com/w/cpp/thread/condition_variable/notify_one">std::condition_variable::notify_one</a>  示例，如果 <del>在通知前依旧保有锁</del> 通知线程一直持有锁，会造成被通知线程持续阻塞，进而通知线程循环无法结束……无解。</p>
+<p><del>那么，标题描述的情形是否是由其他原因造成的呢？即便必须加锁，也是业务原因而非 <code>condition_variable::notify</code> 使用方式</del>。</p>
+<h2 id="结论"><a href="#结论" class="headerlink" title="结论"></a>结论</h2><p>条件变量 <code>wait()</code> 时用锁：</p>
+<ul>
+<li><code>notify()</code> 时可以不保有锁，但修改共享变量（条件/谓词）时<strong>必须加锁</strong>！</li>
+<li>如果修改谓词时不加锁，那么 <code>notify() </code>之前必须加锁（以保证要么 <code>wait()</code> 块未进入/尚未执行谓词判断，要么 <code>wait()</code> 已在 sleep ）。这样子有个<strong>缺点</strong>，需要注意被通知线程才被唤醒就阻塞，所以在 <code>notify()</code> 之后应迅速释放锁</li>
+</ul>
+<p>如果修改谓词和 <code>notify()</code> 的时候都不加锁，就有概率发生丢失 <code>notify()</code> 事件（多线程竞争，<code>wait()</code> 发生在 <code>notify()</code> 之后，被通知线程一直阻塞下去）</p>
+<h2 id="分析过程"><a href="#分析过程" class="headerlink" title="分析过程"></a>分析过程</h2><blockquote>
+<p><code>notify_one()</code>/<code>notify_all() </code>的效果与<code> wait()</code>/<code>wait_for()</code>/<code>wait_until()</code> 的三个原子部分的每一者（解锁+等待、唤醒和锁定）以能看做原子变量修改顺序单独全序发生。</p>
+</blockquote>
+<p>wait() 操作的三个原子部分：</p>
+<ol>
+<li>unlock+wait</li>
+<li>wakeup</li>
+<li>lock</li>
+</ol>
+<p><a href="https://stackoverflow.com/questions/21439359/signal-on-condition-variable-without-holding-lock">通知时不保有锁，会不会有问题？</a></p>
+<blockquote>
+<p><strong>If it is possible</strong> for another thread to change the value of the predicate while this thread holds the <code>mutex</code>, then it is possible for notifications to occur <strong>between</strong> the predicate check and going to sleep, and effectively be lost.</p>
+</blockquote>
+<p>——上述表述的既定前提：“ predicate 发生变化后<code> notify()</code>，随意 <code>notify()</code> 的情形没有讨论意义”</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">while</span> (!pred()) &#123;</span><br><span class="line">    <span class="comment">// if notify() happens? sleep forever?</span></span><br><span class="line">    <span class="comment">// hold mutex</span></span><br><span class="line">    wait(lock);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>Holding the <code>mutex </code>at any time between the change to the predicate and the notification is sufficient to guarantee the atomicity of the predicate check and <code>wait </code>call in the other thread. </p>
+</blockquote>
+<ul>
+<li>被通知线程先拿到锁：因为 unlock+wait 的原子性，所以通知线程修改 predicate/ <code>notify()</code> 之前已经 wait </li>
+<li>通知线程先拿到锁：那么在 predicate 改变之后，被通知线程 check 为假，直接跳过了 <code>wait()</code> 操作</li>
+</ul>
+<h1 id="线程对象"><a href="#线程对象" class="headerlink" title="线程对象"></a>线程对象</h1><p>程序退出时，条件变量等待~有的会退，有的卡住</p>
+<p>DZHYUNRequest.cpp: L442</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">std::unique_lock&lt;std::mutex&gt; _locker_normal(g_mutex_normal);</span><br><span class="line">while (result !&#x3D; 0 &amp;&amp; get_ws_con_status() !&#x3D; WSCLIENT_STATUS::Open)</span><br><span class="line">&#123;</span><br><span class="line">	g_check_normal.wait(_locker_normal);</span><br><span class="line">	result &#x3D; _client.send(_cmid, reqmsg + qids.str() + &quot;&amp;token&#x3D;&quot; + _token);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>能够退出</p>
+<p>MainComponent.cpp: L154</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">std::unique_lock&lt;std::mutex&gt; _locker_normal(g_mutex_normal);</span><br><span class="line">while (isNormal &#x3D;&#x3D; false)</span><br><span class="line">&#123;</span><br><span class="line">	g_check_normal.wait(_locker_normal);</span><br><span class="line">	isNormal &#x3D; (WSCLIENT_STATUS::Open &#x3D;&#x3D; YDdata_GetWSConStatus());</span><br><span class="line">	if (isNormal)</span><br><span class="line">	&#123;</span><br><span class="line">		_locker_normal.unlock();</span><br><span class="line">		&#x2F;&#x2F; 连接成功提示</span><br><span class="line">		InfoBox(&quot;Open&quot;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不能退出</p>
+<p>其中的差别在哪里？前者使用的 <code>boost::thread</code>，后者使用的 <code>std::thread</code>。前者使用了 boost 线程库的 interrupt 机制。</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-concept</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>关键字 auto</title>
+    <url>/2021/05/26/auto/</url>
+    <content><![CDATA[<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// OK</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">auto</span> itor = _functionCode.cbegin(); itor != _functionCode.cend(); ++itor)</span><br><span class="line"><span class="comment">// ERR</span></span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">auto</span> <span class="keyword">const</span> itor = _functionCode.cbegin(); itor != _functionCode.cend(); ++itor)</span><br><span class="line"><span class="comment">// why?</span></span><br></pre></td></tr></table></figure>
+<p><code>auto</code> 能够自动推导常量吗？引用呢？——不能！</p>
+<blockquote>
+<p><code>auto</code> 一般会忽略掉顶层 <code>const</code>，如果希望推导出的 <code>auto </code>类型是一个顶层 <code>const</code>，需要明确指出。P66</p>
+</blockquote>
+<blockquote>
+<p>可以将引用的类型设为 <code>auto</code>，此时原来的初始化规则仍然使用。设置一个类型为 <code>auto </code>的引用时，初始值中的顶层常量属性仍然保留。P66</p>
+</blockquote>
+<p><code>const_iterator</code> 可以读取元素，但不能修改元素的迭代器类型</p>
+<a id="more"></a>
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">list</span>&lt;<span class="keyword">int</span>&gt; ages = &#123; <span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span> &#125;;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 不以 c 开头的函数都是被重载过的</span></span><br><span class="line">        <span class="built_in">list</span>&lt;<span class="keyword">int</span>&gt;::const_iterator cit = ages.begin();</span><br><span class="line">        <span class="built_in">list</span>&lt;<span class="keyword">int</span>&gt;::iterator it = ages.begin();</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">auto</span> cages = ages;</span><br><span class="line">            <span class="comment">// 对一个 const 容器调用时，返回容器的 const_iterator 类型</span></span><br><span class="line">            cit = cages.begin();</span><br><span class="line">            <span class="comment">// 可以将一个普通的 iterator 转换为对应的 const_iterator，但反之不行</span></span><br><span class="line">            <span class="comment">//it = cages.begin(); // ERR</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//*cit = 9;   // ERR</span></span><br><span class="line">        *it = <span class="number">9</span>;</span><br><span class="line">        ++cit;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; *cit &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">        ++it;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; *it &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">auto</span> it = ages.begin();</span><br><span class="line">        ++it;</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">auto</span> cit = ages.begin();</span><br><span class="line">        <span class="comment">//++cit;  //ERR</span></span><br><span class="line">    &#125;</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 以 c 开头的版本是 C++ 新标准引入的，用以支持 auto 与 begin 和 end 函数结合使用</span></span><br><span class="line">        <span class="keyword">auto</span> cit = ages.cbegin();</span><br><span class="line">        ++cit;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; *cit &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 是 iterator 还是 const_iterator 依赖于容器的类型</span></span><br><span class="line">            <span class="keyword">auto</span> it1 = ages.begin();  <span class="comment">// list&lt;int&gt;::iterator</span></span><br><span class="line">            <span class="keyword">const</span> <span class="keyword">auto</span> cages = ages;</span><br><span class="line">            <span class="keyword">auto</span> it2 = cages.begin();  <span class="comment">// list&lt;int&gt;::const_iterator</span></span><br><span class="line">            <span class="comment">// 但以 c 开头的版本还是可以获得 const_iterator 的，而不管容器的类型是什么</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意区分 <code>list&lt;int&gt;::const_iterator</code> 和 <code>const list&lt;int&gt;::iterator</code>，其实绕一圈还是 <code>char const *</code>  和 <code>char * const </code> 的区别：前者 <code>const </code>修饰指针指向的内容，指针可更改；后者 <code>const </code>修饰指针本身，指针不可更改，但可更改其指向的内容。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="keyword">char</span> * ptr = <span class="string">&quot;liyw&quot;</span>;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">char</span> <span class="keyword">const</span> * str = <span class="string">&quot;niel&quot;</span>;</span><br><span class="line">    str = ptr;</span><br><span class="line">    <span class="comment">//str[1] = &#x27;a&#x27;; // ERR</span></span><br><span class="line">&#125;</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">char</span> * <span class="keyword">const</span> str = <span class="string">&quot;niel&quot;</span>;</span><br><span class="line">    <span class="comment">//str = ptr;  // ERR</span></span><br><span class="line">    str[<span class="number">1</span>] = <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>复合类型指针、引用等</p>
+<p>用来修饰上层（最顶层）指针的 const ，称为<code>顶层 const</code>，表示指针是个常量；<br>相对应的，<code>底层 const</code> 用来表示指针所指的对象是一个常量。</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-concept</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>cpp 容器避坑指南</title>
+    <url>/2016/11/03/container-in-cpp/</url>
+    <content><![CDATA[<p>使用 cpp 中常用容器时，的注意事项。</p>
+<h1 id="不要保存-end-返回的迭代器"><a href="#不要保存-end-返回的迭代器" class="headerlink" title="不要保存 end 返回的迭代器"></a>不要保存 end 返回的迭代器</h1><p>当我们添加或删除 <code>vector</code> 或 <code>string</code> 的元素后，或在 <code>deque</code> 中首元素之外任何位置添加或删除元素后，原来 <code>end</code> 返回的迭代器总是会失效。因此，添加或删除元素的循环程序必须反复调用 <code>end</code>，而不能在循环之前保存 <code>end</code> 返回的迭代器，一直当做容器末尾使用。</p>
+<h1 id="std-map-遍历删除元素"><a href="#std-map-遍历删除元素" class="headerlink" title="std::map 遍历删除元素"></a>std::map 遍历删除元素</h1><p>对容器进行增、删元素操作，可能会使迭代器失效。关于这一点，复习 《C++ Primer》 P315 </p>
+<p>正确的写法：（只需要记住正确的写法，其他的即便不是错的也是不规范的）</p>
+<p>C++11 标准下，使用 <code>erase()</code> 返回值更新迭代器：返回值 Iterator following the last removed element.</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="comment">// erase all odd numbers from c</span></span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">auto</span> it = c.begin(); it != c.end(); ) &#123;</span><br><span class="line">    <span class="keyword">if</span>(it-&gt;first % <span class="number">2</span> != <span class="number">0</span>)</span><br><span class="line">        it = c.erase(it);</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        ++it;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>C++11 之前，<code>erase()</code> 成员没有返回值。怎么遍历删除自行 Google 吧</p>
+<a id="more"></a>
+
+<h2 id="C-11-之前"><a href="#C-11-之前" class="headerlink" title="C++11 之前"></a>C++11 之前</h2><p>顺序容器的 <code>erase()</code> 操作返回指向删除的（最后一个）元素之后位置的迭代器。</p>
+<p><a href="https://en.cppreference.com/w/cpp/container/map/erase"><code>map.erase()</code></a> 有 3 个重载：</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">??? erase ( iterator position );</span><br><span class="line"><span class="function">size_type <span class="title">erase</span> <span class="params">( <span class="keyword">const</span> key_type&amp; x )</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">erase</span> <span class="params">( iterator first, iterator last )</span></span>;</span><br></pre></td></tr></table></figure>
+<p>在 C++11 之前返回 <code>iterator</code> 的 <code>erase()</code> 是不符合 STL 标准的</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">erase</span><span class="params">( iterator pos )</span></span>;                (until C++<span class="number">11</span>)</span><br><span class="line"><span class="function">iterator <span class="title">erase</span><span class="params">( const_iterator pos )</span></span>;      (since C++<span class="number">11</span>)</span><br><span class="line"><span class="function">iterator <span class="title">erase</span><span class="params">( iterator pos )</span></span>;            (since C++<span class="number">17</span>)</span><br></pre></td></tr></table></figure>
+<h1 id="vector-地址"><a href="#vector-地址" class="headerlink" title="vector 地址"></a>vector 地址</h1><p>vector 地址、vector 首元素地址以及 <code>vector::data()</code> 的返回值</p>
+<p>后两者相等，但和容器地址是两码事。</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="built_in">vector</span>&lt;<span class="keyword">int</span>&gt; ha = &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line">assert(&amp;ha[<span class="number">0</span>] == ha.data());     <span class="comment">// 相等</span></span><br><span class="line">assert((<span class="keyword">void</span>*)&amp;ha != ha.data()); <span class="comment">// 不相等</span></span><br></pre></td></tr></table></figure>
+<p>参考 ：<a href="https://stackoverflow.com/a/14825318/6728820">https://stackoverflow.com/a/14825318/6728820</a></p>
+<h1 id="迭代器"><a href="#迭代器" class="headerlink" title="迭代器"></a>迭代器</h1><p>迭代器能递加递减，能加一减一吗？</p>
+<p><strong>随机访问迭代器</strong> (RandomAccessIterator)是可以的。顺序容器 <code>std::vector</code> 是随机访问迭代器。<br><a href="http://zh.cppreference.com/w/cpp/concept/RandomAccessIterator">http://zh.cppreference.com/w/cpp/concept/RandomAccessIterator</a></p>
+<p>但<strong>双向迭代器</strong> (BidirectionalIterator)是不可以的。关联容器 <code>std::set </code> <code>std::map</code> 、顺序容器<code>std::list</code>是双向迭代器。<br><a href="http://zh.cppreference.com/w/cpp/concept/BidirectionalIterator">http://zh.cppreference.com/w/cpp/concept/BidirectionalIterator</a></p>
+<p>更多信息请查看：<a href="http://zh.cppreference.com/w/cpp/concept/Iterator">迭代器</a></p>
+<p><a href="http://zh.cppreference.com/w/cpp/iterator/advance">http://zh.cppreference.com/w/cpp/iterator/advance</a></p>
+<p><a href="http://zh.cppreference.com/w/cpp/iterator/next">http://zh.cppreference.com/w/cpp/iterator/next</a></p>
+<p>两者的区别：<a href="https://stackoverflow.com/questions/15017065/whats-the-difference-between-stdadvance-and-stdnext">https://stackoverflow.com/questions/15017065/whats-the-difference-between-stdadvance-and-stdnext</a></p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-code</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>编码转换和 locale</title>
+    <url>/2021/05/26/locale/</url>
+    <content><![CDATA[<p>学习 locale 和编码转换过程中的关键以及问题。</p>
+<ul>
+<li>不使用 locale，无法完成编码转换吗？Unicode 自身的 utf-8/16/32 的 <a href="https://justcheckingonall.wordpress.com/2009/01/05/convert-utf-8-to-wchar_t/">存储方式之间的转换</a> 也不行吗？</li>
+<li>utf-8 对应 <code>char</code>、<code>string</code>；utf-16 对应 <code>wchar_t</code>/<code>wstring</code>，这种理解对吗？所以 <code>boost::locale::conv::to_utf&lt;char&gt;()</code> 就是转 utf-8（而不是 utf-16/32）？<code>boost::locale::conv::to_utf&lt;wchar_t&gt;()</code> 就是转 utf-16 （或 utf-32）？</li>
+<li>本地化策略集 locale 和程序运行有关系吗？ #139 </li>
+<li>C++17 为什么弃用了 <code>&lt;codecvt&gt;</code>？且 <a href="https://stackoverflow.com/questions/42946335/deprecated-header-codecvt-replacement">尚无替换方案</a> 吗？</li>
+<li>都有哪些本地化策略可选呢？</li>
+<li>如果统一使用 Unicode 编码（utf-8/16/32 存储方式无所谓），是否就不需要本地化策略 locale了？它是源于上世纪各个国家、地区闭门造车，独自扩展 ANSI 字符集带来的后果吧？</li>
+<li><a href="https://ryanclouser.com/2016/08/11/C-11-Convert-to-from-UTF-8-wchar-t/">C++11 - Convert to/from UTF-8/wchar_t</a> 里面提到的 UTF8-CPP 和 NoWide 分别是什么？</li>
+</ul>
+<p>没有一致的 locale name o(╥﹏╥)o，windows 编程时<a href="https://stackoverflow.com/questions/42946335/deprecated-header-codecvt-replacement">怎么写</a>？</p>
+<blockquote>
+<p>Locale names are not part of the C++ standard… <a href="https://justcheckingonall.wordpress.com/2009/01/05/convert-utf-8-to-wchar_t/">引用来源</a></p>
+</blockquote>
+<p>关联问题：</p>
+<ol start="4">
+<li><a href="https://stackoverflow.com/questions/4324542/what-is-the-windows-equivalent-for-en-us-utf-8-locale">What is the Windows equivalent for en_US.UTF-8 locale?</a></li>
+<li><a href="https://answers.microsoft.com/en-us/surface/forum/surfbook-surfaccess/how-to-change-system-locale-in-windows-10-the/d7826ef0-13cd-43ea-8e01-2846d813dfed">How to change system locale in Windows 10</a></li>
+</ol>
+<a id="more"></a>
+
+<h1 id="第二章"><a href="#第二章" class="headerlink" title="第二章"></a>第二章</h1><ul>
+<li><code>wctomb</code>  <code>wcstombs</code> ，这两个在处理过字符（串）时更新 <code>std::mbstate_t </code>类型的<strong>全局静态对象</strong>，而且不能为二个线程同时调用，这种情况下应使用以下两个函数</li>
+<li><code>wcrtomb</code> <code>wcsrtombs</code>，依旧需要在使用之前先调用 <code>setlocale</code> 函数安装指定的系统本地环境或其一部分，作为新的 C 本地环境。<br>  以下情形会造成 <code>wcstombs</code>/<code>wcsrtombs</code> 转换终止：<blockquote>
+<p>遇到任何非法多字节字符（按照当前 C 本地环境）。</p>
+</blockquote>
+</li>
+<li><code>setlocale</code> 修改影响本地环境依赖函数的<strong>全局状态</strong>，故从一个线程调用它，而另一线程同时执行任何下列函数是未定义行为：xxx <a href="http://zh.cppreference.com/w/cpp/locale/setlocale">参考来源</a></li>
+</ul>
+<blockquote>
+<p>程序启动过程中，运行任何用户代码前会执行 <code>std::setlocale(LC_ALL, &quot;C&quot;);</code> 的等价代码。</p>
+</blockquote>
+<ol>
+<li>默认的最小本地环境为 <code>&quot;C&quot;</code>，其是否就是最小集？</li>
+<li>如果是最小集，是否意味着如果不设置新的本地环境，转换中文汉字、表情符号等就会造成转换终止？</li>
+<li>windows/msvc 是否又做了手脚？</li>
+</ol>
+<h1 id="第三章"><a href="#第三章" class="headerlink" title="第三章"></a>第三章</h1><p><a href="https://stackoverflow.com/questions/42946335/deprecated-header-codecvt-replacement"><code>std::codecvt</code></a>， 中提到：</p>
+<blockquote>
+<p>Four standalone (<strong>locale-independent</strong>/本地环境无关) specializations are provided by the standard library:</p>
+</blockquote>
+<ul>
+<li>恒等转换的意义是什么？</li>
+<li>在 UTF-16 和 UTF-8 间转换</li>
+<li>在 UTF-32 和 UTF-8 间转换<br>  这两者的存在结合 “locale-independent” 是否间接证明了第一个猜测？<br>  不存在 UTF-16 和 UTF-32 之间的转换意味着什么？</li>
+<li><code>std::codecvt&lt;wchar_t, char, std::mbstate_t&gt;</code> | 在系统原生宽和单字节窄字符集间转换<br>  系统原生宽字符集：UTF-32(non-Windows)、UCS2(Windows)；<strong>单字节</strong>窄字符集：重点就在于 single-byte，将多字节编码剔除，如此最多也就是 ASCII、ANSI，这部分字符是无需 locale 的，不同的C 本地环境单字节窄字符集都相同。</li>
+</ul>
+<blockquote>
+<p>In addition, every locale object constructed in a C++ program implements its own (locale-specific) versions of these four specializations.</p>
+</blockquote>
+<p>如果上述的理解是正确的，既然都和 <code>locale</code> 无关，那么为什么还要和 <code>locale</code> 混在一起，放在 <code>&lt;locale&gt;</code> 头文件中呢？</p>
+<p>另外，针对 <a href="http://zh.cppreference.com/w/cpp/locale/codecvt"><code>codecvt</code></a> 底部的表格（同 <a href="http://zh.cppreference.com/w/cpp/locale/wstring_convert"><code>std::wstring_convert</code> </a> 底部表格？）有以下疑惑，这张表格藏着好多内容：</p>
+<ol>
+<li>UTF-16 和 UCS2 不同？两者之间还有转换？</li>
+<li>UTF-16 和 UTF-32 之间是存在转换的？为什么四个特化不包含这个？</li>
+</ol>
+<p><code>std::codecvt</code> 使用场景是否限于 <a href="http://zh.cppreference.com/w/cpp/locale/wstring_convert"><code>std::wstring_convert</code> </a>?</p>
+<blockquote>
+<p>单独的编码转换平面 Codecvt</p>
+</blockquote>
+<p>什么概念？</p>
+<p><code>std::codecvt_utf8</code> 等什么作用？</p>
+<p>怎么就这么难理解？难用呢？</p>
+<h1 id="国际化？"><a href="#国际化？" class="headerlink" title="国际化？"></a>国际化？</h1><p>项目在非中文系统上编译警告（C4566），执行文件有 bug</p>
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line">content =<span class="string">&quot;股票/大智慧自定义/热门概念&quot;</span>;    <span class="comment">// 问题源头</span></span><br><span class="line">oss &lt;&lt; content &lt;&lt; xxx;</span><br><span class="line">...</span><br><span class="line">content = boost::locale::conv::to_utf&lt;<span class="keyword">char</span>&gt;(oss.str(), <span class="string">&quot;GBK&quot;</span>);    <span class="comment">// 将错误进行下去</span></span><br></pre></td></tr></table></figure>
+<p>写死 <code>GBK</code>（称之为“简体中文版”），这个应该和本地化策略 <code>locale </code>协同吧？</p>
+<ol>
+<li><del>软件在非中文系统上无法正常运行</del>吧？编译之后，<strong>简中版本</strong>拿到其他代码页的系统上应该是<strong>能够正常运行</strong>的。详细验证见后文。</li>
+<li>项目在 <del>非中文系统</del> 更换系统代码页后无法正常编译、执行吧？done 编译 C4566 警告（意味着已经错了），能够完成编译（编译的可执行文件潜藏 bug）；能够（带错）执行，程序不崩溃，但<strong>业务逻辑未实现</strong>。</li>
+</ol>
+<h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><ul>
+<li>写死 <code>GBK</code>：不同代码页编译有问题（源于编译时字符串字面值转为执行字符集是依赖本地化策略的），但 936 代码页编译成功后不同代码页（基本上意味着不同语言）执行没有问题（前提是系统存有/能够识别 936 代码页）;</li>
+<li>要解决编译问题，此处就需要和「编译时字符串字面值转为执行字符集是依赖本地化策略的」本地化策略协同。</li>
+</ul>
+<p>怎么分析也觉得“系统的本地化策略集和程序运行无关吧，只关系程序编译才是吧？”</p>
+<blockquote>
+<p>一个程序在运行之前并不知道系统的本地化策略集是什么，程序只有在运行之后才通过locale获得当时的本地化策略集。<a href="http://www.cppblog.com/deane/archive/2011/08/11/153007.aspx">引用来源</a></p>
+</blockquote>
+<h3 id="验证2"><a href="#验证2" class="headerlink" title="验证2"></a>验证2</h3><p>参考 <a href="https://msdn.microsoft.com/en-us/library/mt708818.aspx"><code>/execution-charset</code> (Set Execution Character Set)</a> 新增编译选项 <code>/execution-charset:.932 </code>：</p>
+<ol>
+<li><p>编译时抛出大量 C4566 警告，但编译能够成功；</p>
+<blockquote>
+<p>warning C4566: 由通用字符名称“\u5757”表示的字符不能在当前代码页(932)中表示出来。</p>
+</blockquote>
+<p> 事实上<strong>出现此警告即意味着错误</strong>：源文件中某字符（串）字面值未按预期使用，转换执行字符集时失败了（但编译继续，编译完成），生成的可执行文件中字面值的硬编码是错误的、混乱的。</p>
+<p> 此警告由 <code>content =&quot;股票/大智慧自定义/热门概念&quot;;  </code> 等简体中文字符抛出</p>
+</li>
+<li><p>启动软件，带错运行，通过 <code>boost::locale::conv::to_utf&lt;char&gt;(oss.str(), &quot;GBK&quot;);</code> 将<strong>错误的</strong>硬编码字节按照 GBK（936 codepage）转成 UTF-8，虽然能够转换完毕，但转换的结果肯定也是错的了</p>
+<p> 所以，业务方面请求已发送，但大智慧接口未返回有效数据，进而本地缓存无内容，按键精灵无个股、指数、板块等…</p>
+</li>
+</ol>
+<h3 id="验证1"><a href="#验证1" class="headerlink" title="验证1"></a>验证1</h3><p>根据  <a href="https://answers.microsoft.com/en-us/surface/forum/surfbook-surfaccess/how-to-change-system-locale-in-windows-10-the/d7826ef0-13cd-43ea-8e01-2846d813dfed">How to change system locale in Windows 10</a> 描述修改 「非 Unicode 程序中所使用的的当前语言」属性：</p>
+<table>
+<thead>
+<tr>
+<th>当前语言</th>
+<th>编译</th>
+<th>运行</th>
+<th>运行「简体中文」版是否正常</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>中文(繁体，中国台湾)</td>
+<td>C4566 警告*</td>
+<td>按键精灵缺少板块</td>
+<td>正常</td>
+</tr>
+<tr>
+<td>英语(美国)</td>
+<td>同上</td>
+<td>同上</td>
+<td>同上</td>
+</tr>
+</tbody></table>
+<p>*：警告只限于 <code>initializeBlockInfoWithType()</code> 中的板块路径：</p>
+<ul>
+<li>函数所在的 DZHYUNRequest.cpp 文件使用的 UTF-8-BOM 编码（msvc 打开<strong>未乱码</strong>），「字面值（有 BOM） ，转 utf-8，转 执行字符集（无前缀，未指定相关编译选项，则目标是 current code page/Big5）」，再通过 <code>boost::locale::conv::to_utf&lt;char&gt;(oss.str(), &quot;GBK&quot;); </code> 将 Big5 硬编码字节当做 GBK 转换成 utf-8，所以出错造成按键精灵缺失板块。</li>
+<li>DZHYUNdef.cpp 文件使用的 GB2312 编码，所以在 msvc 中打开看到原本简体中文的位置变成了<strong>乱码</strong>（Big5 的皮，<strong>GBK 的芯</strong>），在后续的「字面值（无 BOM 则依据 current code page/Big5），转 utf-8，转 执行字符集（无前缀，未指定相关编译选项，则目标是 current code page/Big5）」没什么变化，再通过 <code>boost::locale::conv::to_utf&lt;char&gt;(oss.str(), &quot;GBK&quot;); </code> GBK 转换成 utf-8，反而正确了。</li>
+</ul>
+<h2 id="心得-结论"><a href="#心得-结论" class="headerlink" title="心得/结论"></a>心得/结论</h2><p>首先，源文件使用 UTF-8-BOM 格式保存；其次</p>
+<ul>
+<li>只用 u8 字符串 <code>string str = u8&quot;value&quot;</code>；</li>
+<li>编译选项指定「执行字符集」：<code>/execution-charset:utf-8 </code></li>
+</ul>
+<p>上述两种方式等效，可混用！</p>
+<h3 id="UTF-8-without-BOM"><a href="#UTF-8-without-BOM" class="headerlink" title="UTF-8 without BOM"></a>UTF-8 without BOM</h3><p>如果排斥 UTF-8 带 BOM，通过「文件-高级保存选项-」可以将编码改为<strong>无签名</strong>，<del>或者安装 <a href="https://marketplace.visualstudio.com/items?itemName=vilicvane.ForceUTF8">ForceUTF8 插件</a>，避免手动调整每一个文件的编码</del>（插件有问题）。需要强调的是，使用无签名 UTF-8 编码，MSVC 会脑残：</p>
+<blockquote>
+<p> warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。</p>
+</blockquote>
+<p>需要明确告知编译器文件编码：<a href="https://msdn.microsoft.com/en-us/library/mt708819.aspx"><code>/source-charset</code> (Set Source Character Set)</a>)，编译选项指定「源字符集」</p>
+<h3 id="简写-utf-8"><a href="#简写-utf-8" class="headerlink" title="简写 /utf-8"></a>简写 <code>/utf-8</code></h3><blockquote>
+<p>If you want to set both the source character set and the execution character set to UTF-8, you can use the <code>/utf-8</code> compiler option as a shortcut. It is equivalent to specifying <code>/source-charset:utf-8 /execution-charset:utf-8</code> on the command line. </p>
+</blockquote>
+<h3 id="控制台应用程序"><a href="#控制台应用程序" class="headerlink" title="控制台应用程序"></a>控制台应用程序</h3><p>windows 的命令行窗口以及 powershell 默认都是无法支持 utf-8 的，调教使其支持 utf-8 挺麻烦的。使用 utf-8 作为执行字符集，在控制台输出时就会产生乱码。所以如果打算通过控制台查看结果，可以使用 utf-8-bom 编码（或者 utf-8 编码并指定 <code>/source-charset:utf-8</code>），但不能修改执行字符集。</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>减少头文件依赖</title>
+    <url>/2021/05/26/pimpl/</url>
+    <content><![CDATA[<p>减少头文件的依赖。</p>
+<h1 id="Pimpl-Idiom"><a href="#Pimpl-Idiom" class="headerlink" title="Pimpl Idiom"></a>Pimpl Idiom</h1><p>《Effective C++》 <a href="http://www.kuqin.com/language/20080106/3466.html">条款31</a>：将文件间的编译依存关系降至最低</p>
+<p>《Effective Modern C++》 <a href="https://blog.csdn.net/big_yellow_duck/article/details/52351729">Item 22</a>: When using the Pimpl Idiom, define special member functions in<br>the implementation file. </p>
+<p>在其<strong>单例模式</strong>的基础上，使用 Interface class（<strong>工厂模式</strong>）而非 Handle class（Pimpl Idiom）更合适</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-idioms</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>使用 using</title>
+    <url>/2021/05/26/using/</url>
+    <content><![CDATA[<p>using 指示，第 703 页，两种使用场景：</p>
+<ul>
+<li>using declaration 声明 <code>using std::cout;</code></li>
+<li>using directive 指示 <code>using namespace std;</code></li>
+</ul>
+<blockquote>
+<p><strong>using 指示</strong>（using directive）和 using 声明类似的地方是，我们可以使用命名空间名字的简写形式；和 using 声明不同的地方是，我们无法控制哪些名字是可见的，因为所有名字都是可见的。</p>
+</blockquote>
+<p>后者不能用在类作用域中；前者虽然能用在类作用域中但<strong>只能指向基类成员</strong>。更多知识请进一步学习《C++ Primer》</p>
+<p>75 页明确提到头文件中不应使用 using 声明：</p>
+<blockquote>
+<p>位于头文件的代码一般来说不应该使用 using 声明。这是因为头文件的内容会拷贝到引用它的文件中去，如果头文件有某个 using 声明，那么每个使用了该头文件的文件就都会有这个声明。对应某些程序来说，由于不经意间包含了一些名字，反而可能产生始料未及的<strong>名字冲突</strong>。</p>
+</blockquote>
+<p>702 页提到使用 using 指示也可能造成名字冲突问题：</p>
+<blockquote>
+<p>如果我们提供了一个对 std 等命名空间的 using 指示而未做任何特殊控制的话，将重新引入由于使用了多个库而造成的<strong>名字冲突</strong>问题。</p>
+</blockquote>
+<p>在源文件中使用 using 指示是否能够接受呢？能够节省大量的重复代码，注意规避名字冲突即可——除非源文件引入了较多的三方库，名字冲突并不常见。</p>
+]]></content>
+      <categories>
+        <category>cpp</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>智能指针</title>
+    <url>/2021/05/26/sharedptr/</url>
+    <content><![CDATA[<p><code>shared_ptr&lt;void&gt;</code> 神奇不？</p>
+<p><a href="https://stackoverflow.com/questions/39288891/why-is-shared-ptrvoid-legal-while-unique-ptrvoid-is-ill-formed">Why is <code>shared_ptr&lt;void&gt;</code> legal, while <code>unique_ptr&lt;void&gt;</code> is ill-formed?</a></p>
+<p>智能指针类型转换时，自定义删除器怎么处理的？释放时执行自定义的删除器！</p>
+<a id="more"></a>
+
+<figure class="highlight cpp"><table><tr><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;memory&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;iostream&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> <span class="built_in">std</span>;</span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Test</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    Test()  &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;ctor&quot;</span> &lt;&lt; <span class="built_in">endl</span>; &#125;</span><br><span class="line">    ~Test() &#123; <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;dtor&quot;</span> &lt;&lt; <span class="built_in">endl</span>; &#125;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 不会执行析构</span></span><br><span class="line">    <span class="keyword">void</span> * rptr = <span class="keyword">new</span> Test();</span><br><span class="line">    <span class="comment">// 能够正确执行析构，为什么</span></span><br><span class="line">    <span class="function"><span class="built_in">shared_ptr</span>&lt;<span class="keyword">void</span>&gt; <span class="title">ptr</span><span class="params">(<span class="keyword">new</span> Test())</span></span>;</span><br><span class="line">    <span class="keyword">auto</span> unknow = ptr.get();    <span class="comment">// &quot;unknow&quot; is &quot;void *&quot;</span></span><br><span class="line"></span><br><span class="line">    ptr = <span class="built_in">shared_ptr</span>&lt;<span class="keyword">char</span>&gt;(<span class="keyword">new</span> <span class="keyword">char</span>[<span class="number">10</span>], [](<span class="keyword">auto</span> *p) &#123;</span><br><span class="line">        <span class="keyword">delete</span>[] p;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; <span class="string">&quot;check&quot;</span> &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="comment">// 执行自定义的删除器，Test 的析构是不执行的</span></span><br><span class="line">    <span class="keyword">auto</span> tPtr = static_pointer_cast&lt;Test&gt;(ptr);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>执行结果</p>
+<figure class="highlight console"><table><tr><td class="code"><pre><span class="line">ctor</span><br><span class="line">ctor</span><br><span class="line">dtor</span><br><span class="line">check</span><br><span class="line">请按任意键继续. . .</span><br></pre></td></tr></table></figure>
+<p>因为一个智能指针的变量除了被管理对象的指针（可以通过 <code>get()</code> 获得原始指针），它也存储了删除器（通过自定义删除器的方式可以看出），这个变量做 <a href="https://zh.cppreference.com/w/cpp/memory/shared_ptr/pointer_cast">类型转换</a> 时，只是改变了底层指针的类型，其删除器并未做任何改动，直接拷贝的。</p>
+<blockquote>
+<p>The pointer held by the <code>shared_ptr</code> directly is the one returned by <code>get()</code>, while the pointer/object held by <strong>the control block</strong> is the one that will be deleted when the number of shared owners reaches zero. These pointers <strong>are not necessarily equal</strong>. <a href="https://en.cppreference.com/w/cpp/memory/shared_ptr">引用来源</a></p>
+</blockquote>
+<p><code>shared_ptr</code> 的 <a href="https://zh.cppreference.com/w/cpp/memory/shared_ptr/shared_ptr">构造函数</a> 以及 <a href="https://zh.cppreference.com/w/cpp/memory/shared_ptr/operator%3D">拷贝赋值运算符</a> 的描述中，都未描述跨类型的情况。只在 <a href="https://zh.cppreference.com/w/cpp/memory/shared_ptr/pointer_cast">类型转换操作符</a> 中，有详细解释。</p>
+<blockquote>
+<p>The destructor of <code>shared_ptr</code> decrements the number of shared owners of the control block. If that counter reaches zero, <strong>the control block</strong> calls the destructor of <strong>the managed object</strong>. The control block <strong>does not deallocate</strong> itself until the <code>std::weak_ptr</code> counter reaches zero as well.</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>cpp</category>
+        <category>cpp-concept</category>
+      </categories>
   </entry>
 </search>
