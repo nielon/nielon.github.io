@@ -46,15 +46,15 @@
   };
 </script>
 
-  <meta name="description" content="这里不讲条件变量 std::conditional_varibale 的具体使用，自行上 cppreference 网站查阅手册。 条件变量 wait 参数锁住的到底是什么以下文字摘抄自 std::condition_variable，其中语义不通或翻译欠妥的地方直接改换为英文原文了。 有意修改变量（条件）的线程必须  获得 std::mutex （典型地通过 std::lock_guard  ）">
+  <meta name="description" content="这里不讲条件变量 std::conditional_varibale 的具体使用，自行上 cppreference 网站查阅手册。 条件变量std::condition_variable 类型描述 在 pthread 中条件变量的惯用手法是将 wait 放在 while 循环中。在 C++11 之后，常见的书写形式为 12std::unique_lock&lt;std::mutex&gt; lk(">
 <meta property="og:type" content="article">
 <meta property="og:title" content="条件变量">
 <meta property="og:url" content="https://tnie.github.io/2021/05/26/conditionalvariable/index.html">
 <meta property="og:site_name" content="不积小流，无以成江海">
-<meta property="og:description" content="这里不讲条件变量 std::conditional_varibale 的具体使用，自行上 cppreference 网站查阅手册。 条件变量 wait 参数锁住的到底是什么以下文字摘抄自 std::condition_variable，其中语义不通或翻译欠妥的地方直接改换为英文原文了。 有意修改变量（条件）的线程必须  获得 std::mutex （典型地通过 std::lock_guard  ）">
+<meta property="og:description" content="这里不讲条件变量 std::conditional_varibale 的具体使用，自行上 cppreference 网站查阅手册。 条件变量std::condition_variable 类型描述 在 pthread 中条件变量的惯用手法是将 wait 放在 while 循环中。在 C++11 之后，常见的书写形式为 12std::unique_lock&lt;std::mutex&gt; lk(">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-05-26T09:26:03.000Z">
-<meta property="article:modified_time" content="2021-05-26T09:52:39.094Z">
+<meta property="article:modified_time" content="2021-06-11T07:46:26.169Z">
 <meta property="article:author" content="tnie &amp; ilyw">
 <meta name="twitter:card" content="summary">
 
@@ -239,10 +239,16 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-05-26 17:26:03 / 修改时间：17:52:39" itemprop="dateCreated datePublished" datetime="2021-05-26T17:26:03+08:00">2021-05-26</time>
+              <time title="创建时间：2021-05-26 17:26:03" itemprop="dateCreated datePublished" datetime="2021-05-26T17:26:03+08:00">2021-05-26</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-06-11 15:46:26" itemprop="dateModified" datetime="2021-06-11T15:46:26+08:00">2021-06-11</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="fa fa-folder-o"></i>
@@ -273,6 +279,26 @@
 
       
         <p>这里不讲条件变量 <code>std::conditional_varibale</code> 的具体使用，自行上 cppreference 网站查阅手册。</p>
+<h1 id="条件变量"><a href="#条件变量" class="headerlink" title="条件变量"></a>条件变量</h1><p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/condition_variable">std::condition_variable 类型描述</a></p>
+<p>在 pthread 中条件变量的惯用手法是将 <code>wait</code> 放在 <code>while</code> 循环中。在 C++11 之后，常见的书写形式为</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="built_in">std</span>::unique_lock&lt;<span class="built_in">std</span>::mutex&gt; <span class="title">lk</span><span class="params">(m)</span></span>;</span><br><span class="line">cv.wait(lk, []&#123;<span class="keyword">return</span> ready;&#125;);</span><br></pre></td></tr></table></figure>
+<p>其完全等价于循环方式，而将 <code>wait</code> 放到循环中，主要是因为虚假唤醒的存在。</p>
+<blockquote>
+<p>此重载可用于在等待特定条件成为 true 时忽略虚假唤醒。</p>
+</blockquote>
+<p>初次之外，还有 <code>wait_for</code> 和 <code>wait_util</code>。</p>
+<a id="more"></a>
+
+<p>需要强调的是在循环中使用 <code>wait_for</code> 和 <code>wait_for</code> 带谓词的重载并不等价，是有显著区别的，甚至于在循环中调用 <code>wait_for</code> 有造成永久阻塞的风险（处理不了虚假唤醒）。</p>
+<blockquote>
+<p><code>wait_for</code> 阻塞当前线程，直到条件变量被唤醒，或到指定时限时长后</p>
+</blockquote>
+<p><code>wait_for</code> 带有谓词的重载由 <code>wait_util</code> 实现，可用于忽略虚假唤醒。</p>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/31871267/how-does-condition-variablewait-for-deal-with-spurious-wakeups">How does condition_variable::wait_for() deal with spurious wakeups?</a></p>
+<p>在循环中使用 <code>wait_until</code> 和其带有谓词的重载完全等价，都可用于忽略虚假唤醒。</p>
+<blockquote>
+<p><code>wait_until</code> 阻塞当前线程，直到条件变量被唤醒，或直到抵达指定时间点</p>
+</blockquote>
 <h1 id="条件变量-wait-参数锁住的到底是什么"><a href="#条件变量-wait-参数锁住的到底是什么" class="headerlink" title="条件变量 wait 参数锁住的到底是什么"></a>条件变量 wait 参数锁住的到底是什么</h1><p>以下文字摘抄自 <a target="_blank" rel="noopener" href="https://zh.cppreference.com/w/cpp/thread/condition_variable">std::condition_variable</a>，其中语义不通或翻译欠妥的地方直接改换为英文原文了。</p>
 <p>有意修改变量（<strong>条件</strong>）的线程必须</p>
 <ol>
@@ -288,7 +314,7 @@
 <li><code>condition_variable </code>被通知时，时限消失或虚假唤醒发生，线程被唤醒，且自动重获得互斥。之后线程应检查条件，若唤醒是虚假的，则继续等待。</li>
 </ol>
 <p>所以，<code>_lock </code>是针对共享变量（条件），<code>wait() </code>使用 <code>_lock </code>是为了悬挂线程执行时<strong>释放</strong>互斥的所有权以及跳出等待时线程再次<strong>获得</strong>互斥的所有权——如果由用户 unlock、lock 显然会造成竞争，无法保证原子性</p>
-<a id="more"></a>
+<!-- more -->
 
 <h1 id="条件变量-notify-one-之前为什么要加锁？不加锁为什么卡死？"><a href="#条件变量-notify-one-之前为什么要加锁？不加锁为什么卡死？" class="headerlink" title="条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？"></a>条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？</h1><p>在 <a target="_blank" rel="noopener" href="https://zh.cppreference.com/w/cpp/thread/condition_variable">std::condition_variable</a> 中提到：</p>
 <blockquote>
@@ -331,7 +357,21 @@
 <p>MainComponent.cpp: L154</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">std::unique_lock&lt;std::mutex&gt; _locker_normal(g_mutex_normal);</span><br><span class="line">while (isNormal &#x3D;&#x3D; false)</span><br><span class="line">&#123;</span><br><span class="line">	g_check_normal.wait(_locker_normal);</span><br><span class="line">	isNormal &#x3D; (WSCLIENT_STATUS::Open &#x3D;&#x3D; YDdata_GetWSConStatus());</span><br><span class="line">	if (isNormal)</span><br><span class="line">	&#123;</span><br><span class="line">		_locker_normal.unlock();</span><br><span class="line">		&#x2F;&#x2F; 连接成功提示</span><br><span class="line">		InfoBox(&quot;Open&quot;);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>不能退出</p>
-<p>其中的差别在哪里？前者使用的 <code>boost::thread</code>，后者使用的 <code>std::thread</code>。前者使用了 boost 线程库的 interrupt 机制。</p>
+<p>其中的差别在哪里？前者使用的 <code>boost::thread</code>，后者使用的 <code>std::thread</code>。前者使用了 <strong>boost 线程库的 interrupt 机制</strong>。</p>
+<h1 id="std-thread-线程类"><a href="#std-thread-线程类" class="headerlink" title="std::thread 线程类"></a>std::thread 线程类</h1><p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/thread">std::thread 类型描述</a></p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">std</span>::thread t1, t2;	<span class="comment">// 构造不表示线程的新 thread 对象</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="built_in">std</span>::thread <span class="title">t3</span><span class="params">([]() &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">  <span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span></span></span><br><span class="line"><span class="function"><span class="params">    this_thread::sleep_for(<span class="number">200</span>ms);</span></span></span><br><span class="line"><span class="function"><span class="params">  &#125;</span></span></span><br><span class="line"><span class="function"><span class="params">&#125;)</span></span>;</span><br><span class="line">t3.swap(t2);	<span class="comment">// 互换二个 thread 对象的底层句柄。</span></span><br><span class="line"><span class="comment">// 和空的线程对象互换也是可以的，但注意之后对 t2 调用 join() 或者 detach()</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (t1.joinable())</span><br><span class="line">  t1.join();</span><br><span class="line"><span class="keyword">if</span> (t2.joinable())</span><br><span class="line">  t2.join();	<span class="comment">// 不 join 也不 detach 就会崩溃</span></span><br><span class="line"><span class="keyword">if</span> (t3.joinable())</span><br><span class="line">  t3.join();</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="线程对象的析构函数"><a href="#线程对象的析构函数" class="headerlink" title="线程对象的析构函数"></a>线程对象的析构函数</h2><pre><code>std::thread::~thread    // 销毁 thread 对象。</code></pre>
+<p>析构时，若 <code>*this </code>拥有关联线程（ <code>joinable() == true</code> ），则调用 <code>std::terminate()</code> 。</p>
+<p>注意：在下列操作后 thread 对象无关联的线程（从而可安全销毁）</p>
+<ul>
+<li>被默认构造</li>
+<li>被移动</li>
+<li>已调用 <code>join()</code></li>
+<li>已调用 <code>detach()</code></li>
+</ul>
+<p>和线程对象有关，触发的崩溃，一般都是因为没有合理处理 <code>joinable()</code> 造成的。</p>
+<h2 id="线程和引用"><a href="#线程和引用" class="headerlink" title="线程和引用"></a>线程和引用</h2><figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span> (<span class="keyword">size_t</span> i = <span class="number">0</span>; i &lt; <span class="number">100</span>; i++)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="built_in">string</span> label = <span class="built_in">std</span>::to_string(i);</span><br><span class="line">    <span class="comment">// vt.push_back(thread([label]() &#123;   // it&#x27;s ok</span></span><br><span class="line">    vt.push_back(thread([&amp;]() &#123;</span><br><span class="line">        <span class="built_in">cout</span> &lt;&lt; label &lt;&lt; <span class="built_in">endl</span>;</span><br><span class="line">    &#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出乱序！不使用 <code>&amp;</code> 引用输出结果正确。</p>
 
     </div>
 
@@ -353,6 +393,9 @@
             <span class="post-nav-divider"></span>
 
             <div class="post-nav-prev post-nav-item">
+                <a href="/2021/06/11/interface/" rel="prev" title="C++ 接口形式">
+                  C++ 接口形式 <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
       </footer>
@@ -391,7 +434,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-wait-%E5%8F%82%E6%95%B0%E9%94%81%E4%BD%8F%E7%9A%84%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">1.</span> <span class="nav-text">条件变量 wait 参数锁住的到底是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-notify-one-%E4%B9%8B%E5%89%8D%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%8A%A0%E9%94%81%EF%BC%9F%E4%B8%8D%E5%8A%A0%E9%94%81%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%A1%E6%AD%BB%EF%BC%9F"><span class="nav-number">2.</span> <span class="nav-text">条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">2.1.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="nav-number">2.2.</span> <span class="nav-text">分析过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1"><span class="nav-number">3.</span> <span class="nav-text">线程对象</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F"><span class="nav-number">1.</span> <span class="nav-text">条件变量</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-wait-%E5%8F%82%E6%95%B0%E9%94%81%E4%BD%8F%E7%9A%84%E5%88%B0%E5%BA%95%E6%98%AF%E4%BB%80%E4%B9%88"><span class="nav-number">2.</span> <span class="nav-text">条件变量 wait 参数锁住的到底是什么</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%8F%98%E9%87%8F-notify-one-%E4%B9%8B%E5%89%8D%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%8A%A0%E9%94%81%EF%BC%9F%E4%B8%8D%E5%8A%A0%E9%94%81%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%A1%E6%AD%BB%EF%BC%9F"><span class="nav-number">3.</span> <span class="nav-text">条件变量 notify_one 之前为什么要加锁？不加锁为什么卡死？</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E8%AE%BA"><span class="nav-number">3.1.</span> <span class="nav-text">结论</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="nav-number">3.2.</span> <span class="nav-text">分析过程</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1"><span class="nav-number">4.</span> <span class="nav-text">线程对象</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#std-thread-%E7%BA%BF%E7%A8%8B%E7%B1%BB"><span class="nav-number">5.</span> <span class="nav-text">std::thread 线程类</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AF%B9%E8%B1%A1%E7%9A%84%E6%9E%90%E6%9E%84%E5%87%BD%E6%95%B0"><span class="nav-number">5.1.</span> <span class="nav-text">线程对象的析构函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%92%8C%E5%BC%95%E7%94%A8"><span class="nav-number">5.2.</span> <span class="nav-text">线程和引用</span></a></li></ol></li></ol></div>
       </div>
       <!--/noindex-->
 

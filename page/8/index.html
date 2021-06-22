@@ -215,6 +215,95 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/03/20/ln-command/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
+      <meta itemprop="name" content="tnie & ilyw">
+      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="不积小流，无以成江海">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+            <a href="/2017/03/20/ln-command/" class="post-title-link" itemprop="url">硬链接是别名；软链接关键在于路径</a>
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2017-03-20 18:10:00" itemprop="dateCreated datePublished" datetime="2017-03-20T18:10:00+08:00">2017-03-20</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/linux/" itemprop="url" rel="index">
+                    <span itemprop="name">linux</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>2015年12月1日 20:00:13</p>
+<p>结论在前：如果不使用相对路径，则软链接、硬链接再怎么交叉混用都不会有问题。</p>
+<ul>
+<li>ln 直接创建硬链接到目标目录，和创建到当前目录，再mv到目标目录，效果一致。硬链接就是别名，全场通用。注意其应用限制。</li>
+<li>ln 的软链接关键在于依据路径是否能查找到文件。软链接的关键在于路径。</li>
+<li><strong>cp 操作，总是拷贝原文件到新副本，和链接毫无关联。</strong></li>
+</ul>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2017/03/20/ln-command/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+        
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/03/17/how-to-install-applications-1/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -246,7 +335,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-05-05 14:48:07" itemprop="dateModified" datetime="2019-05-05T14:48:07+08:00">2019-05-05</time>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -336,7 +425,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2019-05-05 14:41:53" itemprop="dateModified" datetime="2019-05-05T14:41:53+08:00">2019-05-05</time>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -421,7 +510,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 09:50:29" itemprop="dateModified" datetime="2017-04-14T09:50:29+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:24" itemprop="dateModified" datetime="2021-06-03T16:21:24+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -505,7 +594,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 09:50:10" itemprop="dateModified" datetime="2017-04-14T09:50:10+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -590,7 +679,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:40" itemprop="dateModified" datetime="2017-04-14T10:35:40+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -678,7 +767,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:32" itemprop="dateModified" datetime="2017-04-14T10:35:32+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:24" itemprop="dateModified" datetime="2021-06-03T16:21:24+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -762,7 +851,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:28" itemprop="dateModified" datetime="2017-04-14T10:35:28+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:26" itemprop="dateModified" datetime="2021-06-03T16:21:26+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -846,7 +935,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:21" itemprop="dateModified" datetime="2017-04-14T10:35:21+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:25" itemprop="dateModified" datetime="2021-06-03T16:21:25+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -930,7 +1019,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:17" itemprop="dateModified" datetime="2017-04-14T10:35:17+08:00">2017-04-14</time>
+                <time title="修改时间：2021-06-03 16:21:26" itemprop="dateModified" datetime="2021-06-03T16:21:26+08:00">2021-06-03</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -961,91 +1050,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2017/03/10/bandwagon/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-        
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block home" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://tnie.github.io/2017/03/10/standardOfLanguage/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://raw.githubusercontent.com/tnie/MarkdownPhotos/master/Baymax1.jpg">
-      <meta itemprop="name" content="tnie & ilyw">
-      <meta itemprop="description" content="家人是奋斗的初衷，路途艰辛时常思初心。">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="不积小流，无以成江海">
-    </span>
-      <header class="post-header">
-        <h1 class="post-title" itemprop="name headline">
-          
-            <a href="/2017/03/10/standardOfLanguage/" class="post-title-link" itemprop="url">-std= 语言标准</a>
-        </h1>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2017-03-10 08:31:58" itemprop="dateCreated datePublished" datetime="2017-03-10T08:31:58+08:00">2017-03-10</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2017-04-14 10:35:11" itemprop="dateModified" datetime="2017-04-14T10:35:11+08:00">2017-04-14</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/linux/" itemprop="url" rel="index">
-                    <span itemprop="name">linux</span>
-                  </a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>2016/5/27 13:13:10</p>
-<p>gcc 版本：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">cts@SuSe-CTS2:~&gt; gcc --version</span><br><span class="line">gcc (SUSE Linux) 4.3.4 [gcc-4_3-branch revision 152973]</span><br><span class="line">Copyright (C) 2008 Free Software Foundation, Inc.</span><br><span class="line">This is free software; see the source for copying conditions.  There is NO</span><br><span class="line">warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.</span><br><span class="line">cts@SuSe-CTS2:~&gt; man gcc</span><br><span class="line">...(略)</span><br></pre></td></tr></table></figure>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2017/03/10/standardOfLanguage/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
